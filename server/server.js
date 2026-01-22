@@ -15,7 +15,11 @@ const app = express();
 // Middleware
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*', // Allow Vercel app in production, or * in dev
+    origin: [
+        'http://localhost:5173', 
+        'https://school-management-3ah63babo-vineeths-projects-c5f12fec.vercel.app',
+        process.env.CLIENT_URL
+    ].filter(Boolean), // Allow localhost, specific vercel app, and any env var override
     credentials: true
 }));
 app.use(express.json()); // Body parser for JSON data
