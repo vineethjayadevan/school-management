@@ -46,7 +46,7 @@ export default function Login() {
             <div className="flex-1 flex items-center justify-center p-4">
                 <button
                     onClick={() => navigate('/')}
-                    className="absolute top-6 left-6 text-white/80 hover:text-white flex items-center gap-2 font-medium transition-colors"
+                    className="absolute top-24 left-6 text-white/80 hover:text-white flex items-center gap-2 font-medium transition-colors"
                 >
                     <ArrowRight className="rotate-180" size={20} /> Back to Home
                 </button>

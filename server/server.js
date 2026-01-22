@@ -16,7 +16,9 @@ const app = express();
 // Middleware
 app.use(cors({
     origin: [
-        'http://localhost:5173', 
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5173',
         'https://school-management-3ah63babo-vineeths-projects-c5f12fec.vercel.app',
         process.env.CLIENT_URL
     ].filter(Boolean), // Allow localhost, specific vercel app, and any env var override
