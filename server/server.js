@@ -13,7 +13,11 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+// Middleware
+app.use(cors({
+    origin: process.env.CLIENT_URL || '*', // Allow Vercel app in production, or * in dev
+    credentials: true
+}));
 app.use(express.json()); // Body parser for JSON data
 app.use(express.urlencoded({ extended: true }));
 
