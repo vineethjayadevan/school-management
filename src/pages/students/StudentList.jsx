@@ -143,13 +143,7 @@ export default function StudentList() {
                     <h1 className="text-2xl font-bold text-slate-900">Students Directory</h1>
                     <p className="text-slate-500">Manage student admissions and records.</p>
                 </div>
-                <button
-                    onClick={() => navigate('/admin/students/admit')}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                >
-                    <Plus size={20} />
-                    <span>Admit Student</span>
-                </button>
+                {/* Button Removed as per request (moved to Admissions) */}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">

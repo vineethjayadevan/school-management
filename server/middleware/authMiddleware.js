@@ -43,5 +43,6 @@ const authorize = (...roles) => {
 };
 
 const admin = authorize('superuser', 'admin'); // Backward compatibility/Convenience
+const superuser = authorize('superuser');
 
-module.exports = { protect, authorize, admin };
+module.exports = { protect, authorize, admin, superuser };

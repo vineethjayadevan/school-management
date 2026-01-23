@@ -5,14 +5,24 @@ const Enquiry = require('../models/Enquiry');
 // @access  Public
 const createEnquiry = async (req, res) => {
     try {
-        const { name, studentName, studentGrade, contactNumber, email, message } = req.body;
+        const {
+            studentFirstName, studentMiddleName, studentLastName,
+            fatherName, motherName,
+            contactNumber, email,
+            dob, studentGrade,
+            message
+        } = req.body;
 
         const enquiry = await Enquiry.create({
-            name,
-            studentName,
-            studentGrade,
+            studentFirstName,
+            studentMiddleName,
+            studentLastName,
+            fatherName,
+            motherName,
             contactNumber,
             email,
+            dob,
+            studentGrade,
             message
         });
 

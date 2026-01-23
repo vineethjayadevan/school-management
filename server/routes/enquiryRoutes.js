@@ -4,7 +4,7 @@ const { createEnquiry, getEnquiries, updateEnquiryStatus } = require('../control
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.post('/', createEnquiry);
-router.get('/', protect, authorize('superuser', 'office_staff'), getEnquiries);
-router.put('/:id', protect, authorize('superuser', 'office_staff'), updateEnquiryStatus);
+router.get('/', protect, authorize('superuser', 'office_staff', 'admin'), getEnquiries);
+router.put('/:id', protect, authorize('superuser', 'office_staff', 'admin'), updateEnquiryStatus);
 
 module.exports = router;

@@ -13,6 +13,8 @@ import ManageEvents from './pages/admin/ManageEvents';
 import Academics from './pages/academics/Academics';
 import Login from './pages/auth/Login';
 import Home from './pages/Home';
+import UserManagement from './pages/admin/UserManagement';
+import Admissions from './pages/admin/Admissions';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -59,6 +61,12 @@ function App() {
                 }>
                     <Route index element={<RedirectHandler />} />
 
+                    <Route path="users" element={
+                        <RequireAuth allowedRoles={['superuser']}>
+                            <UserManagement />
+                        </RequireAuth>
+                    } />
+
                     <Route path="dashboard" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <Dashboard />
@@ -77,9 +85,14 @@ function App() {
                             <StudentList />
                         </RequireAuth>
                     } />
-                    <Route path="students/admit" element={
+                    <Route path="admissions/new" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <AdmissionForm />
+                        </RequireAuth>
+                    } />
+                    <Route path="admissions" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <Admissions />
                         </RequireAuth>
                     } />
                     <Route path="academics" element={
