@@ -97,12 +97,19 @@ const Navbar = () => {
         <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-200">
-                        S
+                    <img
+                        src="/images/logo.png"
+                        alt="Stem Global Logo"
+                        className="h-12 w-auto object-contain rounded-lg"
+                    />
+                    <div className="flex flex-col">
+                        <span className={`text-xl md:text-2xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
+                            Stem Global Public School
+                        </span>
+                        <span className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">
+                            Kollannoor - Kappur
+                        </span>
                     </div>
-                    <span className={`text-xl md:text-2xl font-bold tracking-tight ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
-                        Stem Global
-                    </span>
                 </div>
 
                 {/* Desktop Navigation */}
@@ -213,84 +220,110 @@ const Navbar = () => {
 const Hero = ({ onRegister, onContact }) => {
     return (
         <section id="home" className="relative min-h-screen flex items-center pt-20 bg-slate-50 overflow-hidden">
-            <div className="absolute inset-0 z-0 opacity-40">
+            {/* Background shapes */}
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-50/50 rounded-l-[100px] transform translate-x-20"></div>
                 <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-blue-50/50 rounded-tr-[100px] transform -translate-x-10"></div>
             </div>
 
             <div className="container mx-auto px-6 relative z-10">
                 <div className="grid lg:grid-cols-2 gap-16 items-center">
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                    >
-                        <motion.button
-                            onClick={onContact}
-                            animate={{ scale: [1, 1.05, 1], boxShadow: ["0 0 0 rgba(99, 102, 241, 0)", "0 0 20px rgba(99, 102, 241, 0.5)", "0 0 0 rgba(99, 102, 241, 0)"] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-full text-sm font-bold mb-8 tracking-wide cursor-pointer hover:bg-indigo-700 transition-colors"
-                        >
-                            ✨ 2025-26 ADMISSIONS OPEN - CLICK HERE
-                        </motion.button>
-
-                        <h1 className="text-5xl md:text-7xl font-bold text-slate-900 leading-[1.1] mb-8 tracking-tight">
-                            Nurturing <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">
-                                Global Leaders
-                            </span>
-                        </h1>
-                        <p className="text-xl text-slate-500 mb-10 leading-relaxed max-w-lg">
-                            We provide a holistic education that balances academic excellence with character development, preparing students for a limitless future.
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                            <button
-                                onClick={onRegister}
-                                className="px-8 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 group"
-                            >
-                                Register Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <button className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-semibold hover:bg-slate-50 transition-all flex items-center gap-2">
-                                <Play size={18} className="fill-slate-700" /> Watch Video
-                            </button>
-                        </div>
-                    </motion.div>
-
+                    {/* Image Column - Left */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="relative"
+                        transition={{ duration: 0.8 }}
+                        className="relative order-1" // Ensure visual order matches logical order if needed, but grid default is fine
                     >
                         <div className="aspect-[4/5] md:aspect-square rounded-[3rem] overflow-hidden shadow-2xl relative z-10">
                             <img
-                                src="/images/hero.jpeg"
+                                src="/images/abtUs2.jpeg"
                                 alt="Student Learning"
                                 className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         </div>
+
                         {/* Decorative Elements */}
                         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-20 blur-2xl z-0"></div>
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600 rounded-full opacity-10 blur-3xl z-0"></div>
 
-                        {/* Floating Stats */}
+                        {/* Scanner Box - Floating over image */}
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.6 }}
-                            className="absolute bottom-8 -left-8 bg-white p-5 rounded-2xl shadow-xl shadow-slate-200/50 z-20 border border-slate-50 hidden md:block"
+                            className="absolute bottom-6 right-6 z-20 hidden md:block" // Adjusted position
                         >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                                    <Smile size={24} />
+                            <a
+                                href="https://www.instagram.com/stemglobalpublicschool"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/50 hover:scale-105 transition-transform duration-300"
+                            >
+                                {/* Stats */}
+                                <div className="flex flex-col items-start min-w-[100px]">
+                                    <div className="flex -space-x-2 mb-2">
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[8px] overflow-hidden">
+                                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xl font-bold text-slate-900 leading-none">100%</p>
+                                    <p className="text-[10px] font-medium text-slate-500">Happy Students</p>
                                 </div>
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-900">100%</div>
-                                    <div className="text-sm text-slate-500 font-medium">Happy Students</div>
+                                {/* Divider */}
+                                <div className="w-px h-10 bg-slate-200 mx-1"></div>
+                                {/* Scanner */}
+                                <div className="text-center">
+                                    <img
+                                        src="/images/insta-scanner.jpg.jpeg"
+                                        alt="Scan"
+                                        className="w-16 h-auto rounded-lg mix-blend-multiply"
+                                    />
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Scan Me</p>
                                 </div>
-                            </div>
+                            </a>
                         </motion.div>
+                    </motion.div>
+
+                    {/* Text Column - Right */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                        className="order-2"
+                    >
+                        <motion.button
+                            onClick={onContact}
+                            animate={{ scale: [1, 1.05, 1], boxShadow: ["0 0 0 rgba(99, 102, 241, 0)", "0 0 20px rgba(99, 102, 241, 0.5)", "0 0 0 rgba(99, 102, 241, 0)"] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-full text-sm font-bold mb-8 tracking-wide cursor-pointer hover:bg-indigo-700 transition-colors shadow-md"
+                        >
+                            ✨ 2025-26 ADMISSIONS OPEN - CLICK HERE
+                        </motion.button>
+
+                        <h1 className="text-5xl md:text-7xl font-bold text-slate-900 leading-[1.1] mb-8 tracking-tight drop-shadow-sm">
+                            Inspiring Minds <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-blue-600">
+                                Igniting Innovation
+                            </span>
+                        </h1>
+                        <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg font-medium">
+                            Dream Big, Reach Closer, Rise with STEM Global Public School
+                        </p>
+                        <div className="flex flex-wrap gap-4">
+                            <button
+                                onClick={onRegister}
+                                className="px-8 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2 group"
+                            >
+                                Register Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                            <button className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-semibold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+                                <Play size={18} className="fill-slate-700" /> Watch Video
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             </div>
@@ -301,64 +334,99 @@ const Hero = ({ onRegister, onContact }) => {
 
 
 const About = () => {
-    const features = [
-        { icon: Star, title: 'Montessori Method', desc: 'Fostering independence and natural curiosity.' },
-        { icon: Heart, title: 'Holistic Growth', desc: 'Focusing on emotional and social development.' },
-        { icon: Users, title: 'Expert Faculty', desc: 'Dedicated mentors guiding every step.' },
-        { icon: Award, title: 'Modern Facilities', desc: 'Safe, stimulating environments for learning.' }
-    ];
-
     return (
         <section id="about" className="py-32 bg-white">
             <div className="container mx-auto px-6">
-                <div className="grid lg:grid-cols-2 gap-20 items-center">
-                    <div>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="inline-block px-4 py-1.5 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-6"
-                        >
-                            About Us
-                        </motion.div>
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-5xl font-bold text-slate-900 mb-8 leading-tight"
-                        >
-                            Building Strong Foundations for Life
-                        </motion.h2>
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.2 }}
-                            className="text-slate-500 text-lg leading-relaxed mb-6"
-                        >
-                            At Stem Global Public School, we believe that education is not just about filling a bucket, but lighting a fire. Our approach blends traditional values with modern methodologies.
-                        </motion.p>
+                {/* 1. Who We Are - Full Width Top Section */}
+                <div className="mb-16 text-center max-w-4xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="inline-block px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-6"
+                    >
+                        About Us
+                    </motion.div>
+                    <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight"
+                    >
+                        Who We Are
+                    </motion.h2>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="text-slate-500 text-lg leading-relaxed"
+                    >
+                        STEM Global Public School is an initiative of STEM GPS Educational & Charitable Trust, committed to nurturing future-ready learners through a blend of Montessori philosophy, STEM-based learning, and NEP-supported CBSE education.
+                    </motion.p>
+                </div>
 
-                        <div className="grid sm:grid-cols-2 gap-8 mt-12">
-                            {features.map((feature, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: 0.3 + (idx * 0.1) }}
-                                    className="flex flex-col gap-3"
-                                >
-                                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-indigo-600 mb-2">
-                                        <feature.icon size={24} />
-                                    </div>
-                                    <h4 className="text-xl font-bold text-slate-900">{feature.title}</h4>
-                                    <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
-                                </motion.div>
-                            ))}
+                <div className="grid lg:grid-cols-2 gap-20 items-start">
+                    {/* 2. Left Column - Motto & Educational Approach */}
+                    <div>
+                        <div className="space-y-8">
+                            <div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6">Our Motto</h3>
+                                <div className="space-y-4">
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.3 }}
+                                        className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl"
+                                    >
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+                                            <Star size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold text-slate-900 mb-1">Start With Montessori</h4>
+                                            <p className="text-slate-500 text-sm">Pre-primary montessori to grade 3</p>
+                                        </div>
+                                    </motion.div>
+
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.4 }}
+                                        className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl"
+                                    >
+                                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shrink-0">
+                                            <Award size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold text-slate-900 mb-1">Rise with Stem Education</h4>
+                                            <p className="text-slate-500 text-sm">Grade 4 to 8</p>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            </div>
+
+                            <div className="pt-8 border-t border-slate-100">
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6">Our Educational Approach</h3>
+                                <div className="space-y-4">
+                                    {[
+                                        { title: "Montessori Foundation (Early Years)", desc: "Child-led, activity-based learning that develops independence, concentration, and confidence.", color: "bg-orange-50 text-orange-700" },
+                                        { title: "STEM-Based Learning (Primary & Middle School)", desc: "Integrating Science, Technology, Engineering, and Mathematics to enhance critical thinking, creativity, and problem-solving skills.", color: "bg-blue-50 text-blue-700" },
+                                        { title: "NEP 2020 Alignment", desc: "Focus on conceptual clarity, experiential learning, competency-based assessment and holistic development.", color: "bg-green-50 text-green-700" }
+                                    ].map((item, idx) => (
+                                        <div key={idx} className={`p-4 rounded-2xl border border-slate-100 ${item.color}`}>
+                                            <h4 className="font-bold text-base mb-1">{item.title}</h4>
+                                            <p className="text-sm opacity-90">{item.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    {/* 3. Right Column - Images Collage */}
                     <div className="relative">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -367,9 +435,37 @@ const About = () => {
                             transition={{ duration: 0.8 }}
                             className="grid grid-cols-2 gap-4"
                         >
-                            <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Kids" className="rounded-3xl w-full h-64 object-cover translate-y-12 shadow-xl" />
-                            <img src="https://images.unsplash.com/photo-1587652990173-fed52288a846?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Classroom" className="rounded-3xl w-full h-64 object-cover shadow-xl" />
+                            {/* Column 1 */}
+                            <div className="space-y-4">
+                                <img
+                                    src="/images/aboutus/ABM04846.jpg"
+                                    alt="Learning Environment"
+                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
+                                />
+                                <img
+                                    src="/images/aboutus/ABM04942.jpg"
+                                    alt="Student Activities"
+                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
+                                />
+                            </div>
+
+                            {/* Column 2 - Offset */}
+                            <div className="space-y-4 pt-20">
+                                <img
+                                    src="/images/aboutus/ABM05002.jpg"
+                                    alt="Classroom"
+                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
+                                />
+                                <img
+                                    src="/images/aboutus/ABM04897.jpg"
+                                    alt="Campus Life"
+                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
+                                />
+                            </div>
                         </motion.div>
+
+                        {/* Decorative background elements */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-indigo-50 to-blue-50 rounded-full blur-3xl -z-10 opacity-60"></div>
                     </div>
                 </div>
             </div>
@@ -428,32 +524,48 @@ const Events = () => {
     );
 };
 
-const CampusTour = () => (
-    <section id="campustour" className="py-32 bg-slate-900 text-white relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
-        </div>
+const CampusTour = () => {
+    const campusImages = [
+        "ABM04857.jpg", "ABM04870.jpg", "ABM04883.jpg", "ABM04891.jpg",
+        "ABM04903.jpg", "ABM05033.jpg", "ABM05036.jpg", "ABM05217.jpg"
+    ];
 
-        <div className="container mx-auto px-6 relative z-10">
-            <SectionHeader title="Experience Our Campus" subtitle="Take a virtual tour of our world-class facilities designed to inspire learning." centered={true} />
+    return (
+        <section id="campustour" className="py-32 bg-slate-900 text-white relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob"></div>
+                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
+            </div>
 
-            <div className="mt-12 relative rounded-3xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-800 aspect-video group cursor-pointer">
-                <img src="/images/hero.jpeg" alt="Campus Tour" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/20">
-                        <Play size={32} className="fill-white text-white ml-1" />
-                    </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
-                    <h3 className="text-2xl font-bold text-white mb-2">Virtual Walkthrough</h3>
-                    <p className="text-slate-300">Explore our classrooms, labs, library, and sports complex.</p>
+            <div className="container mx-auto px-6 relative z-10">
+                <SectionHeader title="Experience Our Campus" subtitle="A world-class environment designed to inspire learning, creativity, and growth." centered={true} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {campusImages.map((img, idx) => (
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.1 }}
+                            whileHover={{ scale: 1.03 }}
+                            className={`relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer ${idx === 0 || idx === 7 ? 'md:col-span-2 md:row-span-2 aspect-[4/3]' : 'aspect-square'
+                                }`}
+                        >
+                            <img
+                                src={`/images/campustour/${img}`}
+                                alt={`Campus Tour ${idx + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300"></div>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
-        </div>
-    </section>
-);
+        </section>
+    );
+};
 
 const Admissions = () => (
     <section id="admissions" className="py-32 bg-indigo-600 text-white relative overflow-hidden">
@@ -527,7 +639,7 @@ const Board = () => (
         <div className="container mx-auto px-6">
             <SectionHeader title="Visionary Leadership" subtitle="Guided by experienced educators committed to excellence." />
 
-            <div className="grid md:grid-cols-3 gap-10 max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-7xl mx-auto">
                 {Array.from({ length: 10 }).map((_, i) => ({
                     name: `Board Member ${i + 1}`,
                     role: "Board Member",
@@ -538,13 +650,13 @@ const Board = () => (
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: idx * 0.2 }}
-                        className="bg-white p-8 rounded-3xl text-center shadow-lg border border-slate-100/50"
+                        transition={{ delay: idx * 0.1 }}
+                        className="bg-white p-4 rounded-2xl text-center shadow-lg border border-slate-100/50"
                     >
-                        <img src={person.img} alt={person.name} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover bg-slate-100" />
-                        <h3 className="text-xl font-bold text-slate-900 mb-1">{person.name}</h3>
-                        <p className="text-indigo-600 text-sm font-semibold uppercase tracking-wide mb-4">{person.role}</p>
-                        <p className="text-slate-500 text-sm leading-relaxed">Dedicated to fostering an environment of academic excellence and integrity.</p>
+                        <img src={person.img} alt={person.name} className="w-20 h-20 rounded-full mx-auto mb-4 object-cover bg-slate-100" />
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">{person.name}</h3>
+                        <p className="text-indigo-600 text-xs font-semibold uppercase tracking-wide mb-2">{person.role}</p>
+                        <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">Dedicated to fostering excellence.</p>
                     </motion.div>
                 ))}
             </div>
