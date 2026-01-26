@@ -18,7 +18,9 @@ import {
     CheckCircle,
     Play,
     Check,
-    Menu
+    Menu,
+    Download,
+    FileText
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import api from '../services/api';
@@ -107,7 +109,7 @@ const Navbar = () => {
                             Stem Global Public School
                         </span>
                         <span className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">
-                            Kollannoor - Kappur
+                            Kollannoor-Kappur Palakkad District Kerala
                         </span>
                     </div>
                 </div>
@@ -217,9 +219,10 @@ const Navbar = () => {
     );
 };
 
-const Hero = ({ onRegister, onContact }) => {
+// Skip to Hero section replacement for the button
+const Hero = ({ onRegister, onContact, onViewFees }) => {
     return (
-        <section id="home" className="relative min-h-screen flex items-center pt-20 bg-slate-50 overflow-hidden">
+        <section id="home" className="relative min-h-screen flex items-center pt-28 bg-slate-50 overflow-hidden">
             {/* Background shapes */}
             <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-50/50 rounded-l-[100px] transform translate-x-20"></div>
@@ -248,44 +251,7 @@ const Hero = ({ onRegister, onContact }) => {
                         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-20 blur-2xl z-0"></div>
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-600 rounded-full opacity-10 blur-3xl z-0"></div>
 
-                        {/* Scanner Box - Floating over image */}
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.6 }}
-                            className="absolute bottom-6 right-6 z-20 hidden md:block" // Adjusted position
-                        >
-                            <a
-                                href="https://www.instagram.com/stemglobalpublicschool"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/50 hover:scale-105 transition-transform duration-300"
-                            >
-                                {/* Stats */}
-                                <div className="flex flex-col items-start min-w-[100px]">
-                                    <div className="flex -space-x-2 mb-2">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[8px] overflow-hidden">
-                                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-xl font-bold text-slate-900 leading-none">100%</p>
-                                    <p className="text-[10px] font-medium text-slate-500">Happy Students</p>
-                                </div>
-                                {/* Divider */}
-                                <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                                {/* Scanner */}
-                                <div className="text-center">
-                                    <img
-                                        src="/images/insta-scanner.jpg.jpeg"
-                                        alt="Scan"
-                                        className="w-16 h-auto rounded-lg mix-blend-multiply"
-                                    />
-                                    <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Scan Me</p>
-                                </div>
-                            </a>
-                        </motion.div>
+
                     </motion.div>
 
                     {/* Text Column - Right */}
@@ -313,17 +279,69 @@ const Hero = ({ onRegister, onContact }) => {
                         <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg font-medium">
                             Dream Big, Reach Closer, Rise with STEM Global Public School
                         </p>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-4 mb-2">
                             <button
                                 onClick={onRegister}
                                 className="px-8 py-4 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2 group"
                             >
                                 Register Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
-                            <button className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-semibold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
-                                <Play size={18} className="fill-slate-700" /> Watch Video
-                            </button>
+                            <a
+                                href="/documents/school-brochure.pdf"
+                                download="STEM_Global_Brochure.pdf"
+                                className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-semibold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                            >
+                                <Download size={18} className="text-slate-700" /> Download Brochure
+                            </a>
                         </div>
+
+                        {/* Catchy Scanner Section */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="mt-8"
+                        >
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Connect With Us</span>
+                                <div className="h-px bg-slate-200 flex-grow"></div>
+                            </div>
+
+                            <div className="inline-flex gap-4 bg-white/80 p-3 rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-900/5">
+                                {/* Location Scanner */}
+                                <div className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-indigo-50/50 p-2 rounded-xl transition-colors">
+                                    <div className="w-20 h-20 bg-white rounded-xl p-1 shadow-sm border border-slate-100">
+                                        <div className="w-full h-full bg-slate-50 rounded-lg flex items-center justify-center">
+                                            <MapPin size={28} className="text-indigo-400" />
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                        📍 Locate Us
+                                    </span>
+                                </div>
+
+                                <div className="w-px bg-slate-200 my-2"></div>
+
+                                {/* Instagram Scanner */}
+                                <a
+                                    href="https://www.instagram.com/stemglobalpublicschool"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-pink-50/50 p-2 rounded-xl transition-colors"
+                                >
+                                    <div className="w-20 h-20 bg-white rounded-xl p-1 shadow-sm border border-slate-100 group-hover:scale-105 transition-transform">
+                                        <img
+                                            src="/images/insta-scanner.jpg.jpeg"
+                                            alt="Instagram"
+                                            className="w-full h-full object-cover rounded-lg"
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                                        📸 Follow Us
+                                    </span>
+                                </a>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 </div>
             </div>
@@ -440,11 +458,13 @@ const About = () => {
                                 <img
                                     src="/images/aboutus/ABM04846.jpg"
                                     alt="Learning Environment"
+                                    loading="lazy"
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                                 <img
                                     src="/images/aboutus/ABM04942.jpg"
                                     alt="Student Activities"
+                                    loading="lazy"
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                             </div>
@@ -454,11 +474,13 @@ const About = () => {
                                 <img
                                     src="/images/aboutus/ABM05002.jpg"
                                     alt="Classroom"
+                                    loading="lazy"
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                                 <img
                                     src="/images/aboutus/ABM04897.jpg"
                                     alt="Campus Life"
+                                    loading="lazy"
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                             </div>
@@ -556,6 +578,7 @@ const CampusTour = () => {
                             <img
                                 src={`/images/campustour/${img}`}
                                 alt={`Campus Tour ${idx + 1}`}
+                                loading="lazy"
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300"></div>
@@ -610,7 +633,7 @@ const Gallery = () => (
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[250px]">
                 <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="col-span-2 row-span-2 rounded-3xl overflow-hidden relative group">
-                    <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Main" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Main" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
                 </motion.div>
                 {[
@@ -620,7 +643,7 @@ const Gallery = () => (
                     "https://images.unsplash.com/photo-1571260899304-42d98b60d713?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                 ].map((src, idx) => (
                     <motion.div key={idx} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 * idx }} className="col-span-1 rounded-3xl overflow-hidden relative group">
-                        <img src={src} alt="Gallery" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                        <img src={src} alt="Gallery" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     </motion.div>
                 ))}
             </div>
@@ -651,9 +674,8 @@ const Board = () => (
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-white p-4 rounded-2xl text-center shadow-lg border border-slate-100/50"
                     >
-                        <img src={person.img} alt={person.name} className="w-20 h-20 rounded-full mx-auto mb-4 object-cover bg-slate-100" />
+                        <img src={person.img} alt={person.name} loading="lazy" className="w-20 h-20 rounded-full mx-auto mb-4 object-cover bg-slate-100" />
                         <h3 className="text-sm font-bold text-slate-900 mb-1">{person.name}</h3>
                         <p className="text-indigo-600 text-xs font-semibold uppercase tracking-wide mb-2">{person.role}</p>
                         <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">Dedicated to fostering excellence.</p>
@@ -664,7 +686,7 @@ const Board = () => (
     </section>
 );
 
-const AdmissionsNew = ({ onRegister }) => (
+const AdmissionsNew = ({ onRegister, onViewFees }) => (
     <section id="admissions" className="py-24 bg-white relative overflow-hidden">
         {/* Decorative background */}
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-blue-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
@@ -749,8 +771,11 @@ const AdmissionsNew = ({ onRegister }) => (
                             <div className="relative z-10">
                                 <h3 className="text-xl font-bold mb-2">Fee Structure</h3>
                                 <p className="text-indigo-100 mb-6 text-sm">Transparent and affordable fee structure for all grades.</p>
-                                <button className="px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
-                                    <BookOpen size={16} /> Download Brochure
+                                <button
+                                    onClick={onViewFees}
+                                    className="px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                                >
+                                    <FileText size={16} /> View Fee Structure
                                 </button>
                             </div>
                             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -827,6 +852,7 @@ const Footer = () => (
 export default function Home() {
     const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
     const [isAdmissionsContactOpen, setIsAdmissionsContactOpen] = useState(false);
+    const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
     const [isSuccessOpen, setIsSuccessOpen] = useState(false);
     const { addToast } = useToast();
 
@@ -841,6 +867,9 @@ export default function Home() {
         studentGrade: '',
         contactNumber: '',
         email: '',
+        conveyance: 'No',
+        address: '',
+        classMode: '',
         message: ''
     };
 
@@ -870,14 +899,149 @@ export default function Home() {
     return (
         <div className="min-h-screen font-sans bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
             <Navbar />
-            <Hero onRegister={() => setIsEnquiryOpen(true)} onContact={() => setIsAdmissionsContactOpen(true)} />
+            <Hero onRegister={() => {
+                const element = document.getElementById('admissions');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+            }} onContact={() => setIsAdmissionsContactOpen(true)} />
             <About />
-            <AdmissionsNew onRegister={() => setIsEnquiryOpen(true)} />
+            <AdmissionsNew onRegister={() => setIsEnquiryOpen(true)} onViewFees={() => setIsFeeModalOpen(true)} />
             <CampusTour />
             <Events />
             <Gallery />
             <Board />
             <Footer />
+
+            {/* Fee Structure Modal */}
+            <AnimatePresence>
+                {isFeeModalOpen && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsFeeModalOpen(false)}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden z-20 max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="bg-indigo-600 p-6 flex justify-between items-center text-white sticky top-0 z-10">
+                                <div>
+                                    <h3 className="text-2xl font-bold">Fee Structure 2025-26</h3>
+                                    <p className="text-indigo-100 text-sm">Transparent and affordable quality education</p>
+                                </div>
+                                <button onClick={() => setIsFeeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="p-8 space-y-8">
+                                {/* One-time Fees */}
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+                                        <div className="w-2 h-8 bg-blue-500 rounded-sm"></div> One-Time Fees (New Admission)
+                                    </h4>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                                            <span className="font-medium text-slate-600">Admission Fee</span>
+                                            <span className="font-bold text-slate-900">₹ 15,000</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                                            <span className="font-medium text-slate-600">Registration Fee</span>
+                                            <span className="font-bold text-slate-900">₹ 1,000</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                                            <span className="font-medium text-slate-600">Caution Deposit (Refundable)</span>
+                                            <span className="font-bold text-slate-900">₹ 5,000</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Annual Fees */}
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+                                        <div className="w-2 h-8 bg-green-500 rounded-sm"></div> Annual Fees
+                                    </h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                                                <tr>
+                                                    <th className="px-4 py-3">Description</th>
+                                                    <th className="px-4 py-3 text-right">Pre-Primary</th>
+                                                    <th className="px-4 py-3 text-right">Primary (1-5)</th>
+                                                    <th className="px-4 py-3 text-right">Middle (6-8)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                <tr className="hover:bg-slate-50/50">
+                                                    <td className="px-4 py-3 font-medium text-slate-700">Annual Charges (Library, Sports, etc.)</td>
+                                                    <td className="px-4 py-3 text-right">₹ 5,000</td>
+                                                    <td className="px-4 py-3 text-right">₹ 6,000</td>
+                                                    <td className="px-4 py-3 text-right">₹ 7,000</td>
+                                                </tr>
+                                                <tr className="hover:bg-slate-50/50">
+                                                    <td className="px-4 py-3 font-medium text-slate-700">Development Fund</td>
+                                                    <td className="px-4 py-3 text-right">₹ 2,000</td>
+                                                    <td className="px-4 py-3 text-right">₹ 2,500</td>
+                                                    <td className="px-4 py-3 text-right">₹ 3,000</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Tuition Fees */}
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+                                        <div className="w-2 h-8 bg-purple-500 rounded-sm"></div> Tuition Fees (Per Term - 3 Terms/Year)
+                                    </h4>
+                                    <div className="grid md:grid-cols-3 gap-4">
+                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
+                                            <h5 className="font-bold text-indigo-900 mb-1">Pre-Primary</h5>
+                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 8,000</p>
+                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
+                                        </div>
+                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
+                                            <h5 className="font-bold text-indigo-900 mb-1">Primary (1-5)</h5>
+                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 10,000</p>
+                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
+                                        </div>
+                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
+                                            <h5 className="font-bold text-indigo-900 mb-1">Middle (6-8)</h5>
+                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 12,000</p>
+                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 border border-yellow-100">
+                                    <p className="font-bold flex items-center gap-2 mb-1"><Star size={14} className="fill-yellow-600 text-yellow-600" /> Note:</p>
+                                    <ul className="list-disc list-inside space-y-1 opacity-90">
+                                        <li>Sibling discount of 10% on tuition fees for the second child onwards.</li>
+                                        <li>Books and uniforms are charged separately based on actual usage.</li>
+                                        <li>Fees once paid are non-refundable.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div className="bg-slate-50 p-6 border-t border-slate-100 text-center">
+                                <button
+                                    onClick={() => {
+                                        setIsFeeModalOpen(false);
+                                        const element = document.getElementById('admissions');
+                                        if (element) element.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                >
+                                    Apply for Admission Now
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Global Modals lifted to Home */}
 
@@ -1048,6 +1212,7 @@ export default function Home() {
                                     </div>
 
                                     {/* Contact Section */}
+                                    {/* Contact Section */}
                                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
                                         <h4 className="font-semibold text-slate-700 text-sm flex items-center gap-2">
                                             <Phone size={16} /> Contact Information
@@ -1064,6 +1229,57 @@ export default function Home() {
                                         </div>
                                     </div>
 
+                                    {/* Additional Details Section */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
+                                        <h4 className="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                                            <School size={16} /> Additional Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Class Mode *</label>
+                                                <div className="flex gap-4 mt-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input required type="radio" name="classMode" value="Offline" checked={enquiryForm.classMode === 'Offline'} onChange={handleChange} className="accent-indigo-600" />
+                                                        <span className="text-sm text-slate-700">Offline</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input required type="radio" name="classMode" value="Online" checked={enquiryForm.classMode === 'Online'} onChange={handleChange} className="accent-indigo-600" />
+                                                        <span className="text-sm text-slate-700">Online</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Conveyance Required? *</label>
+                                                <div className="flex gap-4 mt-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input required type="radio" name="conveyance" value="Yes" checked={enquiryForm.conveyance === 'Yes'} onChange={handleChange} className="accent-indigo-600" />
+                                                        <span className="text-sm text-slate-700">Yes</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input required type="radio" name="conveyance" value="No" checked={enquiryForm.conveyance === 'No'} onChange={handleChange} className="accent-indigo-600" />
+                                                        <span className="text-sm text-slate-700">No</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Address Field - Conditionally Mandatory */}
+                                        <div>
+                                            <label className="text-xs font-semibold text-slate-500 mb-1 block">
+                                                Address {enquiryForm.conveyance === 'Yes' && '*'}
+                                            </label>
+                                            <textarea
+                                                rows="2"
+                                                name="address"
+                                                required={enquiryForm.conveyance === 'Yes'}
+                                                placeholder={enquiryForm.conveyance === 'Yes' ? "Please enter your full address for conveyance..." : "Address (Optional)"}
+                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                value={enquiryForm.address}
+                                                onChange={handleChange}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
                                     {/* Remarks */}
                                     <div>
                                         <label className="text-xs font-semibold text-slate-500 mb-1 block">Remarks / Enquiry</label>
@@ -1075,13 +1291,14 @@ export default function Home() {
                                     </button>
                                 </form>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                        </motion.div >
+                    </div >
+                )
+                }
+            </AnimatePresence >
 
             {/* Success Modal */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {isSuccessOpen && (
                     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
                         <motion.div
@@ -1112,7 +1329,7 @@ export default function Home() {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
-        </div>
+            </AnimatePresence >
+        </div >
     );
 }

@@ -17,6 +17,9 @@ const enquirySchema = mongoose.Schema({
     email: { type: String },
 
     // Other
+    conveyance: { type: String, enum: ['Yes', 'No'], required: true },
+    address: { type: String }, // Required if conveyance is Yes
+    classMode: { type: String, enum: ['Online', 'Offline'], required: true },
     message: { type: String }, // Remarks
     status: {
         type: String,

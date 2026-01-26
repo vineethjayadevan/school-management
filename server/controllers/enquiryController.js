@@ -10,6 +10,7 @@ const createEnquiry = async (req, res) => {
             fatherName, motherName,
             contactNumber, email,
             dob, studentGrade,
+            conveyance, address, classMode,
             message
         } = req.body;
 
@@ -23,6 +24,9 @@ const createEnquiry = async (req, res) => {
             email,
             dob,
             studentGrade,
+            conveyance,
+            address,
+            classMode,
             message
         });
 
