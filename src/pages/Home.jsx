@@ -307,7 +307,7 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                                 <div className="h-px bg-slate-200 flex-grow"></div>
                             </div>
 
-                            <div className="inline-flex gap-4 bg-white/80 p-3 rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-900/5">
+                            <div className="flex flex-col sm:flex-row gap-4 bg-white/80 p-3 rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-900/5">
                                 {/* Location Scanner */}
                                 <div className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-indigo-50/50 p-2 rounded-xl transition-colors">
                                     <div className="w-20 h-20 bg-white rounded-xl p-1 shadow-sm border border-slate-100">
@@ -451,7 +451,7 @@ const About = () => {
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.8 }}
-                            className="grid grid-cols-2 gap-4"
+                            className="grid grid-cols-2 gap-2 md:gap-4"
                         >
                             {/* Column 1 */}
                             <div className="space-y-4">
@@ -594,7 +594,7 @@ const LifeAtCampus = () => {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.05 }}
-                                className="min-w-[280px] md:min-w-[250px] lg:min-w-[calc(20%-20px)] snap-start bg-slate-50 rounded-3xl overflow-hidden shadow-lg border border-slate-100 group cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
+                                className="min-w-[85vw] md:min-w-[300px] lg:min-w-[calc(20%-20px)] snap-start bg-slate-50 rounded-3xl overflow-hidden shadow-lg border border-slate-100 group cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
                             >
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     <img
@@ -648,10 +648,10 @@ const Events = () => {
 
             {/* Annual Day Feature Card */}
             <div className="container mx-auto px-6">
-                <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100">
+                <div className="bg-white rounded-3xl md:rounded-[3rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100">
                     <div className="grid lg:grid-cols-2 gap-8 lg:gap-0">
                         {/* Text Content Side */}
-                        <div className="p-12 lg:p-16 flex flex-col justify-center order-2 lg:order-1">
+                        <div className="p-6 md:p-12 lg:p-16 flex flex-col justify-center order-2 lg:order-1">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 whileInView={{ opacity: 1, x: 0 }}
@@ -784,7 +784,7 @@ const CampusTour = () => {
                     centered={true}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[300px]">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[250px] md:auto-rows-[300px]">
                     {/* Building - Large Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -999,7 +999,7 @@ const Gallery = () => {
             <div className="container mx-auto px-6">
                 <SectionHeader title="Captured Moments" subtitle="Glimpses of joy, learning, and discovery from our daily campus life." />
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[200px]">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 auto-rows-[150px] md:auto-rows-[200px]">
                     {/* Slot 0: Large Square (2x2) */}
                     <GallerySlot
                         className="col-span-2 row-span-2"
@@ -1129,34 +1129,88 @@ const GallerySlot = ({ className, initialImage, imagePool, index }) => {
     );
 };
 
-const Board = () => (
-    <section id="board" className="py-32 bg-slate-50">
-        <div className="container mx-auto px-6">
-            <SectionHeader title="Visionary Leadership" subtitle="Guided by experienced educators committed to excellence." />
+const Board = () => {
+    const chairman = {
+        name: "Reji",
+        role: "Chairman cum Principal",
+        img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" // Placeholder
+    };
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-7xl mx-auto">
-                {Array.from({ length: 10 }).map((_, i) => ({
-                    name: `Board Member ${i + 1}`,
-                    role: "Board Member",
-                    img: "https://images.unsplash.com/photo-1556157382-97eda2d622ca?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80"
-                })).map((person, idx) => (
-                    <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1 }}
-                    >
-                        <img src={person.img} alt={person.name} loading="lazy" className="w-20 h-20 rounded-full mx-auto mb-4 object-cover bg-slate-100" />
-                        <h3 className="text-sm font-bold text-slate-900 mb-1">{person.name}</h3>
-                        <p className="text-indigo-600 text-xs font-semibold uppercase tracking-wide mb-2">{person.role}</p>
-                        <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">Dedicated to fostering excellence.</p>
-                    </motion.div>
-                ))}
+    const heads = [
+        { name: "Sabira", role: "Head Teacher (Montessori)" },
+        { name: "Sitara", role: "Head Teacher (Montessori)" }
+    ];
+
+    const members = [
+        "Jayaraj V", "Shaji", "Partner3", "Partner4", "Partner5", "Jayadevan V"
+    ].map(name => ({ name, role: "Board Member" }));
+
+    // Helper for Card
+    const MemberCard = ({ member, size = "small" }) => {
+        const isLarge = size === "large";
+        const isMedium = size === "medium";
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className={`flex flex-col items-center text-center ${isLarge ? 'max-w-xs' : 'max-w-[200px]'} mx-auto`}
+            >
+                {/* Square Box Placeholder */}
+                <div className={`
+                    relative overflow-hidden rounded-2xl md:rounded-3xl border-4 border-white shadow-lg bg-slate-200 mb-4 flex items-center justify-center
+                    ${isLarge ? 'w-48 h-48 md:w-56 md:h-56' : isMedium ? 'w-36 h-36 md:w-40 md:h-40' : 'w-28 h-28 md:w-32 md:h-32'}
+                `}>
+                    <Users className="text-slate-400" size={isLarge ? 64 : isMedium ? 48 : 32} opacity={0.5} />
+                    {/* Image placeholder for later use */}
+                    {/* <img src={member.img} alt={member.name} className="w-full h-full object-cover" /> */}
+                </div>
+
+                <h3 className={`font-bold text-slate-900 ${isLarge ? 'text-2xl' : isMedium ? 'text-xl' : 'text-base'}`}>
+                    {member.name}
+                </h3>
+                <p className={`text-indigo-600 font-medium uppercase tracking-wide ${isLarge ? 'text-sm' : 'text-xs'}`}>
+                    {member.role}
+                </p>
+            </motion.div>
+        );
+    };
+
+    return (
+        <section id="board" className="py-24 bg-slate-50 relative">
+            <div className="container mx-auto px-6">
+                <SectionHeader title="Visionary Leadership" subtitle="Guided by experienced educators committed to excellence." centered={true} />
+
+                <div className="flex flex-col gap-16 max-w-7xl mx-auto items-center">
+
+                    {/* Tier 1: Chairman */}
+                    <div className="w-full flex justify-center">
+                        <MemberCard member={chairman} size="large" />
+                    </div>
+
+                    {/* Tier 2: Head Teachers */}
+                    <div className="flex flex-wrap justify-center gap-12 md:gap-24 relative">
+                        {/* Decorative connector line */}
+                        <div className="hidden md:block absolute top-1/2 left-1/4 right-1/4 h-px bg-slate-200 -z-10 -translate-y-8"></div>
+
+                        {heads.map((head, idx) => (
+                            <MemberCard key={idx} member={head} size="medium" />
+                        ))}
+                    </div>
+
+                    {/* Tier 3: Board Members */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 w-full pt-8 border-t border-slate-200/60">
+                        {members.map((member, idx) => (
+                            <MemberCard key={idx} member={member} size="small" />
+                        ))}
+                    </div>
+
+                </div>
             </div>
-        </div>
-    </section>
-);
+        </section>
+    );
+};
 
 const AdmissionsNew = ({ onRegister, onViewFees }) => (
     <section id="admissions" className="py-24 bg-white relative overflow-hidden">
