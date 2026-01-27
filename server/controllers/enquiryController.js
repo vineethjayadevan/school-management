@@ -43,7 +43,7 @@ const createEnquiry = async (req, res) => {
                     subject: "New Admission Query",
                     html: `
                         <h2>New Admission Enquiry Received</h2>
-                        <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Date:</strong> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                         <hr />
                         <h3>Student Details</h3>
                         <p><strong>Name:</strong> ${studentFirstName} ${studentMiddleName || ''} ${studentLastName}</p>

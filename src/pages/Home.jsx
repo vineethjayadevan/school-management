@@ -100,7 +100,7 @@ const Navbar = () => {
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <img
-                        src="/images/logo.png"
+                        src="/images/logo.webp"
                         alt="Stem Global Logo"
                         className="h-12 w-auto object-contain rounded-lg"
                     />
@@ -240,9 +240,11 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                     >
                         <div className="aspect-[4/5] md:aspect-square rounded-[3rem] overflow-hidden shadow-2xl relative z-10">
                             <img
-                                src="/images/abtUs2.jpeg"
+                                src="/images/abtUs2.webp"
                                 alt="Student Learning"
                                 className="w-full h-full object-cover"
+                                loading="eager"
+                                fetchPriority="high"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         </div>
@@ -451,39 +453,34 @@ const About = () => {
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.8 }}
-                            className="grid grid-cols-2 gap-2 md:gap-4"
+                            className="grid grid-cols-2 gap-4"
                         >
-                            {/* Column 1 */}
-                            <div className="space-y-4">
+                            {/* Top Center Image */}
+                            <div className="col-span-2">
                                 <img
-                                    src="/images/aboutus/ABM04846.jpg"
-                                    alt="Learning Environment"
+                                    src="/images/aboutus/ABM05698.webp"
+                                    alt="Campus Life"
                                     loading="lazy"
-                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
-                                />
-                                <img
-                                    src="/images/aboutus/ABM04942.jpg"
-                                    alt="Student Activities"
-                                    loading="lazy"
-                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
+                                    decoding="async"
+                                    className="rounded-2xl w-full h-64 md:h-80 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                             </div>
 
-                            {/* Column 2 - Offset */}
-                            <div className="space-y-4 pt-20">
-                                <img
-                                    src="/images/aboutus/ABM05002.jpg"
-                                    alt="Classroom"
-                                    loading="lazy"
-                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
-                                />
-                                <img
-                                    src="/images/aboutus/ABM05698.jpg"
-                                    alt="Campus Life"
-                                    loading="lazy"
-                                    className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
-                                />
-                            </div>
+                            {/* Bottom Row */}
+                            <img
+                                src="/images/aboutus/ABM05002.webp"
+                                alt="Classroom"
+                                loading="lazy"
+                                decoding="async"
+                                className="rounded-2xl w-full h-48 md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
+                            />
+                            <img
+                                src="/images/aboutus/ABM04942.webp"
+                                alt="Student Activities"
+                                loading="lazy"
+                                decoding="async"
+                                className="rounded-2xl w-full h-48 md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
+                            />
                         </motion.div>
 
                         {/* Decorative background elements */}
@@ -600,6 +597,8 @@ const LifeAtCampus = () => {
                                     <img
                                         src={`/images/${event.image}`}
                                         alt={event.title}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-indigo-600 shadow-sm uppercase tracking-wide">
@@ -625,13 +624,13 @@ const LifeAtCampus = () => {
 
 const Events = () => {
     // 1. Featured Image (Static)
-    const featuredImage = "ABM05870.jpg";
+    const featuredImage = "ABM05870.webp";
 
     // 2. Marquee Images (The "Train")
     const marqueeImages = [
-        "ABM05337.jpg", "ABM05340.jpg", "ABM05383.jpg", "ABM05419.jpg",
-        "ABM05506.jpg", "ABM05631.jpg", "ABM05682.jpg", "ABM05706.jpg",
-        "ABM05717.jpg", "ABM05726.jpg"
+        "ABM05337.webp", "ABM05340.webp", "ABM05383.webp", "ABM05419.webp",
+        "ABM05506.webp", "ABM05631.webp", "ABM05682.webp", "ABM05706.webp",
+        "ABM05717.webp", "ABM05726.webp"
     ];
 
     // Duplicate list for seamless loop
@@ -693,6 +692,8 @@ const Events = () => {
                                 <img
                                     src={`/images/annualday/${featuredImage}`}
                                     alt="Inaugural Function Main"
+                                    loading="lazy"
+                                    decoding="async"
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
@@ -716,7 +717,7 @@ const Events = () => {
                                         repeat: Infinity,
                                         repeatType: "loop"
                                     }}
-                                    style={{ width: "max-content" }}
+                                    style={{ width: "max-content", willChange: "transform" }}
                                 >
                                     {flowImages.map((img, idx) => (
                                         <div
@@ -726,6 +727,8 @@ const Events = () => {
                                             <img
                                                 src={`/images/annualday/${img}`}
                                                 alt={`Event moment ${idx}`}
+                                                loading="lazy"
+                                                decoding="async"
                                                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                                             />
                                         </div>
@@ -745,31 +748,31 @@ const CampusTour = () => {
     const categories = [
         {
             title: "School Building",
-            images: ["ABM04857.jpg"],
+            images: ["ABM04857.webp"],
             size: "large", // spans 2 cols
             desc: "A modern architectural marvel designed for safety and inspiration."
         },
         {
             title: "Reception Area",
-            images: ["ABM04903.jpg"],
+            images: ["ABM04903.webp"],
             size: "small", // spans 1 col
             desc: "Welcoming spaces for parents and visitors."
         },
         {
             title: "Principal's Office",
-            images: ["ABM04883.jpg"],
+            images: ["ABM04883.webp"],
             size: "small",
             desc: "Where leadership meets vision."
         },
         {
             title: "Conference Hall",
-            images: ["ABM04891.jpg", "ABM04870.jpg"],
+            images: ["ABM04891.webp", "ABM04870.webp"],
             size: "medium",
             desc: "State-of-the-art facility for events and gatherings."
         },
         {
             title: "Playground & Sports",
-            images: ["ABM05033.jpg", "ABM05036.jpg", "ABM05217.jpg"],
+            images: ["ABM05033.webp", "ABM05036.webp", "ABM05217.webp"],
             size: "wide", // full width or large
             desc: "Expansive grounds for physical development and recreation."
         }
@@ -795,6 +798,8 @@ const CampusTour = () => {
                         <img
                             src={`/images/campustour/${categories[0].images[0]}`}
                             alt={categories[0].title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-8">
@@ -937,10 +942,10 @@ const Admissions = () => (
 const Gallery = () => {
     // 14 images available in public/images/gallery
     const allImages = [
-        "ABM04971.jpg", "ABM05018.jpg", "ABM05916.jpg", "ABM05925.jpg",
-        "ABM05929.jpg", "ABM06311.jpg", "ABM06378.jpg", "ABM06393.jpg",
-        "ABM06419.jpg", "ABM06536.jpg", "ABM06566.jpg", "ABM06602.jpg",
-        "ABM06641.jpg", "ABM06656.jpg"
+        "ABM04971.webp", "ABM05018.webp", "ABM05916.webp", "ABM05925.webp",
+        "ABM05929.webp", "ABM06311.webp", "ABM06378.webp", "ABM06393.webp",
+        "ABM06419.webp", "ABM06536.webp", "ABM06566.webp", "ABM06602.webp",
+        "ABM06641.webp", "ABM06656.webp"
     ];
 
     // Grid configuration: 7 slots
