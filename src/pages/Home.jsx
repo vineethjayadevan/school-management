@@ -65,7 +65,7 @@ const Navbar = () => {
             setScrolled(window.scrollY > 20);
 
             // Active section logic
-            const sections = ['home', 'about', 'admissions', 'campustour', 'events', 'gallery', 'board', 'contact'];
+            const sections = ['home', 'about', 'admissions', 'campustour', 'lifeatcampus', 'events', 'gallery', 'board', 'contact'];
             const current = sections.find(section => {
                 const element = document.getElementById(section);
                 if (element) {
@@ -115,9 +115,9 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center gap-8">
-                    {['Home', 'About', 'Admissions', 'Campus Tour', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => {
-                        const sectionId = item.toLowerCase().replace(' ', '');
+                <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+                    {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => {
+                        const sectionId = item.toLowerCase().replace(/\s+/g, '');
                         return (
                             <a
                                 key={item}
@@ -168,7 +168,7 @@ const Navbar = () => {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden text-slate-900 p-2"
+                        className="lg:hidden text-slate-900 p-2"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     >
                         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -183,13 +183,13 @@ const Navbar = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-white border-b border-slate-100 overflow-hidden"
+                        className="lg:hidden bg-white border-b border-slate-100 overflow-hidden"
                     >
                         <div className="flex flex-col p-6 space-y-4">
-                            {['Home', 'About', 'Admissions', 'Campus Tour', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => (
+                            {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => (
                                 <a
                                     key={item}
-                                    href={`#${item.toLowerCase().replace(' ', '')}`}
+                                    href={`#${item.toLowerCase().replace(/\s+/g, '')}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="text-base font-medium text-slate-600 hover:text-indigo-600 py-2"
                                 >
@@ -324,7 +324,7 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
 
                                 {/* Instagram Scanner */}
                                 <a
-                                    href="https://www.instagram.com/stemglobalpublicschool"
+                                    href="https://www.instagram.com/stem.global?igsh=ZHBoZGM0MnA0N3Nx"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-pink-50/50 p-2 rounded-xl transition-colors"
@@ -478,7 +478,7 @@ const About = () => {
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                                 <img
-                                    src="/images/aboutus/ABM04897.jpg"
+                                    src="/images/aboutus/ABM05698.jpg"
                                     alt="Campus Life"
                                     loading="lazy"
                                     className="rounded-2xl w-full h-auto shadow-lg hover:scale-105 transition-transform duration-500"
@@ -495,51 +495,246 @@ const About = () => {
     );
 };
 
-const Events = () => {
-    const [events, setEvents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        api.get('/events').then(({ data }) => setEvents(data)).catch(console.error).finally(() => setIsLoading(false));
-    }, []);
 
-    // Placeholder events if API fails or empty
-    const displayEvents = events.length > 0 ? events : [
-        { id: 1, title: 'Annual Sports Day', date: 'DEC 15', desc: 'A day of fun, games, and healthy competition.', color: 'from-blue-400 to-indigo-500' },
-        { id: 2, title: 'Science Exhibition', date: 'JAN 20', desc: 'Showcasing the innovative projects of our young minds.', color: 'from-purple-400 to-pink-500' },
-        { id: 3, title: 'Art & Craft Fair', date: 'FEB 10', desc: 'Celebrating creativity and artistic expression.', color: 'from-orange-400 to-red-500' },
+const LifeAtCampus = () => {
+    const scrollRef = useRef(null);
+
+    const scroll = (direction) => {
+        if (scrollRef.current) {
+            const { current } = scrollRef;
+            const scrollAmount = direction === 'left' ? -current.offsetWidth : current.offsetWidth;
+            current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
+
+    const events = [
+        {
+            title: "Children's Day",
+            theme: "Celebrating Innocence",
+            date: "Nov 14",
+            image: "childrensday/Screenshot 2026-01-27 124725.png",
+            description: "A day dedicated to the joy and potential of every child, filled with fun, games, and laughter."
+        },
+        {
+            title: "Yoga Day",
+            theme: "Mindfulness & Health",
+            date: "June 21",
+            image: "yogaday/Screenshot 2026-01-27 124836.png",
+            description: "Uniting mind and body through the practice of yoga, fostering physical and mental well-being."
+        },
+        {
+            title: "Visit to Ayur Green",
+            theme: "Connecting with Nature",
+            image: "ayurgreenday/Screenshot 2026-01-27 124756.png",
+            description: "An educational trip to explore medicinal plants and understand the importance of ayurveda and nature conservation."
+        },
+        {
+            title: "Traffic Awareness",
+            theme: "Safety First",
+            image: "trafficday/Screenshot 2026-01-27 124737.png",
+            description: "Empowering students with essential road safety rules and responsible citizenship awareness."
+        },
+        {
+            title: "Electronics Workshop",
+            theme: "Innovation & Tech",
+            image: "electronicsworkshop/Screenshot 2026-01-27 124707.png",
+            description: "Hands-on experience with circuits and electronics to spark curiosity and engineering minds."
+        },
+        {
+            title: "Smiley Day",
+            theme: "Spread Happiness",
+            image: "smileyday/Screenshot 2026-01-27 124823.png",
+            description: "A vibrant day focused on positivity, kindness, and the power of a simple smile."
+        },
+        {
+            title: "Black & White Day",
+            theme: "Harmony in Contrast",
+            image: "blackwhiteday/Screenshot 2026-01-27 124809.png",
+            description: "Exploring the beauty of monochrome while understanding unity in diversity."
+        }
     ];
 
     return (
-        <section id="events" className="py-32 bg-slate-50">
+        <section id="lifeatcampus" className="py-24 bg-white relative overflow-hidden">
             <div className="container mx-auto px-6">
-                <SectionHeader title="Life at Campus" subtitle="Beyond textbooks, we create experiences that shape character and build community." />
+                <SectionHeader
+                    title="Life at Campus"
+                    subtitle="Every day is a new opportunity to learn, grow, and celebrate together! Experience our vibrant community."
+                />
 
-                <div className="grid md:grid-cols-3 gap-8">
-                    {displayEvents.map((event, idx) => (
-                        <motion.div
-                            key={event.id}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.1 }}
-                            whileHover={{ y: -10 }}
-                            className="bg-white rounded-3xl p-2 shadow-lg hover:shadow-2xl transition-all group overflow-hidden"
-                        >
-                            <div className={`h-48 rounded-2xl bg-gradient-to-br ${event.color || 'from-indigo-500 to-purple-600'} flex flex-col items-center justify-center text-white relative overflow-hidden`}>
-                                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                                <span className="text-5xl font-bold mb-1">{event.date.split(' ')[1]}</span>
-                                <span className="text-sm font-bold tracking-widest uppercase opacity-80">{event.date.split(' ')[0]}</span>
+                <div className="relative mt-12 group/section">
+                    {/* Navigation Arrows */}
+                    <button
+                        onClick={() => scroll('left')}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-xl shadow-indigo-100 flex items-center justify-center text-indigo-600 border border-indigo-50 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 disabled:opacity-50"
+                        aria-label="Scroll left"
+                    >
+                        <ArrowRight className="rotate-180" size={24} />
+                    </button>
+
+                    <button
+                        onClick={() => scroll('right')}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-xl shadow-indigo-100 flex items-center justify-center text-indigo-600 border border-indigo-50 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 disabled:opacity-50"
+                        aria-label="Scroll right"
+                    >
+                        <ArrowRight size={24} />
+                    </button>
+
+                    {/* Scroll Container */}
+                    <div
+                        ref={scrollRef}
+                        className="flex gap-6 overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {events.map((event, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.05 }}
+                                className="min-w-[280px] md:min-w-[250px] lg:min-w-[calc(20%-20px)] snap-start bg-slate-50 rounded-3xl overflow-hidden shadow-lg border border-slate-100 group cursor-pointer hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
+                            >
+                                <div className="relative aspect-[4/3] overflow-hidden">
+                                    <img
+                                        src={`/images/${event.image}`}
+                                        alt={event.title}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-indigo-600 shadow-sm uppercase tracking-wide">
+                                        {event.theme}
+                                    </div>
+                                </div>
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{event.title}</h3>
+                                    <p className="text-slate-500 text-xs leading-relaxed mb-4 line-clamp-3 flex-grow">{event.description}</p>
+
+                                    <div className="flex items-center gap-2 text-slate-900 font-bold text-xs group-hover:translate-x-1 transition-transform mt-auto text-indigo-600">
+                                        View Moments <ArrowRight size={14} />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const Events = () => {
+    // 1. Featured Image (Static)
+    const featuredImage = "ABM05870.jpg";
+
+    // 2. Marquee Images (The "Train")
+    const marqueeImages = [
+        "ABM05337.jpg", "ABM05340.jpg", "ABM05383.jpg", "ABM05419.jpg",
+        "ABM05506.jpg", "ABM05631.jpg", "ABM05682.jpg", "ABM05706.jpg",
+        "ABM05717.jpg", "ABM05726.jpg"
+    ];
+
+    // Duplicate list for seamless loop
+    const flowImages = [...marqueeImages, ...marqueeImages];
+
+    return (
+        <section id="events" className="py-32 bg-slate-50 overflow-hidden">
+            <div className="container mx-auto px-6 mb-12">
+                <SectionHeader
+                    title="Celebrations & Milestones"
+                    subtitle="Honoring our traditions and celebrating our achievements together."
+                />
+            </div>
+
+            {/* Annual Day Feature Card */}
+            <div className="container mx-auto px-6">
+                <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100">
+                    <div className="grid lg:grid-cols-2 gap-8 lg:gap-0">
+                        {/* Text Content Side */}
+                        <div className="p-12 lg:p-16 flex flex-col justify-center order-2 lg:order-1">
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                            >
+                                <span className="inline-block px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-bold mb-6 tracking-wide uppercase">
+                                    Latest Event
+                                </span>
+                                <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+                                    Annual Day & <br />
+                                    <span className="text-indigo-600">Inaugural Function</span>
+                                </h3>
+                                <div className="space-y-6 text-lg text-slate-500 leading-relaxed mb-8">
+                                    <p>
+                                        We are delighted to share glimpses of our Annual Day and Inaugural Function, a momentous occasion graced by the
+                                        <span className="font-bold text-slate-700"> Honorable Minister MB Rajesh</span>.
+                                    </p>
+                                    <p>
+                                        The day was filled with joy and vibrancy as our students mesmerized the audience with their spectacular cultural performances, showcasing their talents and celebrating the true spirit of our school community.
+                                    </p>
+                                </div>
+
+                                <a
+                                    href="https://photos.app.goo.gl/vZS57LcXdbcVAd4f8"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg hover:shadow-indigo-500/30 group"
+                                >
+                                    View Full Gallery
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </a>
+                            </motion.div>
+                        </div>
+
+                        {/* Visual Side */}
+                        <div className="order-1 lg:order-2 bg-slate-100 flex flex-col">
+                            {/* Static Featured Image */}
+                            <div className="h-[400px] w-full overflow-hidden relative">
+                                <img
+                                    src={`/images/annualday/${featuredImage}`}
+                                    alt="Inaugural Function Main"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
+                                    <p className="text-white font-medium text-sm md:text-base bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                                        📸 Inaugural Ceremony by Minister MB Rajesh
+                                    </p>
+                                </div>
                             </div>
-                            <div className="p-8">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors">{event.title}</h3>
-                                <p className="text-slate-500 leading-relaxed mb-6">{event.desc}</p>
-                                <button className="text-sm font-bold text-slate-900 flex items-center gap-2 group/btn">
-                                    Learn More <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                                </button>
+
+                            {/* Moving Train (Marquee) */}
+                            <div className="h-[200px] bg-slate-900 relative flex items-center overflow-hidden">
+                                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
+                                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10"></div>
+
+                                <motion.div
+                                    className="flex gap-4 px-4"
+                                    animate={{ x: ["0%", "-50%"] }}
+                                    transition={{
+                                        ease: "linear",
+                                        duration: 30,
+                                        repeat: Infinity,
+                                        repeatType: "loop"
+                                    }}
+                                    style={{ width: "max-content" }}
+                                >
+                                    {flowImages.map((img, idx) => (
+                                        <div
+                                            key={`train-${idx}`}
+                                            className="w-[250px] h-[160px] rounded-xl overflow-hidden flex-shrink-0 border-2 border-slate-700/50"
+                                        >
+                                            <img
+                                                src={`/images/annualday/${img}`}
+                                                alt={`Event moment ${idx}`}
+                                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    ))}
+                                </motion.div>
                             </div>
-                        </motion.div>
-                    ))}
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </section>
@@ -547,43 +742,156 @@ const Events = () => {
 };
 
 const CampusTour = () => {
-    const campusImages = [
-        "ABM04857.jpg", "ABM04870.jpg", "ABM04883.jpg", "ABM04891.jpg",
-        "ABM04903.jpg", "ABM05033.jpg", "ABM05036.jpg", "ABM05217.jpg"
+    const categories = [
+        {
+            title: "School Building",
+            images: ["ABM04857.jpg"],
+            size: "large", // spans 2 cols
+            desc: "A modern architectural marvel designed for safety and inspiration."
+        },
+        {
+            title: "Reception Area",
+            images: ["ABM04903.jpg"],
+            size: "small", // spans 1 col
+            desc: "Welcoming spaces for parents and visitors."
+        },
+        {
+            title: "Principal's Office",
+            images: ["ABM04883.jpg"],
+            size: "small",
+            desc: "Where leadership meets vision."
+        },
+        {
+            title: "Conference Hall",
+            images: ["ABM04891.jpg", "ABM04870.jpg"],
+            size: "medium",
+            desc: "State-of-the-art facility for events and gatherings."
+        },
+        {
+            title: "Playground & Sports",
+            images: ["ABM05033.jpg", "ABM05036.jpg", "ABM05217.jpg"],
+            size: "wide", // full width or large
+            desc: "Expansive grounds for physical development and recreation."
+        }
     ];
 
     return (
-        <section id="campustour" className="py-32 bg-slate-900 text-white relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob"></div>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
-            </div>
-
+        <section id="campustour" className="py-32 bg-slate-50 relative overflow-hidden">
             <div className="container mx-auto px-6 relative z-10">
-                <SectionHeader title="Experience Our Campus" subtitle="A world-class environment designed to inspire learning, creativity, and growth." centered={true} />
+                <SectionHeader
+                    title="Experience Our Campus"
+                    subtitle="A world-class environment designed to inspire learning, creativity, and growth."
+                    centered={true}
+                />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {campusImages.map((img, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.1 }}
-                            whileHover={{ scale: 1.03 }}
-                            className={`relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer ${idx === 0 || idx === 7 ? 'md:col-span-2 md:row-span-2 aspect-[4/3]' : 'aspect-square'
-                                }`}
-                        >
-                            <img
-                                src={`/images/campustour/${img}`}
-                                alt={`Campus Tour ${idx + 1}`}
-                                loading="lazy"
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300"></div>
-                        </motion.div>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[300px]">
+                    {/* Building - Large Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="md:col-span-2 md:row-span-2 relative rounded-3xl overflow-hidden group shadow-xl"
+                    >
+                        <img
+                            src={`/images/campustour/${categories[0].images[0]}`}
+                            alt={categories[0].title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-8">
+                            <h3 className="text-white text-2xl font-bold mb-2">{categories[0].title}</h3>
+                            <p className="text-slate-200 text-sm">{categories[0].desc}</p>
+                        </div>
+                    </motion.div>
+
+                    {/* Reception - Small Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        className="md:col-span-1 md:row-span-1 relative rounded-3xl overflow-hidden group shadow-xl"
+                    >
+                        <img
+                            src={`/images/campustour/${categories[1].images[0]}`}
+                            alt={categories[1].title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex flex-col justify-end p-6">
+                            <h3 className="text-white text-lg font-bold">{categories[1].title}</h3>
+                        </div>
+                    </motion.div>
+
+                    {/* Principal's Room - Small Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        className="md:col-span-1 md:row-span-1 relative rounded-3xl overflow-hidden group shadow-xl"
+                    >
+                        <img
+                            src={`/images/campustour/${categories[2].images[0]}`}
+                            alt={categories[2].title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex flex-col justify-end p-6">
+                            <h3 className="text-white text-lg font-bold">{categories[2].title}</h3>
+                        </div>
+                    </motion.div>
+
+                    {/* Conference Hall - Medium Card (Slider concept or grid) */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 }}
+                        className="md:col-span-2 md:row-span-1 relative rounded-3xl overflow-hidden group shadow-xl bg-white"
+                    >
+                        <div className="grid grid-cols-2 h-full">
+                            {categories[3].images.map((img, i) => (
+                                <div key={i} className="h-full overflow-hidden relative">
+                                    <img
+                                        src={`/images/campustour/${img}`}
+                                        alt={`${categories[3].title} ${i}`}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/10"></div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/60 to-transparent">
+                            <h3 className="text-white text-xl font-bold">{categories[3].title}</h3>
+                            <p className="text-slate-200 text-xs mt-1">{categories[3].desc}</p>
+                        </div>
+                    </motion.div>
+
+                    {/* Playground - Wide Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.4 }}
+                        className="md:col-span-4 md:row-span-1 relative rounded-3xl overflow-hidden group shadow-xl bg-slate-800"
+                    >
+                        <div className="grid grid-cols-3 h-full gap-0.5">
+                            {categories[4].images.map((img, i) => (
+                                <div key={i} className="h-full overflow-hidden relative group/item">
+                                    <img
+                                        src={`/images/campustour/${img}`}
+                                        alt={`${categories[4].title} ${i}`}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover/item:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 group-hover/item:bg-transparent transition-colors"></div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl">
+                            <h3 className="text-slate-900 text-xl font-bold flex items-center gap-2">
+                                <Smile className="text-indigo-600" size={20} />
+                                {categories[4].title}
+                            </h3>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
         </section>
@@ -626,36 +934,200 @@ const Admissions = () => (
     </section>
 );
 
-const Gallery = () => (
-    <section id="gallery" className="py-32 bg-white">
-        <div className="container mx-auto px-6">
-            <SectionHeader title="Captured Moments" subtitle="Glimpses of joy, learning, and discovery from our daily campus life." />
+const Gallery = () => {
+    // 14 images available in public/images/gallery
+    const allImages = [
+        "ABM04971.jpg", "ABM05018.jpg", "ABM05916.jpg", "ABM05925.jpg",
+        "ABM05929.jpg", "ABM06311.jpg", "ABM06378.jpg", "ABM06393.jpg",
+        "ABM06419.jpg", "ABM06536.jpg", "ABM06566.jpg", "ABM06602.jpg",
+        "ABM06641.jpg", "ABM06656.jpg"
+    ];
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[250px]">
-                <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="col-span-2 row-span-2 rounded-3xl overflow-hidden relative group">
-                    <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Main" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-                </motion.div>
-                {[
-                    "https://images.unsplash.com/photo-1596464716127-f9a804e0647e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1588072432836-e10032774350?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1566378246598-5b11a0d486cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-                    "https://images.unsplash.com/photo-1571260899304-42d98b60d713?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                ].map((src, idx) => (
-                    <motion.div key={idx} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 * idx }} className="col-span-1 rounded-3xl overflow-hidden relative group">
-                        <img src={src} alt="Gallery" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                    </motion.div>
-                ))}
-            </div>
+    // Grid configuration: 7 slots
+    // We'll track which image index (from allImages) is currently in which slot
+    const [gridState, setGridState] = useState([0, 1, 2, 3, 4, 5, 6]);
+    const [isFlipped, setIsFlipped] = useState([false, false, false, false, false, false, false]);
 
-            <div className="text-center mt-12">
-                <button className="px-8 py-3 bg-slate-50 text-slate-900 rounded-full font-semibold hover:bg-slate-100 transition-colors inline-flex items-center gap-2">
-                    View Full Gallery <ArrowRight size={18} />
-                </button>
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // 1. Pick a random slot to flip
+            const randomSlot = Math.floor(Math.random() * 7);
+
+            // 2. Pick a random new image that isn't currently displayed
+            let newImageIndex;
+            do {
+                newImageIndex = Math.floor(Math.random() * allImages.length);
+            } while (gridState.includes(newImageIndex));
+
+            // 3. Trigger Flip
+            setIsFlipped(prev => {
+                const newState = [...prev];
+                newState[randomSlot] = !newState[randomSlot]; // Toggle flip state
+                return newState;
+            });
+
+            // 4. Update the image content for that slot after half the animation duration (so it changes while invisible/flipped)
+            // Ideally we want to show the 'back' face. 
+            // Simplified approach: The card has front and back faces. 
+            // If currently 'front' is showing (isFlipped false), we put new image on 'back' and flip to true.
+            // If currently 'back' is showing (isFlipped true), we put new image on 'front' and flip to false.
+            // Actually, we can just update the 'next' image state.
+
+            setTimeout(() => {
+                setGridState(prev => {
+                    const newState = [...prev];
+                    newState[randomSlot] = newImageIndex;
+                    return newState;
+                });
+            }, 600); // Wait for flip to cover content? No, true 3D flip needs front/back content.
+            // Simpler "Fade/Swap" or "Flip Card" logic:
+            // A flip card has Face A and Face B. 
+            // We just toggle a boolean. But we need to know what image is on A and B. 
+            // Let's keep it simple: Just standard layout, but we'll re-render.
+
+        }, 2500);
+
+        return () => clearInterval(interval);
+    }, [gridState, allImages.length]);
+
+    // Better 3D Flip Implementation:
+    // Each Slot component manages its own "Front" and "Back" images.
+    // When triggered, it flips to the other side.
+
+    return (
+        <section id="gallery" className="py-24 bg-white relative">
+            <div className="container mx-auto px-6">
+                <SectionHeader title="Captured Moments" subtitle="Glimpses of joy, learning, and discovery from our daily campus life." />
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[200px]">
+                    {/* Slot 0: Large Square (2x2) */}
+                    <GallerySlot
+                        className="col-span-2 row-span-2"
+                        initialImage={allImages[0]}
+                        imagePool={allImages}
+                        index={0}
+                    />
+
+                    {/* Slot 1: Tall (1x2) */}
+                    <GallerySlot
+                        className="col-span-1 row-span-2"
+                        initialImage={allImages[1]}
+                        imagePool={allImages}
+                        index={1}
+                    />
+
+                    {/* Slot 2: Standard */}
+                    <GallerySlot
+                        className="col-span-1 row-span-1"
+                        initialImage={allImages[2]}
+                        imagePool={allImages}
+                        index={2}
+                    />
+
+                    {/* Slot 3: Standard */}
+                    <GallerySlot
+                        className="col-span-1 row-span-1"
+                        initialImage={allImages[3]}
+                        imagePool={allImages}
+                        index={3}
+                    />
+
+                    {/* Slot 4: Standard */}
+                    <GallerySlot
+                        className="col-span-1 row-span-1"
+                        initialImage={allImages[4]}
+                        imagePool={allImages}
+                        index={4}
+                    />
+                    {/* Slot 5: Standard */}
+                    <GallerySlot
+                        className="col-span-1 row-span-1"
+                        initialImage={allImages[5]}
+                        imagePool={allImages}
+                        index={5}
+                    />
+                    {/* Slot 6: Wide (2x1) */}
+                    <GallerySlot
+                        className="col-span-2 row-span-1 md:col-span-2"
+                        initialImage={allImages[6]}
+                        imagePool={allImages}
+                        index={6}
+                    />
+                </div>
+
+                <div className="text-center mt-12">
+                    <a href="https://photos.app.goo.gl/vZS57LcXdbcVAd4f8" target="_blank" rel="noopener noreferrer" className="px-8 py-3 bg-slate-50 text-slate-900 rounded-full font-semibold hover:bg-slate-100 transition-colors inline-flex items-center gap-2 border border-slate-200">
+                        View Full Gallery <ArrowRight size={18} />
+                    </a>
+                </div>
             </div>
+        </section>
+    );
+};
+
+// Helper Component for Flipping Cell
+const GallerySlot = ({ className, initialImage, imagePool, index }) => {
+    const [currentImage, setCurrentImage] = useState(initialImage);
+    const [nextImage, setNextImage] = useState(null);
+    const [isFlipped, setIsFlipped] = useState(false);
+
+    useEffect(() => {
+        // Randomly decide to flip this specific card occasionally
+        // Stagger the intervals so they don't all flip at once
+        const randomInterval = 3000 + Math.random() * 5000; // 3s to 8s
+
+        const interval = setInterval(() => {
+            if (Math.random() > 0.7) { // 30% chance to flip when interval hits
+                // Pick new image
+                const randomImg = imagePool[Math.floor(Math.random() * imagePool.length)];
+
+                // Set 'back' face content
+                if (!isFlipped) {
+                    setNextImage(randomImg);
+                } else {
+                    setCurrentImage(randomImg);
+                }
+
+                setIsFlipped(prev => !prev);
+            }
+        }, randomInterval);
+
+        return () => clearInterval(interval);
+    }, [imagePool, isFlipped]);
+
+    return (
+        <div className={`relative perspective-1000 group ${className}`}>
+            <motion.div
+                className="w-full h-full relative preserve-3d transition-transform duration-1000"
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                style={{ transformStyle: 'preserve-3d' }}
+            >
+                {/* Front Face */}
+                <div className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden bg-slate-100">
+                    <img
+                        src={`/images/gallery/${isFlipped ? nextImage : currentImage}`}
+                        alt="Gallery"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                </div>
+
+                {/* Back Face */}
+                <div
+                    className="absolute inset-0 backface-hidden rounded-3xl overflow-hidden bg-slate-100"
+                    style={{ transform: 'rotateY(180deg)' }}
+                >
+                    <img
+                        src={`/images/gallery/${isFlipped ? nextImage : currentImage}`}
+                        alt="Gallery"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                </div>
+            </motion.div>
         </div>
-    </section>
-);
+    );
+};
 
 const Board = () => (
     <section id="board" className="py-32 bg-slate-50">
@@ -757,7 +1229,7 @@ const AdmissionsNew = ({ onRegister, onViewFees }) => (
                                 { step: "03", title: "Enrollment", desc: "Payment of fees and confirmation of admission." }
                             ].map((item, i) => (
                                 <div key={i} className="relative">
-                                    <div className="text-4xl font-bold text-slate-100 mb-2">{item.step}</div>
+                                    <div className="text-4xl font-bold text-indigo-500 mb-2">{item.step}</div>
                                     <h4 className="font-bold text-slate-900 mb-1">{item.title}</h4>
                                     <p className="text-sm text-slate-500">{item.desc}</p>
                                 </div>
@@ -906,6 +1378,7 @@ export default function Home() {
             <About />
             <AdmissionsNew onRegister={() => setIsEnquiryOpen(true)} onViewFees={() => setIsFeeModalOpen(true)} />
             <CampusTour />
+            <LifeAtCampus />
             <Events />
             <Gallery />
             <Board />
@@ -1181,14 +1654,13 @@ export default function Home() {
                                                 <label className="text-xs font-semibold text-slate-500 mb-1 block">Grade Sought *</label>
                                                 <select required name="studentGrade" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-600" value={enquiryForm.studentGrade} onChange={handleChange}>
                                                     <option value="">Select Grade</option>
-                                                    <option value="Playgroup">Playgroup</option>
-                                                    <option value="LKG">LKG</option>
-                                                    <option value="UKG">UKG</option>
-                                                    <option value="Class 1">Class 1</option>
-                                                    <option value="Class 2">Class 2</option>
-                                                    <option value="Class 3">Class 3</option>
-                                                    <option value="Class 4">Class 4</option>
-                                                    <option value="Class 5">Class 5</option>
+                                                    <option value="Mont 1">Mont 1</option>
+                                                    <option value="Mont 2">Mont 2</option>
+                                                    <option value="Grade 1">Grade 1</option>
+                                                    <option value="Grade 2">Grade 2</option>
+                                                    <option value="Grade 3">Grade 3</option>
+                                                    <option value="Grade 4">Grade 4</option>
+                                                    <option value="Grade 5">Grade 5</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1333,3 +1805,4 @@ export default function Home() {
         </div >
     );
 }
+
