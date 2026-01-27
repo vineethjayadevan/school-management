@@ -1,6 +1,6 @@
 const Enquiry = require('../models/Enquiry');
 
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 // @desc    Create a new enquiry
 // @route   POST /api/enquiries
@@ -32,24 +32,15 @@ const createEnquiry = async (req, res) => {
             message
         });
 
-        // --- Notification Logic ---
-        // Only attempt to send if credentials are present to avoid crashing if config is missing
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        // --- Notification Logic (Resend) ---
+        if (process.env.RESEND_API_KEY) {
             try {
-                const transporter = nodemailer.createTransport({
-                    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-                    port: process.env.EMAIL_PORT || 587,
-                    secure: false, // true for 465, false for other ports
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS,
-                    },
-                });
+                const resend = new Resend(process.env.RESEND_API_KEY);
 
-                const mailOptions = {
-                    from: `"Admission Enquiry - Stem GPS" <${process.env.EMAIL_USER}>`,
-                    to: process.env.EMAIL_RECEIVER, // vineethjay1998@gmail.com
-                    subject: `📢 New Admission Enquiry: ${studentFirstName} ${studentLastName}`,
+                const { data, error } = await resend.emails.send({
+                    from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+                    to: process.env.EMAIL_RECEIVER,
+                    subject: "New Admission Query",
                     html: `
                         <h2>New Admission Enquiry Received</h2>
                         <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
@@ -73,17 +64,20 @@ const createEnquiry = async (req, res) => {
                         <h3>Message</h3>
                         <p>${message}</p>
                     `,
-                };
+                });
 
-                await transporter.sendMail(mailOptions);
-                console.log(`Notification email sent to ${process.env.EMAIL_RECEIVER}`);
+                if (error) {
+                    console.error("Resend API Error:", error);
+                } else {
+                    console.log(`Notification email sent to ${process.env.EMAIL_RECEIVER} via Resend. ID: ${data.id}`);
+                }
 
             } catch (emailError) {
                 console.error("Failed to send notification email:", emailError.message);
                 // We do NOT fail the request if email fails, just log it.
             }
         } else {
-            console.log("Email credentials missing in .env, skipping notification.");
+            console.log("RESEND_API_KEY missing in .env, skipping notification.");
         }
 
         res.status(201).json(enquiry);
