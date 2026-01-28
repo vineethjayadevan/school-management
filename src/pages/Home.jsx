@@ -242,7 +242,7 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                             <img
                                 src="/images/abtUs2.webp"
                                 alt="Student Learning"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain md:object-cover"
                                 loading="eager"
                                 fetchPriority="high"
                             />
@@ -462,7 +462,7 @@ const About = () => {
                                     alt="Campus Life"
                                     loading="lazy"
                                     decoding="async"
-                                    className="rounded-2xl w-full h-64 md:h-80 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
+                                    className="rounded-2xl w-full h-auto md:h-80 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
                                 />
                             </div>
 
@@ -472,14 +472,14 @@ const About = () => {
                                 alt="Classroom"
                                 loading="lazy"
                                 decoding="async"
-                                className="rounded-2xl w-full h-48 md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
+                                className="rounded-2xl w-full h-auto md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
                             />
                             <img
                                 src="/images/aboutus/ABM04942.webp"
                                 alt="Student Activities"
                                 loading="lazy"
                                 decoding="async"
-                                className="rounded-2xl w-full h-48 md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
+                                className="rounded-2xl w-full h-auto md:h-64 object-cover shadow-lg hover:scale-105 transition-transform duration-500"
                             />
                         </motion.div>
 
@@ -599,7 +599,7 @@ const LifeAtCampus = () => {
                                         alt={event.title}
                                         loading="lazy"
                                         decoding="async"
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="w-full h-full object-contain md:object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-indigo-600 shadow-sm uppercase tracking-wide">
                                         {event.theme}
@@ -645,102 +645,101 @@ const Events = () => {
                 />
             </div>
 
-            {/* Annual Day Feature Card */}
+            {/* Annual Day - Separated Blocks Layout */}
             <div className="container mx-auto px-6">
-                <div className="bg-white rounded-3xl md:rounded-[3rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100">
-                    <div className="grid lg:grid-cols-2 gap-8 lg:gap-0">
-                        {/* Text Content Side */}
-                        <div className="p-6 md:p-12 lg:p-16 flex flex-col justify-center order-2 lg:order-1">
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                            >
-                                <span className="inline-block px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-bold mb-6 tracking-wide uppercase">
-                                    Latest Event
-                                </span>
-                                <h3 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
-                                    Annual Day & <br />
-                                    <span className="text-indigo-600">Inaugural Function</span>
-                                </h3>
-                                <div className="space-y-6 text-lg text-slate-500 leading-relaxed mb-8">
-                                    <p>
-                                        We are delighted to share glimpses of our Annual Day and Inaugural Function, a momentous occasion graced by the
-                                        <span className="font-bold text-slate-700"> Honorable Minister MB Rajesh</span>.
-                                    </p>
-                                    <p>
-                                        The day was filled with joy and vibrancy as our students mesmerized the audience with their spectacular cultural performances, showcasing their talents and celebrating the true spirit of our school community.
-                                    </p>
-                                </div>
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                    {/* Text Content Side */}
+                    <div className="order-2 lg:order-1">
+                        <motion.div
+                            className="w-full"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <span className="inline-block px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-bold mb-6 tracking-wide uppercase">
+                                Latest Event
+                            </span>
+                            <h3 className="text-2xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+                                Annual Day & <br />
+                                <span className="text-indigo-600">Inaugural Function</span>
+                            </h3>
+                            <div className="w-full space-y-6 text-base md:text-lg text-slate-600 leading-relaxed mb-8 break-words text-justify md:text-left hyphens-auto">
+                                <p>
+                                    We are delighted to share glimpses of our Annual Day and Inaugural Function, a momentous occasion graced by the
+                                    <span className="font-bold text-slate-700"> Honorable Minister MB Rajesh</span>.
+                                </p>
+                                <p>
+                                    The day was filled with joy and vibrancy as our students mesmerized the audience with their spectacular cultural performances, showcasing their talents and celebrating the true spirit of our school community.
+                                </p>
+                            </div>
 
-                                <a
-                                    href="https://photos.app.goo.gl/vZS57LcXdbcVAd4f8"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg hover:shadow-indigo-500/30 group"
-                                >
-                                    View Full Gallery
-                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                </a>
+                            <a
+                                href="https://photos.app.goo.gl/vZS57LcXdbcVAd4f8"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg hover:shadow-indigo-500/30 group"
+                            >
+                                View Full Gallery
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </a>
+                        </motion.div>
+                    </div>
+
+                    {/* Visual Side */}
+                    <div className="order-1 lg:order-2 bg-slate-100 rounded-3xl overflow-hidden shadow-2xl shadow-indigo-900/10 border border-slate-100">
+                        {/* Static Featured Image - Mobile Fix applied for ABM05870 */}
+                        <div className="w-full aspect-video md:aspect-auto md:h-[400px] overflow-hidden relative bg-slate-100">
+                            <img
+                                src={`/images/annualday/${featuredImage}`}
+                                alt="Inaugural Function Main"
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-contain md:object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
+                                <p className="text-white font-medium text-sm md:text-base bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                                    📸 Inaugural Ceremony by Minister MB Rajesh
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Moving Train (Marquee) */}
+                        <div className="h-[200px] bg-slate-900 relative flex items-center overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
+                            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10"></div>
+
+                            <motion.div
+                                className="flex gap-4 px-4"
+                                animate={{ x: ["0%", "-50%"] }}
+                                transition={{
+                                    ease: "linear",
+                                    duration: 30,
+                                    repeat: Infinity,
+                                    repeatType: "loop"
+                                }}
+                                style={{ width: "max-content", willChange: "transform" }}
+                            >
+                                {flowImages.map((img, idx) => (
+                                    <div
+                                        key={`train-${idx}`}
+                                        className="w-[250px] h-[160px] rounded-xl overflow-hidden flex-shrink-0 border-2 border-slate-700/50"
+                                    >
+                                        <img
+                                            src={`/images/annualday/${img}`}
+                                            alt={`Event moment ${idx}`}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                                        />
+                                    </div>
+                                ))}
                             </motion.div>
                         </div>
-
-                        {/* Visual Side */}
-                        <div className="order-1 lg:order-2 bg-slate-100 flex flex-col">
-                            {/* Static Featured Image */}
-                            <div className="h-[400px] w-full overflow-hidden relative">
-                                <img
-                                    src={`/images/annualday/${featuredImage}`}
-                                    alt="Inaugural Function Main"
-                                    loading="lazy"
-                                    decoding="async"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
-                                    <p className="text-white font-medium text-sm md:text-base bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                                        📸 Inaugural Ceremony by Minister MB Rajesh
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Moving Train (Marquee) */}
-                            <div className="h-[200px] bg-slate-900 relative flex items-center overflow-hidden">
-                                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
-                                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10"></div>
-
-                                <motion.div
-                                    className="flex gap-4 px-4"
-                                    animate={{ x: ["0%", "-50%"] }}
-                                    transition={{
-                                        ease: "linear",
-                                        duration: 30,
-                                        repeat: Infinity,
-                                        repeatType: "loop"
-                                    }}
-                                    style={{ width: "max-content", willChange: "transform" }}
-                                >
-                                    {flowImages.map((img, idx) => (
-                                        <div
-                                            key={`train-${idx}`}
-                                            className="w-[250px] h-[160px] rounded-xl overflow-hidden flex-shrink-0 border-2 border-slate-700/50"
-                                        >
-                                            <img
-                                                src={`/images/annualday/${img}`}
-                                                alt={`Event moment ${idx}`}
-                                                loading="lazy"
-                                                decoding="async"
-                                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                                            />
-                                        </div>
-                                    ))}
-                                </motion.div>
-                            </div>
-                        </div>
-
                     </div>
+
                 </div>
             </div>
-        </section>
+        </section >
     );
 };
 
@@ -787,7 +786,7 @@ const CampusTour = () => {
                     centered={true}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[250px] md:auto-rows-[300px]">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-auto md:auto-rows-[300px]">
                     {/* Building - Large Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -800,7 +799,7 @@ const CampusTour = () => {
                             alt={categories[0].title}
                             loading="lazy"
                             decoding="async"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            className="w-full h-[300px] md:h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-8">
                             <h3 className="text-white text-2xl font-bold mb-2">{categories[0].title}</h3>
@@ -819,7 +818,7 @@ const CampusTour = () => {
                         <img
                             src={`/images/campustour/${categories[1].images[0]}`}
                             alt={categories[1].title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="w-full h-[250px] md:h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex flex-col justify-end p-6">
                             <h3 className="text-white text-lg font-bold">{categories[1].title}</h3>
@@ -837,7 +836,7 @@ const CampusTour = () => {
                         <img
                             src={`/images/campustour/${categories[2].images[0]}`}
                             alt={categories[2].title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="w-full h-[250px] md:h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex flex-col justify-end p-6">
                             <h3 className="text-white text-lg font-bold">{categories[2].title}</h3>
@@ -858,7 +857,7 @@ const CampusTour = () => {
                                     <img
                                         src={`/images/campustour/${img}`}
                                         alt={`${categories[3].title} ${i}`}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="w-full h-[250px] md:h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                     <div className="absolute inset-0 bg-black/10"></div>
                                 </div>
@@ -884,7 +883,7 @@ const CampusTour = () => {
                                     <img
                                         src={`/images/campustour/${img}`}
                                         alt={`${categories[4].title} ${i}`}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover/item:scale-110"
+                                        className="w-full h-[300px] md:h-full object-cover transition-transform duration-700 group-hover/item:scale-110"
                                     />
                                     <div className="absolute inset-0 bg-black/20 group-hover/item:bg-transparent transition-colors"></div>
                                 </div>
@@ -942,8 +941,8 @@ const Admissions = () => (
 const Gallery = () => {
     // 14 images available in public/images/gallery
     const allImages = [
-        "ABM04971.webp", "ABM05018.webp", "ABM05916.webp", "ABM05925.webp",
-        "ABM05929.webp", "ABM06311.webp", "ABM06378.webp", "ABM06393.webp",
+        "ABM04971.webp", "ABM05018.webp", "ABM05916.webp",
+        "ABM06311.webp", "ABM06378.webp", "ABM06393.webp",
         "ABM06419.webp", "ABM06536.webp", "ABM06566.webp", "ABM06602.webp",
         "ABM06641.webp", "ABM06656.webp"
     ];
@@ -1112,7 +1111,7 @@ const GallerySlot = ({ className, initialImage, imagePool, index }) => {
                     <img
                         src={`/images/gallery/${isFlipped ? nextImage : currentImage}`}
                         alt="Gallery"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain md:object-cover"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
                 </div>
@@ -1125,7 +1124,7 @@ const GallerySlot = ({ className, initialImage, imagePool, index }) => {
                     <img
                         src={`/images/gallery/${isFlipped ? nextImage : currentImage}`}
                         alt="Gallery"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain md:object-cover"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
                 </div>

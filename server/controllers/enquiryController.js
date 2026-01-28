@@ -32,16 +32,19 @@ const createEnquiry = async (req, res) => {
             message
         });
 
-        // --- Notification Logic (Resend) ---
-        if (process.env.RESEND_API_KEY) {
-            try {
-                const resend = new Resend(process.env.RESEND_API_KEY);
+        // Send immediate response to frontend
+        res.status(201).json(enquiry);
 
-                const { data, error } = await resend.emails.send({
-                    from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-                    to: process.env.EMAIL_RECEIVER,
-                    subject: "New Admission Query",
-                    html: `
+        // --- Notification Logic (Resend) ---
+        // Fire-and-forget: We do not await this, preventing frontend delay.
+        if (process.env.RESEND_API_KEY) {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+
+            resend.emails.send({
+                from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+                to: process.env.EMAIL_RECEIVER,
+                subject: "New Admission Query",
+                html: `
                         <h2>New Admission Enquiry Received</h2>
                         <p><strong>Date:</strong> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                         <hr />
@@ -64,23 +67,21 @@ const createEnquiry = async (req, res) => {
                         <h3>Message</h3>
                         <p>${message}</p>
                     `,
+            })
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error("Resend API Error:", error);
+                    } else {
+                        console.log(`Notification email sent to ${process.env.EMAIL_RECEIVER} via Resend. ID: ${data.id}`);
+                    }
+                })
+                .catch(emailError => {
+                    console.error("Failed to send notification email:", emailError.message);
                 });
 
-                if (error) {
-                    console.error("Resend API Error:", error);
-                } else {
-                    console.log(`Notification email sent to ${process.env.EMAIL_RECEIVER} via Resend. ID: ${data.id}`);
-                }
-
-            } catch (emailError) {
-                console.error("Failed to send notification email:", emailError.message);
-                // We do NOT fail the request if email fails, just log it.
-            }
         } else {
             console.log("RESEND_API_KEY missing in .env, skipping notification.");
         }
-
-        res.status(201).json(enquiry);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
