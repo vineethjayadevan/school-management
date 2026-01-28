@@ -7,7 +7,7 @@ export default function TopBanner() {
                 <GraduationCap size={20} />
             </div>
             <span className="font-bold text-lg tracking-wide bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                Stem Global Public School
+                STEM Global Public School
             </span>
         </div>
     );

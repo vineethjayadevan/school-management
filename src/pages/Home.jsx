@@ -106,7 +106,7 @@ const Navbar = () => {
                     />
                     <div className="flex flex-col">
                         <span className={`text-xl md:text-2xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
-                            Stem Global Public School
+                            STEM Global Public School
                         </span>
                         <span className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">
                             Kollannoor-Kappur Palakkad District Kerala
@@ -115,25 +115,26 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+                <div className="hidden lg:flex items-center gap-8 xl:gap-10">
                     {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => {
                         const sectionId = item.toLowerCase().replace(/\s+/g, '');
+                        const isActive = activeSection === sectionId;
                         return (
                             <a
                                 key={item}
                                 href={`#${sectionId}`}
-                                className={`text-sm font-medium transition-colors relative group ${activeSection === sectionId ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
+                                className={`text-base font-semibold transition-colors relative group py-1 ${activeSection === sectionId ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
                             >
                                 {item}
-                                <span className={`absolute -bottom-1 left-0 h-0.5 bg-indigo-600 transition-all ${activeSection === sectionId ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                                <span className={`absolute -bottom-0 left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${activeSection === sectionId ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                             </a>
                         );
                     })}
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - Hidden on very small screens if needed, but keeping generally accessible */}
-                    <div className="relative hidden md:block" ref={dropdownRef}>
+                    {/* Login Portal Dropdown - HIDDEN as per request */}
+                    <div className="hidden" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 text-sm shadow-xl shadow-slate-200"
@@ -196,7 +197,8 @@ const Navbar = () => {
                                     {item}
                                 </a>
                             ))}
-                            <div className="pt-4 border-t border-slate-100">
+                            {/* Login Portals - HIDDEN */}
+                            {/* <div className="pt-4 border-t border-slate-100">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Login Portals</p>
                                 <div className="space-y-2">
                                     {['Admin', 'Teacher', 'Student'].map((role) => (
@@ -210,12 +212,12 @@ const Navbar = () => {
                                         </button>
                                     ))}
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav>
+        </nav >
     );
 };
 
@@ -640,7 +642,7 @@ const Events = () => {
         <section id="events" className="py-32 bg-slate-50 overflow-hidden">
             <div className="container mx-auto px-6 mb-12">
                 <SectionHeader
-                    title="Celebrations & Milestones"
+                    title="Celebrations & Mileslates"
                     subtitle="Honoring our traditions and celebrating our achievements together."
                 />
             </div>
@@ -696,11 +698,7 @@ const Events = () => {
                                 decoding="async"
                                 className="w-full h-full object-contain md:object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-8">
-                                <p className="text-white font-medium text-sm md:text-base bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                                    📸 Inaugural Ceremony by Minister MB Rajesh
-                                </p>
-                            </div>
+
                         </div>
 
                         {/* Moving Train (Marquee) */}
@@ -1333,10 +1331,8 @@ const Footer = () => (
             <div className="grid md:grid-cols-4 gap-12 mb-20">
                 <div className="col-span-1 md:col-span-2">
                     <div className="flex items-center gap-3 mb-8">
-                        <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                            S
-                        </div>
-                        <span className="text-2xl font-bold text-white">Stem Global</span>
+                        <img src="/images/logo.webp" alt="Stem Global Logo" className="w-12 h-12 object-contain" />
+                        <span className="text-2xl font-bold text-white">STEM Global Public School</span>
                     </div>
                     <p className="text-slate-400 text-lg leading-relaxed max-w-sm mb-8">
                         Nurturing curiosity today, creating leaders for tomorrow. Where learning is a joyful adventure.
@@ -1353,8 +1349,8 @@ const Footer = () => (
                 <div>
                     <h4 className="text-white font-bold mb-6 text-lg">Quick Links</h4>
                     <ul className="space-y-4">
-                        {['About Us', 'Admissions', 'Academics', 'Events', 'Contact'].map(item => (
-                            <li key={item}><a href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors block">{item}</a></li>
+                        {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map(item => (
+                            <li key={item}><a href={`#${item.toLowerCase().replace(/\s+/g, '')}`} className="hover:text-white transition-colors block">{item}</a></li>
                         ))}
                     </ul>
                 </div>
@@ -1364,7 +1360,7 @@ const Footer = () => (
                     <ul className="space-y-4 text-slate-400">
                         <li className="flex gap-3"><MapPin size={20} className="shrink-0 text-indigo-400" /> Eravakkad, Kollannoor<br />Kerala, 679552</li>
                         <li className="flex gap-3"><Phone size={20} className="shrink-0 text-indigo-400" /> +91 9746402501</li>
-                        <li className="flex gap-3"><Mail size={20} className="shrink-0 text-indigo-400" /> info@stemglobal.edu</li>
+                        <li className="flex gap-3"><Mail size={20} className="shrink-0 text-indigo-400" /> stemnoreply@mystemgps.com</li>
                     </ul>
                 </div>
             </div>
