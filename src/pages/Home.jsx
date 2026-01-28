@@ -1267,24 +1267,38 @@ const GallerySlot = ({ className, frontImage, backImage, isFlipped }) => {
 
 const Board = () => {
     const chairman = {
-        name: "Reji",
-        role: "Chairman cum Principal",
-        img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=400&h=400&q=80" // Placeholder
+        name: "Mr. Regi V. George",
+        role: "Principal & Chairman",
+        img: "Reji.jpeg"
     };
 
     const heads = [
-        { name: "Sabira", role: "Head Teacher (Montessori)" },
-        { name: "Sitara", role: "Head Teacher (Montessori)" }
+        {
+            name: "Ms. Sabira T S",
+            role: "Headmistress",
+            img: "Sabira.jpeg"
+        },
+        {
+            name: "Ms. Sithara Sajid",
+            role: "Academic Coordinator",
+            img: "Sithara.jpeg"
+        }
     ];
 
     const members = [
-        "Jayaraj V", "Shaji", "Partner3", "Partner4", "Partner5", "Jayadevan V"
-    ].map(name => ({ name, role: "Board Member" }));
+        { name: "Mr. Jayaraj V", role: "Board Member", img: "Jayaraj.jpeg", position: "object-top" },
+        { name: "Mr. Shaji P", role: "Board Member", img: "Shaji.jpeg" },
+        { name: "Ms. Sabna Navas", role: "Board Member", img: null },
+        { name: "Ms. Fathima Thasneem CM", role: "Board Member", img: "Fathima.jpeg" },
+        { name: "Ms. Rameena", role: "Board Member", img: null },
+        { name: "Mr. Jayadevan V", role: "Board Member", img: "Jayadevan.jpeg", position: "object-top" }
+    ];
 
     // Helper for Card
     const MemberCard = ({ member, size = "small" }) => {
         const isLarge = size === "large";
         const isMedium = size === "medium";
+        const hasImage = !!member.img;
 
         return (
             <motion.div
@@ -1293,14 +1307,21 @@ const Board = () => {
                 viewport={{ once: true }}
                 className={`flex flex-col items-center text-center ${isLarge ? 'max-w-xs' : 'max-w-[200px]'} mx-auto`}
             >
-                {/* Square Box Placeholder */}
+                {/* Square Box */}
                 <div className={`
                     relative overflow-hidden rounded-2xl md:rounded-3xl border-4 border-white shadow-lg bg-slate-200 mb-4 flex items-center justify-center
                     ${isLarge ? 'w-48 h-48 md:w-56 md:h-56' : isMedium ? 'w-36 h-36 md:w-40 md:h-40' : 'w-28 h-28 md:w-32 md:h-32'}
                 `}>
-                    <Users className="text-slate-400" size={isLarge ? 64 : isMedium ? 48 : 32} opacity={0.5} />
-                    {/* Image placeholder for later use */}
-                    {/* <img src={member.img} alt={member.name} className="w-full h-full object-cover" /> */}
+                    {hasImage ? (
+                        <img
+                            src={`/images/boardmembers/${member.img}`}
+                            alt={member.name}
+                            className={`w-full h-full object-cover ${member.position || ''}`}
+                            loading="lazy"
+                        />
+                    ) : (
+                        <Users className="text-slate-400" size={isLarge ? 64 : isMedium ? 48 : 32} opacity={0.5} />
+                    )}
                 </div>
 
                 <h3 className={`font-bold text-slate-900 ${isLarge ? 'text-2xl' : isMedium ? 'text-xl' : 'text-base'}`}>
@@ -1336,7 +1357,7 @@ const Board = () => {
                     </div>
 
                     {/* Tier 3: Board Members */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 w-full pt-8 border-t border-slate-200/60">
+                    <div className="flex flex-wrap justify-center gap-8 md:gap-16 w-full pt-8 border-t border-slate-200/60">
                         {members.map((member, idx) => (
                             <MemberCard key={idx} member={member} size="small" />
                         ))}
@@ -1626,91 +1647,69 @@ export default function Home() {
                             </div>
 
                             <div className="p-8 space-y-8">
-                                {/* One-time Fees */}
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                        <div className="w-2 h-8 bg-blue-500 rounded-sm"></div> One-Time Fees (New Admission)
+                                {/* No Donation Highlight */}
+                                <div className="bg-gradient-to-r from-orange-100 to-orange-50 border border-orange-200 rounded-2xl p-6 text-center shadow-sm">
+                                    <h4 className="text-2xl md:text-3xl font-black text-orange-600 uppercase tracking-wide flex items-center justify-center gap-3">
+                                        <Star className="fill-orange-600" size={32} /> No Donation <Star className="fill-orange-600" size={32} />
                                     </h4>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                                            <span className="font-medium text-slate-600">Admission Fee</span>
-                                            <span className="font-bold text-slate-900">₹ 15,000</span>
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                                            <span className="font-medium text-slate-600">Registration Fee</span>
-                                            <span className="font-bold text-slate-900">₹ 1,000</span>
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                                            <span className="font-medium text-slate-600">Caution Deposit (Refundable)</span>
-                                            <span className="font-bold text-slate-900">₹ 5,000</span>
-                                        </div>
-                                    </div>
+                                    <p className="text-orange-800 font-medium mt-2">We believe in transparent and accessible education for all.</p>
                                 </div>
 
-                                {/* Annual Fees */}
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                        <div className="w-2 h-8 bg-green-500 rounded-sm"></div> Annual Fees
-                                    </h4>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm text-left">
-                                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
-                                                <tr>
-                                                    <th className="px-4 py-3">Description</th>
-                                                    <th className="px-4 py-3 text-right">Pre-Primary</th>
-                                                    <th className="px-4 py-3 text-right">Primary (1-5)</th>
-                                                    <th className="px-4 py-3 text-right">Middle (6-8)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                <tr className="hover:bg-slate-50/50">
-                                                    <td className="px-4 py-3 font-medium text-slate-700">Annual Charges (Library, Sports, etc.)</td>
-                                                    <td className="px-4 py-3 text-right">₹ 5,000</td>
-                                                    <td className="px-4 py-3 text-right">₹ 6,000</td>
-                                                    <td className="px-4 py-3 text-right">₹ 7,000</td>
-                                                </tr>
-                                                <tr className="hover:bg-slate-50/50">
-                                                    <td className="px-4 py-3 font-medium text-slate-700">Development Fund</td>
-                                                    <td className="px-4 py-3 text-right">₹ 2,000</td>
-                                                    <td className="px-4 py-3 text-right">₹ 2,500</td>
-                                                    <td className="px-4 py-3 text-right">₹ 3,000</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                {/* Fee Breakdown */}
+                                <div className="max-w-xl mx-auto">
+                                    <div className="bg-white border-2 border-slate-100 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50">
+                                        <div className="p-6 md:p-8 space-y-6">
+                                            {/* Header */}
+                                            <div className="text-center pb-6 border-b border-slate-100">
+                                                <p className="text-slate-500 font-bold uppercase tracking-wider text-sm mb-1">Annual Total Fee</p>
+                                                <div className="text-5xl font-black text-slate-900 tracking-tight">
+                                                    ₹ 26,500
+                                                </div>
+                                            </div>
 
-                                {/* Tuition Fees */}
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                        <div className="w-2 h-8 bg-purple-500 rounded-sm"></div> Tuition Fees (Per Term - 3 Terms/Year)
-                                    </h4>
-                                    <div className="grid md:grid-cols-3 gap-4">
-                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
-                                            <h5 className="font-bold text-indigo-900 mb-1">Pre-Primary</h5>
-                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 8,000</p>
-                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
+                                            {/* Breakdown Items */}
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold">
+                                                            <BookOpen size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-800">Tuition Fee</p>
+                                                            <p className="text-xs text-slate-500">Academic Year 2025-26</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-bold text-xl text-slate-700">₹ 20,000</span>
+                                                </div>
+
+                                                <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold">
+                                                            <Users size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-800">Materials Fee</p>
+                                                            <p className="text-xs text-slate-500">Books, Uniforms & Amenities</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-bold text-xl text-slate-700">₹ 6,500</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Bus Fee Notice */}
+                                            <div className="mt-2 text-center p-4 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">
+                                                <div className="flex items-center justify-center gap-2 font-bold mb-2 text-lg">
+                                                    <Users size={20} /> Transport / Bus Fee
+                                                </div>
+                                                <p className="text-base font-semibold text-slate-700">Calculated according to the boarding point/distance.</p>
+                                            </div>
                                         </div>
-                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
-                                            <h5 className="font-bold text-indigo-900 mb-1">Primary (1-5)</h5>
-                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 10,000</p>
-                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
-                                        </div>
-                                        <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 text-center">
-                                            <h5 className="font-bold text-indigo-900 mb-1">Middle (6-8)</h5>
-                                            <p className="text-3xl font-bold text-indigo-600 mb-1">₹ 12,000</p>
-                                            <p className="text-xs text-indigo-500 uppercase tracking-wide">Per Term</p>
+                                        <div className="bg-slate-50 px-6 py-4 text-center border-t border-slate-100">
+                                            <p className="text-xs font-medium text-slate-500">
+                                                * Fees once paid are non-refundable. Terms and conditions apply.
+                                            </p>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 border border-yellow-100">
-                                    <p className="font-bold flex items-center gap-2 mb-1"><Star size={14} className="fill-yellow-600 text-yellow-600" /> Note:</p>
-                                    <ul className="list-disc list-inside space-y-1 opacity-90">
-                                        <li>Sibling discount of 10% on tuition fees for the second child onwards.</li>
-                                        <li>Books and uniforms are charged separately based on actual usage.</li>
-                                        <li>Fees once paid are non-refundable.</li>
-                                    </ul>
                                 </div>
                             </div>
                             <div className="bg-slate-50 p-6 border-t border-slate-100 text-center">
@@ -1747,29 +1746,29 @@ export default function Home() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden z-20 p-8 text-center"
+                            className="relative bg-white w-full max-w-lg md:max-w-2xl rounded-3xl shadow-2xl overflow-hidden z-20 p-6 md:p-8 text-center max-h-[90vh] overflow-y-auto custom-scrollbar"
                         >
                             <button
                                 onClick={() => setIsAdmissionsContactOpen(false)}
-                                className="absolute top-4 right-4 w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 transition-colors"
+                                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 transition-colors z-10"
                             >
-                                <X size={16} />
+                                <X size={20} />
                             </button>
 
-                            <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Phone size={32} />
+                            <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shrink-0">
+                                <Phone size={36} />
                             </div>
 
-                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Admissions Contact</h3>
-                            <p className="text-slate-500 mb-8">Call us directly to secure your seat for the 2025-26 academic year.</p>
+                            <h3 className="text-3xl font-bold text-slate-900 mb-3">Admissions Contact</h3>
+                            <p className="text-slate-600 text-lg mb-8">Call us directly to secure your seat for the 2025-26 academic year.</p>
 
-                            <div className="space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4 mb-8">
                                 <a href="tel:+919746402501" className="flex items-center justify-between p-5 bg-indigo-50 border border-indigo-100 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all group shadow-sm">
                                     <div className="text-left">
                                         <div className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">Primary Contact</div>
                                         <div className="font-bold text-xl">+91 9746402501</div>
                                     </div>
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-white/20 group-hover:text-white">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-white/20 group-hover:text-white shrink-0">
                                         <Phone size={20} />
                                     </div>
                                 </a>
@@ -1778,15 +1777,42 @@ export default function Home() {
                                         <div className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">Secondary Contact</div>
                                         <div className="font-bold text-xl">+91 9544547511</div>
                                     </div>
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-white/20 group-hover:text-white">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-white/20 group-hover:text-white shrink-0">
                                         <Phone size={20} />
                                     </div>
                                 </a>
                             </div>
 
+                            {/* Key Highlights */}
+                            <div className="bg-slate-50 rounded-3xl p-6 md:p-8 border border-slate-100 text-left mb-8">
+                                <h4 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                    <Star size={24} className="text-orange-500 fill-orange-500" /> Why Choose Us?
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {[
+                                        "No Donation",
+                                        "Individual Attention",
+                                        "Experienced Faculties",
+                                        "Samastha Madrasa Education",
+                                        "Value Education",
+                                        "Park Facilities",
+                                        "AC Classrooms",
+                                        "Second Home for Kids",
+                                        "Montessori System",
+                                        "CBSE Syllabus",
+                                        "STEM Education"
+                                    ].map((feature, idx) => (
+                                        <div key={idx} className="flex items-start gap-3 text-base md:text-lg text-slate-700 font-medium bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                            <CheckCircle size={20} className="text-green-500 mt-0.5 shrink-0" />
+                                            <span className="leading-tight">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <button
                                 onClick={() => setIsAdmissionsContactOpen(false)}
-                                className="mt-8 w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                                className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-slate-800 transition-colors shadow-lg"
                             >
                                 Close
                             </button>
