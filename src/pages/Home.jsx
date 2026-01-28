@@ -1288,9 +1288,9 @@ const Board = () => {
     const members = [
         { name: "Mr. Jayaraj V", role: "Board Member", img: "Jayaraj.jpeg", position: "object-top" },
         { name: "Mr. Shaji P", role: "Board Member", img: "Shaji.jpeg" },
-        { name: "Ms. Sabna Navas", role: "Board Member", img: null },
+        { name: "Ms.Sabna P", role: "Board Member", img: "Sabna.jpeg" },
         { name: "Ms. Fathima Thasneem CM", role: "Board Member", img: "Fathima.jpeg" },
-        { name: "Ms. Rameena", role: "Board Member", img: null },
+        { name: "Ms.Rameena Jaleel", role: "Board Member", img: "Raameena.jpeg" },
         { name: "Mr. Jayadevan V", role: "Board Member", img: "Jayadevan.jpeg", position: "object-top" }
     ];
 
