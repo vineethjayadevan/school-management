@@ -7,6 +7,8 @@ const enquirySchema = mongoose.Schema({
     studentLastName: { type: String, required: true },
     studentGrade: { type: String, required: true },
     dob: { type: Date, required: true },
+    studentGender: { type: String, required: true },
+    studentBloodGroup: { type: String, required: true },
 
     // Parent Details
     fatherName: { type: String, required: true },

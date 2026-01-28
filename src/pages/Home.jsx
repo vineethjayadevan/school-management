@@ -1563,7 +1563,6 @@ export default function Home() {
     const [isSuccessOpen, setIsSuccessOpen] = useState(false);
     const { addToast } = useToast();
 
-    // Initial State matching new schema
     const initialFormState = {
         studentFirstName: '',
         studentMiddleName: '',
@@ -1572,6 +1571,8 @@ export default function Home() {
         motherName: '',
         dob: '',
         studentGrade: '',
+        studentGender: '',
+        studentBloodGroup: '',
         contactNumber: '',
         email: '',
         conveyance: 'No',
@@ -1901,6 +1902,31 @@ export default function Home() {
                                                     <option value="Grade 3">Grade 3</option>
                                                     <option value="Grade 4">Grade 4</option>
                                                     <option value="Grade 5">Grade 5</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Gender *</label>
+                                                <select required name="studentGender" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-600" value={enquiryForm.studentGender} onChange={handleChange}>
+                                                    <option value="">Select Gender</option>
+                                                    <option value="Male">Male</option>
+                                                    <option value="Female">Female</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Blood Group *</label>
+                                                <select required name="studentBloodGroup" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-600" value={enquiryForm.studentBloodGroup} onChange={handleChange}>
+                                                    <option value="">Select Blood Group</option>
+                                                    <option value="A+">A+</option>
+                                                    <option value="A-">A-</option>
+                                                    <option value="B+">B+</option>
+                                                    <option value="B-">B-</option>
+                                                    <option value="AB+">AB+</option>
+                                                    <option value="AB-">AB-</option>
+                                                    <option value="O+">O+</option>
+                                                    <option value="O-">O-</option>
                                                 </select>
                                             </div>
                                         </div>

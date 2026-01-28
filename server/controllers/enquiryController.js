@@ -12,6 +12,7 @@ const createEnquiry = async (req, res) => {
             fatherName, motherName,
             contactNumber, email,
             dob, studentGrade,
+            studentGender, studentBloodGroup,
             conveyance, address, classMode,
             message
         } = req.body;
@@ -26,6 +27,8 @@ const createEnquiry = async (req, res) => {
             email,
             dob,
             studentGrade,
+            studentGender,
+            studentBloodGroup,
             conveyance,
             address,
             classMode,
@@ -52,6 +55,8 @@ const createEnquiry = async (req, res) => {
                         <p><strong>Name:</strong> ${studentFirstName} ${studentMiddleName || ''} ${studentLastName}</p>
                         <p><strong>Grade:</strong> ${studentGrade}</p>
                         <p><strong>DOB:</strong> ${dob}</p>
+                        <p><strong>Gender:</strong> ${studentGender}</p>
+                        <p><strong>Blood Group:</strong> ${studentBloodGroup}</p>
                         <p><strong>Class Mode:</strong> ${classMode}</p>
                         
                         <h3>Parent/Guardian Details</h3>
