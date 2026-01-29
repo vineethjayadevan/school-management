@@ -286,7 +286,7 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                             whileTap={{ scale: 0.98 }}
                             className="group relative inline-flex items-center gap-3 pr-2 pl-6 py-2 bg-indigo-600 text-white rounded-full mb-8 cursor-pointer hover:bg-indigo-700 transition-all shadow-xl hover:shadow-2xl hover:shadow-indigo-600/30 ring-4 ring-indigo-50"
                         >
-                            <span className="font-bold text-sm tracking-wide text-indigo-50">✨ Admissions Open 2025-26</span>
+                            <span className="font-bold text-sm tracking-wide text-indigo-50">✨ Admissions Open 2026-27</span>
                             <span className="flex items-center gap-2 bg-white text-indigo-600 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-md">
                                 <span className="drop-shadow-sm">100% Donation Free</span>
                                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -1000,7 +1000,7 @@ const Admissions = () => (
             >
                 <h2 className="text-4xl md:text-5xl font-bold mb-6">Join Our Family</h2>
                 <p className="text-xl text-indigo-100 mb-10 leading-relaxed">
-                    Admissions are open for the 2025-26 academic year. Give your child the gift of world-class education.
+                    Admissions are open for the 2026-27 academic year. Give your child the gift of world-class education.
                 </p>
 
                 <div className="grid md:grid-cols-3 gap-6 mb-12 text-left">
@@ -1639,7 +1639,7 @@ export default function Home() {
                         >
                             <div className="bg-indigo-600 p-6 flex justify-between items-center text-white sticky top-0 z-10">
                                 <div>
-                                    <h3 className="text-2xl font-bold">Fee Structure 2025-26</h3>
+                                    <h3 className="text-2xl font-bold">Fee Structure 2026-27</h3>
                                     <p className="text-indigo-100 text-sm">Transparent and affordable quality education</p>
                                 </div>
                                 <button onClick={() => setIsFeeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -1677,7 +1677,7 @@ export default function Home() {
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-slate-800">Tuition Fee</p>
-                                                            <p className="text-xs text-slate-500">Academic Year 2025-26</p>
+                                                            <p className="text-xs text-slate-500">Academic Year 2026-27</p>
                                                         </div>
                                                     </div>
                                                     <span className="font-bold text-xl text-slate-700">₹ 20,000</span>
@@ -1761,7 +1761,7 @@ export default function Home() {
                             </div>
 
                             <h3 className="text-3xl font-bold text-slate-900 mb-3">Admissions Contact</h3>
-                            <p className="text-slate-600 text-lg mb-8">Call us directly to secure your seat for the 2025-26 academic year.</p>
+                            <p className="text-slate-600 text-lg mb-8">Call us directly to secure your seat for the 2026-27 academic year.</p>
 
                             <div className="grid md:grid-cols-2 gap-4 mb-8">
                                 <a href="tel:+919746402501" className="flex items-center justify-between p-5 bg-indigo-50 border border-indigo-100 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all group shadow-sm">
