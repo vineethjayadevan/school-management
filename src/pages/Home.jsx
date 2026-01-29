@@ -424,33 +424,49 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                     </h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-center md:gap-4 max-w-6xl mx-auto">
-                    {[
-                        { text: "No Donation", icon: "✨", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-                        { text: "Individual Attention", icon: "🎓", color: "bg-blue-50 text-blue-700 border-blue-200" },
-                        { text: "Experienced Faculties", icon: "👩‍🏫", color: "bg-green-50 text-green-700 border-green-200" },
-                        { text: "Samastha Madrasa", icon: "🕌", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                        { text: "Value Education", icon: "🌟", color: "bg-purple-50 text-purple-700 border-purple-200" },
-                        { text: "Park Facilities", icon: "🎡", color: "bg-pink-50 text-pink-700 border-pink-200" },
-                        { text: "AC Classrooms", icon: "❄️", color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
-                        { text: "Montessori System", icon: "🧩", color: "bg-orange-50 text-orange-700 border-orange-200" },
-                        { text: "CBSE Syllabus", icon: "📚", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-                        { text: "STEM Education", icon: "🔬", color: "bg-teal-50 text-teal-700 border-teal-200" },
-                        { text: "Second Home", icon: "🏠", color: "bg-rose-50 text-rose-700 border-rose-200" }
-                    ].map((item, idx) => (
+                <div className="max-w-6xl mx-auto">
+                    {/* Center "No Donation" - Distinct and Top */}
+                    <div className="flex justify-center mb-3 md:mb-5">
                         <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            transition={{ delay: idx * 0.05 }}
-                            whileHover={{ scale: 1.05, y: -2 }}
-                            className={`flex items-center justify-center md:justify-start gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border shadow-sm font-bold text-xs md:text-base cursor-default transition-all duration-300 ${item.color}`}
+                            whileHover={{ scale: 1.05 }}
+                            className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-yellow-200 bg-yellow-50 text-yellow-800 font-bold text-sm md:text-lg shadow-md cursor-default transition-all duration-300"
                         >
-                            <span className="text-base md:text-xl drop-shadow-sm">{item.icon}</span>
-                            <span className="tracking-wide text-center md:text-left">{item.text}</span>
+                            <span className="text-lg md:text-2xl">✨</span>
+                            <span className="tracking-wide uppercase">No Donation</span>
                         </motion.div>
-                    ))}
+                    </div>
+
+                    {/* Remaining Points Grid */}
+                    <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-center md:gap-4">
+                        {[
+                            { text: "Individual Attention", icon: "🎓", color: "bg-blue-50 text-blue-700 border-blue-200" },
+                            { text: "Experienced Faculties", icon: "👩‍🏫", color: "bg-green-50 text-green-700 border-green-200" },
+                            { text: "Samastha Madrasa Education", icon: "🕌", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                            { text: "Value Education", icon: "🌟", color: "bg-purple-50 text-purple-700 border-purple-200" },
+                            { text: "Park facilities", icon: "🎡", color: "bg-pink-50 text-pink-700 border-pink-200" },
+                            { text: "AC Classroom", icon: "❄️", color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+                            { text: "Second Home for kids", icon: "🏠", color: "bg-rose-50 text-rose-700 border-rose-200" },
+                            { text: "Montessori System", icon: "🧩", color: "bg-orange-50 text-orange-700 border-orange-200" },
+                            { text: "CBSE Syllabus", icon: "📚", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+                            { text: "STEM Education", icon: "🔬", color: "bg-teal-50 text-teal-700 border-teal-200" }
+                        ].map((item, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.05 }}
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                className={`flex items-center justify-center md:justify-start gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border shadow-sm font-bold text-xs md:text-base cursor-default transition-all duration-300 ${item.color}`}
+                            >
+                                <span className="text-base md:text-xl drop-shadow-sm">{item.icon}</span>
+                                <span className="tracking-wide text-center md:text-left">{item.text}</span>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </section >
@@ -1399,7 +1415,7 @@ const Board = () => {
                     </div>
 
                     {/* Tier 3: Board Members */}
-                    <div className="flex flex-wrap justify-center gap-8 md:gap-16 w-full pt-8 border-t border-slate-200/60">
+                    <div className="grid grid-cols-2 md:flex md:flex-wrap md:justify-center gap-x-4 gap-y-12 md:gap-16 w-full pt-8 border-t border-slate-200/60">
                         {members.map((member, idx) => (
                             <MemberCard key={idx} member={member} size="small" />
                         ))}
