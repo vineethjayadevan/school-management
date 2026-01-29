@@ -26,20 +26,33 @@ export default function StudentFees() {
         if (!feeData.profile) return [];
 
         const cls = feeData.profile.className || feeData.profile.class;
-        const structure = feeStructure[cls] || { tuition: 5000, library: 500, sports: 500, transport: 2000 };
+        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
         const payments = feeData.history.filter(t => t.status === 'Paid');
 
         return Object.entries(structure).map(([type, dueAmount]) => {
             const paidAmount = payments
-                .filter(t => t.feeType?.toLowerCase().includes(type.toLowerCase()))
-                .reduce((sum, t) => sum + (t.amount || 0), 0);
+                .filter(t => {
+                    if (t.feeType?.toLowerCase().includes('full')) return true; // Full fee covers everything
+                    return t.feeType?.toLowerCase().includes(type.toLowerCase());
+                })
+                .reduce((sum, t) => {
+                    if (t.feeType?.toLowerCase().includes('full')) {
+                        // If Full Fee paid, assume this category is fully paid
+                        // Returns the max due for this category to ensure it shows as Paid
+                        return sum + dueAmount;
+                    }
+                    return sum + (t.amount || 0);
+                }, 0);
+
+            // Cap at due amount if overpaid (which might happen with full fee logic above)
+            const effectivePaid = paidAmount > dueAmount ? dueAmount : paidAmount;
 
             return {
                 type: type.charAt(0).toUpperCase() + type.slice(1),
                 due: dueAmount,
-                paid: paidAmount,
-                pending: dueAmount - paidAmount,
-                status: paidAmount >= dueAmount ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending'
+                paid: effectivePaid,
+                pending: dueAmount - effectivePaid,
+                status: effectivePaid >= dueAmount ? 'Paid' : effectivePaid > 0 ? 'Partial' : 'Pending'
             };
         });
     };

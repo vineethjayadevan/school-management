@@ -29,6 +29,10 @@ export const storageService = {
         add: async (transaction) => {
             const { data } = await api.post('/fees', transaction);
             return { ...data, id: data._id };
+        },
+        getByStudent: async (studentId) => {
+            const { data } = await api.get(`/fees/student/${studentId}`);
+            return data;
         }
     },
     staff: {

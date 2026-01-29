@@ -67,10 +67,18 @@ export const mockStudents = [
 ];
 
 export const feeStructure = {
-    'Class 10': { tuition: 5000, library: 200, sports: 100, transport: 1500 },
-    'Class 9': { tuition: 4800, library: 200, sports: 100, transport: 1500 },
-    'Class 8': { tuition: 4500, library: 150, sports: 100, transport: 1500 },
-    'Class 5': { tuition: 3500, library: 100, sports: 50, transport: 1500 },
+    'Class 10': { tuition: 20000, materials: 6500 },
+    'Class 9': { tuition: 20000, materials: 6500 },
+    'Class 8': { tuition: 20000, materials: 6500 },
+    'Class 7': { tuition: 20000, materials: 6500 },
+    'Class 6': { tuition: 20000, materials: 6500 },
+    'Class 5': { tuition: 20000, materials: 6500 },
+    'Class 4': { tuition: 20000, materials: 6500 },
+    'Class 3': { tuition: 20000, materials: 6500 },
+    'Class 2': { tuition: 20000, materials: 6500 },
+    'Class 1': { tuition: 20000, materials: 6500 },
+    'KG 1': { tuition: 20000, materials: 6500 },
+    'KG 2': { tuition: 20000, materials: 6500 },
 };
 
 export const mockFees = [

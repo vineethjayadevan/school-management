@@ -24,8 +24,24 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            const data = await storageService.students.getById(studentId);
-            setStudent(data);
+            // Parallel fetch: Student Profile AND Fee History
+            const [data, feeHistory] = await Promise.all([
+                storageService.students.getById(studentId),
+                storageService.fees.getByStudent(studentId)
+            ]);
+
+            // Calculate fee stats
+            const totalFee = 26500;
+            const paid = feeHistory.reduce((sum, f) => sum + (f.amount || 0), 0);
+            const pending = totalFee - paid;
+
+            const studentWithFees = {
+                ...data,
+                feeDetails: { paid, pending }
+            };
+
+            setStudent(studentWithFees);
+
             // Pre-fill form for edit mode
             reset({
                 name: data.name,
@@ -41,9 +57,10 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                 motherName: data.motherName,
                 primaryPhone: data.primaryPhone || data.contact,
                 address: data.address,
-                feesStatus: data.feesStatus
+                feesStatus: data.feesStatus // Use status from profile, but display details from calculation
             });
         } catch (error) {
+            console.error(error);
             addToast("Failed to fetch student details", "error");
             onClose();
         } finally {
@@ -136,6 +153,35 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                             <p className="text-xs text-slate-500">Status</p>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${student?.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                                 {student?.feesStatus || 'Active'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Fee Details (Read Only) */}
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        <div className="text-emerald-500">
+                                            {/* Reuse existing icons or import Wallet/CreditCard if needed. Using Users for now or generic icon */}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
+                                        </div>
+                                        Fee Information
+                                    </h3>
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-3">
+                                        <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                                            <span className="text-sm text-slate-600">Total Fee</span>
+                                            <span className="font-bold text-slate-900">₹26,500</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-slate-600">Paid Amount</span>
+                                            <span className="font-semibold text-emerald-600">
+                                                ₹{student?.feeDetails?.paid?.toLocaleString() || 0}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                                            <span className="text-sm text-slate-600">Pending Due</span>
+                                            <span className="font-bold text-rose-600">
+                                                ₹{student?.feeDetails?.pending?.toLocaleString() || '26,500'}
                                             </span>
                                         </div>
                                     </div>

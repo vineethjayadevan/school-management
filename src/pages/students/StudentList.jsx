@@ -237,7 +237,7 @@ export default function StudentList() {
                                 <th className="px-6 py-4 border-b border-slate-200">Student Identity</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Academic Info</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Contact</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Status</th>
+                                <th className="px-6 py-4 border-b border-slate-200">Fee Status</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -283,10 +283,11 @@ export default function StudentList() {
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
                                                 ${student.feesStatus === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
+                                                ${student.feesStatus === 'Partially Paid' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}
                                                 ${student.feesStatus?.toLowerCase() === 'overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' : ''}
-                                                ${!student.feesStatus ? 'bg-slate-100 text-slate-600 border-slate-200' : ''}
+                                                ${!student.feesStatus || student.feesStatus === 'Pending' ? 'bg-slate-100 text-slate-600 border-slate-200' : ''}
                                             `}>
-                                                {student.feesStatus || 'Unknown'}
+                                                {student.feesStatus || 'Pending'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">

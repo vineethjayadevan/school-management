@@ -26,7 +26,7 @@ const studentSchema = mongoose.Schema({
     }],
 
     // Status
-    feesStatus: { type: String, enum: ['Paid', 'Pending', 'Overdue'], default: 'Pending' },
+    feesStatus: { type: String, enum: ['Paid', 'Pending', 'Overdue', 'Partially Paid'], default: 'Pending' },
     isActive: { type: Boolean, default: true },
 }, {
     timestamps: true,

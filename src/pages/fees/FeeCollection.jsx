@@ -88,8 +88,13 @@ export default function FeeDashboard() {
         if (!selectedStudent) return 0;
         // Basic fallback logic: use className or class field
         const cls = selectedStudent.className || selectedStudent.class;
-        if (!cls || !feeStructure[cls]) return 2500; // Default amount
-        return feeStructure[cls][feeType] || 0;
+        // Fallback structure if class not found in mockData
+        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
+
+        if (feeType === 'full') {
+            return (structure.tuition || 0) + (structure.materials || 0);
+        }
+        return structure[feeType] || 0;
     };
 
     const handlePayment = async () => {
@@ -100,7 +105,7 @@ export default function FeeDashboard() {
             const amount = getDueAmount();
             const transaction = {
                 studentId: selectedStudent.id || selectedStudent._id,
-                type: `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
+                type: feeType === 'full' ? 'Full Fee (Tuition + Materials)' : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
                 amount,
                 date: new Date().toISOString(),
                 mode: paymentMode,
@@ -210,9 +215,8 @@ export default function FeeDashboard() {
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <option value="tuition">Tuition Fee</option>
-                                    <option value="transport">Transport Fee</option>
-                                    <option value="library">Library Fee</option>
-                                    <option value="sports">Sports Fee</option>
+                                    <option value="materials">Materials Fee</option>
+                                    <option value="full">Full Fee (Total)</option>
                                 </select>
                             </div>
                             <div>
@@ -279,7 +283,7 @@ export default function FeeDashboard() {
         if (!student) return [];
 
         const cls = student.className || student.class;
-        const structure = feeStructure[cls] || { tuition: 5000, library: 500, sports: 500, transport: 2000 };
+        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
 
         // Get all payments for this student
         const payments = transactions.filter(t =>
@@ -290,15 +294,49 @@ export default function FeeDashboard() {
         // Calculate status per category
         return Object.entries(structure).map(([type, dueAmount]) => {
             const paidAmount = payments
-                .filter(t => t.feeType?.toLowerCase().includes(type.toLowerCase()))
-                .reduce((sum, t) => sum + (t.amount || 0), 0);
+                .filter(t => {
+                    if (t.feeType?.toLowerCase().includes('full')) return true; // Full fee covers everything
+                    return t.feeType?.toLowerCase().includes(type.toLowerCase());
+                })
+                .reduce((sum, t) => {
+                    // specific logic for full fee: we need to attribute portions of it or just count it?
+                    // simpler approach: if full fee paid, we consider everything paid.
+                    // But for accurate partial tracking, if a "Full Fee" txn exists, we allocate proportional amount?
+                    // For this simple implementation: If "Full Fee" txn exists with >= total due, mark all paid.
+                    // Or simpler: Check if sum of ALL payments >= dueAmount for this category.
+                    // Let's refine: The loop maps through categories. We summon all payments relevant to this category.
+                    // "Full Fee" is relevant to ALL categories.
+                    if (t.feeType?.toLowerCase().includes('full')) {
+                        // Distribute full payment? Or simply check if total > due
+                        // If type is tuition (20000) and we found a Full Fee (26500) txn, we can say 20000 covers tuition.
+                        // We need to be careful not to double count if we just sum it up.
+                        // Better approach for display:
+                        // If "Full Fee" transaction exists, override calculation to PAID.
+                        return sum + (type === 'tuition' ? 20000 : 6500); // Hacky but works for this rigid structure
+                    }
+                    return sum + (t.amount || 0);
+                }, 0);
+
+            // Re-calc based on simplified logic:
+            // Just get total paid by student, and check against total due? No, user wants breakdown.
+            // Let's stick to:
+            // Tuition Paid = Sum of 'Tuition Fee' txns + (If Full Fee txn exists ? 20000 : 0)
+            // Materials Paid = Sum of 'Materials Fee' txns + (If Full Fee txn exists ? 6500 : 0)
+
+            let effectivePaid = paidAmount;
+
+            // Check for any Full Fee payment
+            const hasFullFee = payments.some(t => t.feeType?.toLowerCase().includes('full'));
+            if (hasFullFee) {
+                effectivePaid = dueAmount; // Maximise it to due amount if full fee paid
+            }
 
             return {
                 type: type.charAt(0).toUpperCase() + type.slice(1),
                 due: dueAmount,
-                paid: paidAmount,
-                pending: dueAmount - paidAmount,
-                status: paidAmount >= dueAmount ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending'
+                paid: effectivePaid > dueAmount ? dueAmount : effectivePaid,
+                pending: dueAmount - (effectivePaid > dueAmount ? dueAmount : effectivePaid),
+                status: effectivePaid >= dueAmount ? 'Paid' : effectivePaid > 0 ? 'Partial' : 'Pending'
             };
         });
     };

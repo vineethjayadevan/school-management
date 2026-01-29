@@ -22,7 +22,8 @@ import {
     Facebook,
     Instagram,
     Download,
-    FileText
+    FileText,
+    Lock
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import api from '../services/api';
@@ -135,14 +136,14 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - HIDDEN as per request */}
-                    <div className="hidden" ref={dropdownRef}>
+                    {/* Login Portal Dropdown - HIDDEN */}
+                    {/* <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 text-sm shadow-xl shadow-slate-200"
+                            className="text-slate-500 hover:text-indigo-600 font-medium transition-all flex items-center gap-1.5 text-sm py-2 px-1"
                         >
-                            Login Portal
-                            <ChevronDown size={14} className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            <Lock size={16} />
+                            <span>Login</span>
                         </button>
 
                         <AnimatePresence>
@@ -167,7 +168,7 @@ const Navbar = () => {
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div>
+                    </div> */}
 
                     {/* Mobile Menu Button */}
                     <button
@@ -201,7 +202,7 @@ const Navbar = () => {
                             ))}
                             {/* Login Portals - HIDDEN */}
                             {/* <div className="pt-4 border-t border-slate-100">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Login Portals</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-4">Login Portals</p>
                                 <div className="space-y-2">
                                     {['Admin', 'Teacher', 'Student'].map((role) => (
                                         <button
@@ -226,7 +227,7 @@ const Navbar = () => {
 // Skip to Hero section replacement for the button
 const Hero = ({ onRegister, onContact, onViewFees }) => {
     return (
-        <section id="home" className="relative min-h-screen flex items-center pt-28 bg-slate-50 overflow-hidden">
+        <section id="home" className="relative min-h-screen flex flex-col justify-center pt-28 bg-slate-50 overflow-hidden">
             {/* Background shapes */}
             <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-50/50 rounded-l-[100px] transform translate-x-20"></div>
@@ -411,7 +412,48 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                     </motion.div>
                 </div>
             </div>
-        </section>
+
+            {/* Highlights Grid - Static & Catchy */}
+            <div className="mt-8 md:mt-16 w-full relative z-20 px-4 pb-12 md:pb-0">
+                <div className="text-center mb-8">
+                    <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold text-xs md:text-sm tracking-widest uppercase mb-3 shadow-sm">
+                        Why Choose Us?
+                    </span>
+                    <h3 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
+                        Excellence in <span className="text-indigo-600">Every Detail</span>
+                    </h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-center md:gap-4 max-w-6xl mx-auto">
+                    {[
+                        { text: "No Donation", icon: "✨", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+                        { text: "Individual Attention", icon: "🎓", color: "bg-blue-50 text-blue-700 border-blue-200" },
+                        { text: "Experienced Faculties", icon: "👩‍🏫", color: "bg-green-50 text-green-700 border-green-200" },
+                        { text: "Samastha Madrasa", icon: "🕌", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                        { text: "Value Education", icon: "🌟", color: "bg-purple-50 text-purple-700 border-purple-200" },
+                        { text: "Park Facilities", icon: "🎡", color: "bg-pink-50 text-pink-700 border-pink-200" },
+                        { text: "AC Classrooms", icon: "❄️", color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+                        { text: "Montessori System", icon: "🧩", color: "bg-orange-50 text-orange-700 border-orange-200" },
+                        { text: "CBSE Syllabus", icon: "📚", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+                        { text: "STEM Education", icon: "🔬", color: "bg-teal-50 text-teal-700 border-teal-200" },
+                        { text: "Second Home", icon: "🏠", color: "bg-rose-50 text-rose-700 border-rose-200" }
+                    ].map((item, idx) => (
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.05 }}
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            className={`flex items-center justify-center md:justify-start gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border shadow-sm font-bold text-xs md:text-base cursor-default transition-all duration-300 ${item.color}`}
+                        >
+                            <span className="text-base md:text-xl drop-shadow-sm">{item.icon}</span>
+                            <span className="tracking-wide text-center md:text-left">{item.text}</span>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section >
     );
 };
 
@@ -850,7 +892,7 @@ const CampusTour = () => {
                                 {[
                                     "Modern, safe & well-ventilated campus",
                                     "Well-equipped Montessori Labs",
-                                    "Advanced STEM Laboratories",
+                                    "Advanced STEM LAB",
                                     "Kids’ Park & activity zones",
                                     "Smart classrooms & learning resources"
                                 ].map((point, idx) => (
