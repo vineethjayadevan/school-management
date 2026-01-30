@@ -99,13 +99,13 @@ const Navbar = () => {
     };
 
     return (
-        <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
+        <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-2 md:py-4' : 'bg-transparent py-2 md:py-6'}`}>
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <img
                         src="/images/logo3.jpeg"
                         alt="Stem Global Logo"
-                        className="h-20 md:h-12 w-auto object-contain rounded-lg shrink-0"
+                        className={`transition-all duration-500 w-auto object-contain rounded-lg shrink-0 ${scrolled ? 'h-10 md:h-12' : 'h-12 md:h-12'}`}
                     />
                     <div className="flex flex-col">
                         <span className={`text-xl md:text-2xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
