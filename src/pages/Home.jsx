@@ -105,7 +105,7 @@ const Navbar = () => {
                     <img
                         src="/images/logo2.jpeg"
                         alt="Stem Global Logo"
-                        className="h-12 w-auto object-contain rounded-lg"
+                        className="h-20 md:h-12 w-auto object-contain rounded-lg shrink-0"
                     />
                     <div className="flex flex-col">
                         <span className={`text-xl md:text-2xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
