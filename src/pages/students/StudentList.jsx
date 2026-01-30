@@ -70,14 +70,20 @@ export default function StudentList() {
     // Derived State: Unique Classes for Tabs
     const matchClassOrder = (cls) => {
         // Custom sort order for classes
+        if (cls === 'Mont 1') return -5;
+        if (cls === 'Mont 2') return -4;
+        if (cls === 'LKG') return -3;
+        if (cls === 'UKG') return -2;
         if (cls.startsWith('KG')) return 0;
         if (cls.startsWith('Class')) return parseInt(cls.split(' ')[1]) || 10;
         return 20;
     };
 
     const uniqueClasses = useMemo(() => {
-        const classes = [...new Set(allStudents.map(s => s.className || s.class))]; // Handle both field names if legacy exist
-        return ['All', ...classes.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
+        const dynamicClasses = [...new Set(allStudents.map(s => s.className || s.class))];
+        // Force include Mont 1 and Mont 2, plus any other classes found in data
+        const allClasses = [...new Set(['Mont 1', 'Mont 2', ...dynamicClasses])];
+        return ['All', ...allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
     }, [allStudents]);
 
     // Derived State: Filtered Students
@@ -134,6 +140,12 @@ export default function StudentList() {
         link.click();
         document.body.removeChild(link);
         addToast("Exported successfully", "success");
+    };
+
+    // Helper to format class name for display (Class -> Grade)
+    const formatClassLabel = (cls) => {
+        if (!cls) return '';
+        return cls.replace(/^Class\s+/, 'Grade ');
     };
 
     return (
@@ -224,7 +236,7 @@ export default function StudentList() {
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     }`}
                             >
-                                {cls}
+                                {formatClassLabel(cls)}
                             </button>
                         ))}
                     </div>
@@ -271,7 +283,7 @@ export default function StudentList() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-700">{student.className || student.class} - {student.section}</span>
+                                                <span className="text-sm font-medium text-slate-700">{formatClassLabel(student.className || student.class)} - {student.section}</span>
                                                 <span className="text-xs text-slate-500">Roll No: {student.rollNo}</span>
                                             </div>
                                         </td>
