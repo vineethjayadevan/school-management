@@ -12,6 +12,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Vercel/Render/Heroku)
 
 // Middleware
 app.use(cookieParser()); // Cookie parser middleware
