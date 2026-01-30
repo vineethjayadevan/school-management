@@ -193,8 +193,9 @@ export default function StudentList() {
                                 >
                                     <option value="All">All Statuses</option>
                                     <option value="Paid">Paid</option>
-                                    <option value="overdue">Overdue</option> {/* Match case from DB usually? handled safely next? */}
-                                    <option value="Overdue">Overdue (Normalized)</option>
+                                    <option value="Partially Paid">Partially Paid</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Overdue">Overdue</option>
                                 </select>
                             </div>
                             <div>

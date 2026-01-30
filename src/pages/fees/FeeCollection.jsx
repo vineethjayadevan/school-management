@@ -7,6 +7,8 @@ import { storageService } from '../../services/storage';
 import { feeStructure } from '../../services/mockData';
 import { useToast } from '../../components/ui/Toast';
 
+import FeeReceipt from '../../components/fees/FeeReceipt';
+
 export default function FeeDashboard() {
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState('collect'); // 'collect' or 'history'
@@ -84,11 +86,40 @@ export default function FeeDashboard() {
         }
     };
 
-    const getDueAmount = () => {
-        if (!selectedStudent) return 0;
-        // Basic fallback logic: use className or class field
+
+
+    const [amount, setAmount] = useState(0);
+
+    // Fetch student fee details to calculate actual pending amount
+    useEffect(() => {
+        if (selectedStudent) {
+            calculatePendingAmount();
+        }
+    }, [selectedStudent, feeType]);
+
+    const calculatePendingAmount = async () => {
+        if (!selectedStudent) return;
+
         const cls = selectedStudent.className || selectedStudent.class;
-        // Fallback structure if class not found in mockData
+        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
+        const totalFee = feeType === 'full'
+            ? (structure.tuition + structure.materials)
+            : (structure[feeType] || 0);
+
+        // We need to know how much they already paid.
+        // For now, let's assume the backend will handle the logic of "how much is remaining" 
+        // if we want to default the input to "Pending Amount".
+        // But since we don't have that handy without a fetch, let's default to the *Standard Amount*
+        // and let the user override it. Validating against "Overpayment" might be needed later.
+
+        // Better: Default to the standard fee amount for that type.
+        setAmount(totalFee);
+    };
+
+    const getDueAmount = () => {
+        // This is now purely for reference of what the "Standard" fee is.
+        if (!selectedStudent) return 0;
+        const cls = selectedStudent.className || selectedStudent.class;
         const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
 
         if (feeType === 'full') {
@@ -97,26 +128,47 @@ export default function FeeDashboard() {
         return structure[feeType] || 0;
     };
 
-    const handlePayment = async () => {
-        if (!selectedStudent) return;
+    // --- Payment Logic: Preview & Confirm ---
+    const [lastTransaction, setLastTransaction] = useState(null);
+    const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+
+    const handlePreview = () => {
+        if (!selectedStudent || amount <= 0) return;
+
+        const transaction = {
+            studentId: selectedStudent.id || selectedStudent._id,
+            type: feeType === 'full' ? 'Full Fee (Tuition + Materials)' : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
+            amount: Number(amount),
+            date: new Date().toISOString(),
+            mode: paymentMode,
+            remarks: 'Collected via Portal',
+            receiptNo: 'PREVIEW' // Temporary for preview
+        };
+
+        setLastTransaction(transaction);
+        setShowReceipt(true);
+        setIsPaymentConfirmed(false); // Entering preview mode
+    };
+
+    const handleFinalPayment = async () => {
+        if (!selectedStudent || !lastTransaction) return;
         setIsProcessing(true);
 
         try {
-            const amount = getDueAmount();
-            const transaction = {
-                studentId: selectedStudent.id || selectedStudent._id,
-                type: feeType === 'full' ? 'Full Fee (Tuition + Materials)' : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
-                amount,
-                date: new Date().toISOString(),
-                mode: paymentMode,
-                remarks: 'Collected via Portal'
-            };
+            // Use the transaction details from the preview, but strip temporary receiptNo
+            const { receiptNo, ...txnData } = lastTransaction;
 
-            await storageService.fees.add(transaction);
+            const response = await storageService.fees.add(txnData);
+
+            // Update with real receipt number from backend
+            setLastTransaction({ ...lastTransaction, receiptNo: response.receiptNo || 'NEW' });
+
+            // Mark as confirmed so UI switches to Success/Print mode
+            setIsPaymentConfirmed(true);
 
             // Optimistic Update
-            setSelectedStudent(prev => ({ ...prev, feesStatus: 'Paid' }));
-            setShowReceipt(true);
+            setSelectedStudent(prev => ({ ...prev, feesStatus: 'Partially Paid' }));
+
             addToast("Payment recorded successfully", "success");
 
             // Refresh history if already loaded
@@ -130,44 +182,34 @@ export default function FeeDashboard() {
         }
     };
 
+
+
+
     const resetForm = () => {
+        if (!isPaymentConfirmed) {
+            // If just closing preview, hide receipt but keep form data (optional, or clear)
+            setShowReceipt(false);
+            return;
+        }
+        // Full reset after successful payment
         setSelectedStudent(null);
         setSearchTerm('');
         setShowReceipt(false);
+        setLastTransaction(null);
+        setAmount(0);
+        setIsPaymentConfirmed(false);
     };
 
     // --- Render Helpers ---
 
     const renderReceipt = () => (
-        <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center space-y-6 mt-10 animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle size={32} />
-            </div>
-            <div>
-                <h2 className="text-2xl font-bold text-slate-900">Payment Successful!</h2>
-                <p className="text-slate-500">Transaction Recorded</p>
-            </div>
-            <div className="bg-slate-50 p-4 rounded-lg text-left space-y-3">
-                <div className="flex justify-between">
-                    <span className="text-slate-500">Student</span>
-                    <span className="font-medium text-slate-900">{selectedStudent?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500">Amount</span>
-                    <span className="font-bold text-slate-900">₹{getDueAmount()}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500">Mode</span>
-                    <span className="font-medium text-slate-900">{paymentMode}</span>
-                </div>
-            </div>
-            <button
-                onClick={resetForm}
-                className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium"
-            >
-                Collect Next Fee
-            </button>
-        </div>
+        <FeeReceipt
+            transaction={lastTransaction}
+            student={selectedStudent}
+            onNext={resetForm}
+            isPreview={!isPaymentConfirmed}
+            onConfirm={handleFinalPayment}
+        />
     );
 
     const renderCollectionTab = () => (
@@ -206,7 +248,7 @@ export default function FeeDashboard() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Fee Type</label>
                                 <select
@@ -217,7 +259,21 @@ export default function FeeDashboard() {
                                     <option value="tuition">Tuition Fee</option>
                                     <option value="materials">Materials Fee</option>
                                     <option value="full">Full Fee (Total)</option>
+                                    <option value="custom">Custom / Partial Payment</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Amount to Pay</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={amount}
+                                        onChange={(e) => setAmount(Number(e.target.value))}
+                                        className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
@@ -249,25 +305,25 @@ export default function FeeDashboard() {
 
                 <div className="space-y-4 mb-8">
                     <div className="flex justify-between text-slate-300">
-                        <span>Base Amount</span>
+                        <span>Standard Fee</span>
                         <span>₹{selectedStudent ? getDueAmount() : 0}</span>
                     </div>
                     <div className="h-px bg-slate-700 my-2"></div>
                     <div className="flex justify-between text-xl font-bold">
-                        <span>Total Due</span>
-                        <span>₹{selectedStudent ? getDueAmount() : 0}</span>
+                        <span>Paying Now</span>
+                        <span>₹{amount || 0}</span>
                     </div>
                 </div>
 
                 <button
-                    disabled={!selectedStudent || isProcessing}
-                    onClick={handlePayment}
+                    disabled={!selectedStudent || isProcessing || amount <= 0}
+                    onClick={handlePreview}
                     className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isProcessing ? 'Processing...' : (
                         <>
-                            <IndianRupee size={20} />
-                            Confirm Payment
+                            <Banknote size={20} />
+                            Preview & Pay
                         </>
                     )}
                 </button>

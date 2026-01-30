@@ -37,7 +37,8 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
 
             const studentWithFees = {
                 ...data,
-                feeDetails: { paid, pending }
+                feeDetails: { paid, pending },
+                feeHistory: feeHistory || [] // Store history
             };
 
             setStudent(studentWithFees);
@@ -186,6 +187,44 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Transaction History */}
+                                {student?.feeHistory?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            <FileText size={16} /> Payment History
+                                        </h3>
+                                        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                                                    <tr>
+                                                        <th className="px-4 py-2">Date</th>
+                                                        <th className="px-4 py-2">Details</th>
+                                                        <th className="px-4 py-2">Mode</th>
+                                                        <th className="px-4 py-2 text-right">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {student.feeHistory.map((fee, idx) => (
+                                                        <tr key={fee.id || idx} className="hover:bg-slate-50">
+                                                            <td className="px-4 py-2 text-slate-600">
+                                                                {fee.paymentDate ? new Date(fee.paymentDate).toLocaleDateString() : 'N/A'}
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                <p className="font-medium text-slate-900">{fee.feeType || 'Fee'}</p>
+                                                                {fee.receiptNo && <p className="text-xs text-slate-400 font-mono">{fee.receiptNo}</p>}
+                                                            </td>
+                                                            <td className="px-4 py-2 text-slate-500">{fee.paymentMode || 'N/A'}</td>
+                                                            <td className="px-4 py-2 text-right font-semibold text-emerald-600">
+                                                                ₹{Number(fee.amount).toLocaleString()}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Personal Info */}
                                 <div>

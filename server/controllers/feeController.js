@@ -29,6 +29,7 @@ const addFee = async (req, res) => {
             student: studentId,
             feeType: type,
             amount,
+            academicYear: '2025-2026', // Hardcoded for now, should be dynamic or from request
             paymentDate: date,
             paymentMode: mode,
             status: 'Paid', // Assuming immediate payment for now

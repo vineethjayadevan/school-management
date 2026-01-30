@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import TopBanner from '../components/common/TopBanner';
+import { useAuth } from '../context/AuthContext';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -23,8 +24,8 @@ export default function DashboardLayout() {
     const navigate = useNavigate();
     // Initialize sidebar based on screen width (closed on mobile default)
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
-    // Initialize user directly from storage to avoid flash of null and re-renders
-    const [user] = useState(() => authService.getCurrentUser());
+    // Use context to get user state which is already resolved
+    const { user, logout } = useAuth();
     const location = useLocation();
 
     // If for some reason user is missing (should be caught by RequireAuth), 
@@ -32,7 +33,7 @@ export default function DashboardLayout() {
     // RequireAuth in App.jsx handles the redirect security.
 
     const handleLogout = () => {
-        authService.logout();
+        logout();
         navigate('/login');
     };
 
