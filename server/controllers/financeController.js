@@ -78,7 +78,7 @@ const getExpenses = async (req, res) => {
             }
         }
 
-        const expenses = await Expense.find(query).sort({ date: -1 }).populate('addedBy', 'name');
+        const expenses = await Expense.find(query).sort({ date: -1, createdAt: -1 }).populate('addedBy', 'name');
         res.json(expenses);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -89,7 +89,7 @@ const getExpenses = async (req, res) => {
 // @route   POST /api/finance/expenses
 // @access  Private
 const addExpense = async (req, res) => {
-    const { title, amount, category, subcategory, description, date, receiptUrl } = req.body;
+    const { title, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
 
     try {
         const expense = new Expense({
@@ -100,6 +100,8 @@ const addExpense = async (req, res) => {
             description,
             date,
             receiptUrl,
+            referenceType,
+            referenceNo,
             addedBy: req.user._id
         });
 
@@ -159,7 +161,7 @@ const getOtherIncome = async (req, res) => {
         }
 
         // Populate is not strictly needed for category string, but kept for user consistency
-        const income = await OtherIncome.find(query).sort({ date: -1 }).populate('addedBy', 'name');
+        const income = await OtherIncome.find(query).sort({ date: -1, createdAt: -1 }).populate('addedBy', 'name');
         res.json(income);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -170,7 +172,7 @@ const getOtherIncome = async (req, res) => {
 // @route   POST /api/finance/income
 // @access  Private
 const addOtherIncome = async (req, res) => {
-    const { category, amount, description, date } = req.body;
+    const { category, amount, description, date, receiptNo } = req.body;
 
     try {
         const income = new OtherIncome({
@@ -178,6 +180,7 @@ const addOtherIncome = async (req, res) => {
             amount,
             description,
             date,
+            receiptNo,
             addedBy: req.user._id
         });
 
@@ -260,7 +263,7 @@ const addExpenseCategory = async (req, res) => {
 // @route   PUT /api/finance/expenses/:id
 // @access  Private
 const updateExpense = async (req, res) => {
-    const { title, amount, category, subcategory, description, date, receiptUrl } = req.body;
+    const { title, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
 
     try {
         const expense = await Expense.findById(req.params.id);
@@ -279,6 +282,8 @@ const updateExpense = async (req, res) => {
             expense.description = description || expense.description;
             expense.date = date || expense.date;
             expense.receiptUrl = receiptUrl || expense.receiptUrl;
+            expense.referenceType = referenceType || expense.referenceType;
+            expense.referenceNo = referenceNo || expense.referenceNo;
 
             const updatedExpense = await expense.save();
             res.json(updatedExpense);
@@ -294,7 +299,7 @@ const updateExpense = async (req, res) => {
 // @route   PUT /api/finance/income/:id
 // @access  Private
 const updateOtherIncome = async (req, res) => {
-    const { category, amount, description, date } = req.body;
+    const { category, amount, description, date, receiptNo } = req.body;
 
     try {
         const income = await OtherIncome.findById(req.params.id);
@@ -310,6 +315,7 @@ const updateOtherIncome = async (req, res) => {
             income.amount = amount || income.amount;
             income.description = description || income.description;
             income.date = date || income.date;
+            income.receiptNo = receiptNo || income.receiptNo;
 
             const updatedIncome = await income.save();
             res.json(updatedIncome);
@@ -376,7 +382,15 @@ const getTransactions = async (req, res) => {
         const expensesWithType = expenses.map(e => ({ ...e.toObject(), type: 'expense' }));
         const incomeWithType = income.map(i => ({ ...i.toObject(), type: 'income' }));
 
-        const combined = [...expensesWithType, ...incomeWithType].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const combined = [...expensesWithType, ...incomeWithType].sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateB - dateA;
+            }
+            // Tie-breaker: createdAt
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
 
         res.json(combined);
     } catch (error) {

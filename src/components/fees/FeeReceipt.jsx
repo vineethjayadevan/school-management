@@ -1,14 +1,23 @@
-import React, { useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import { useRef } from 'react';
+// import { useReactToPrint } from 'react-to-print'; // Removed
 import { Printer, Download, CheckCircle, School } from 'lucide-react';
+import { SCHOOL_INFO } from '../../utils/schoolInfo';
+import html2pdf from 'html2pdf.js';
 
 const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
     const componentRef = useRef();
 
-    const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
-        documentTitle: `Receipt-${transaction.receiptNo || 'New'}`,
-    });
+    const handleDownload = () => {
+        const element = componentRef.current;
+        const opt = {
+            margin: 10,
+            filename: `Receipt-${transaction.receiptNo || 'New'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    };
 
     const handleConfirm = async () => {
         if (onConfirm) {
@@ -16,13 +25,8 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
         }
     };
 
-    // Mock School Info (Ideally should come from context or config)
-    const schoolInfo = {
-        name: "STEM Global Public School",
-        address: "Kollannoor-Kappur Palakkad District",
-        phone: "9746402501",
-        email: "stemnoreply@mystemgps.com"
-    };
+    // School Info from constants
+    const schoolInfo = SCHOOL_INFO;
 
     return (
         <div className="max-w-2xl mx-auto space-y-6 animate-in zoom-in-95 duration-200">
@@ -59,11 +63,11 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                         </button>
                     ) : (
                         <button
-                            onClick={handlePrint}
+                            onClick={handleDownload}
                             className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-medium transition-shadow hover:shadow-lg hover:shadow-indigo-500/30"
                         >
-                            <Printer size={18} />
-                            Print E-Challan
+                            <Download size={18} />
+                            Download E-Challan
                         </button>
                     )}
                 </div>
@@ -81,7 +85,8 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                 {/* Header */}
                 <div className="text-center border-b-2 border-slate-100 pb-6 mb-6">
                     <div className="flex items-center justify-center gap-3 mb-2">
-                        <School size={32} className="text-indigo-600" />
+                        <img src="/images/logo.webp" alt="School Logo" className="h-16 w-auto" />
+                        {/* <School size={32} className="text-indigo-600" /> */}
                         <h1 className="text-3xl font-bold text-slate-900">{schoolInfo.name}</h1>
                     </div>
                     <p className="text-slate-500">{schoolInfo.address}</p>

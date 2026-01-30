@@ -8,6 +8,12 @@ const expenseSchema = mongoose.Schema({
     date: { type: Date, default: Date.now },
     description: { type: String },
     receiptUrl: { type: String }, // Optional path to uploaded receipt image
+    referenceType: {
+        type: String,
+        enum: ['Receipt', 'Voucher'],
+        default: 'Voucher'
+    },
+    referenceNo: { type: String }, // Required if referenceType is 'Receipt'
     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, {
     timestamps: true

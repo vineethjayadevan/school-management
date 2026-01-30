@@ -30,7 +30,10 @@ const StatCard = ({ title, value, change, changeType, icon: Icon, color, onActio
     </div>
 );
 
+import { useNavigate } from 'react-router-dom';
+
 export default function Dashboard() {
+    const navigate = useNavigate();
     const { addToast } = useToast();
     const [stats, setStats] = useState({
         students: 0,
@@ -47,7 +50,8 @@ export default function Dashboard() {
                     students: data.students,
                     staff: data.staff,
                     revenue: data.revenue,
-                    recentFees: data.recentFees
+                    recentFees: data.recentFees,
+                    recentStudents: data.recentStudents || []
                 });
             } catch (error) {
                 console.error("Failed to load dashboard stats", error);
@@ -101,22 +105,54 @@ export default function Dashboard() {
 
             {/* Recent Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Admissions Placeholder - can be wired similarly later */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-64 overflow-hidden">
+                {/* Recent Admissions */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-fit min-h-64">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-slate-900">Recent Admissions</h3>
-                        <button onClick={showNotice} className="text-indigo-600 text-sm hover:underline">View All</button>
+                        <button onClick={() => navigate('/admin/students')} className="text-indigo-600 text-sm hover:underline">View All</button>
                     </div>
-                    <div className="text-center text-slate-400 py-10 border-2 border-dashed border-slate-100 rounded-lg">
-                        Admissions data coming soon
-                    </div>
+                    {stats.recentStudents && stats.recentStudents.length > 0 ? (
+                        <div className="space-y-4">
+                            {stats.recentStudents.map((student) => (
+                                <div key={student._id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-indigo-100 p-2 rounded-full text-indigo-600">
+                                            <Users size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900">{student.name}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {student.admissionNo ? `#${student.admissionNo}` : 'New'} • {student.className || 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-slate-400">{new Date(student.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg flex flex-col items-center justify-center">
+                            <p className="text-slate-400 mb-3">No recent admissions</p>
+                            <button
+                                onClick={() => navigate('/admin/admissions/new')}
+                                className="text-sm bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition-colors"
+                            >
+                                Create Admission
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Recent Fee Collections */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-fit min-h-64">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-slate-900">Recent Fee Collections</h3>
-                        <button onClick={() => window.location.href = '/fees'} className="text-indigo-600 text-sm hover:underline">View All</button>
+                        <button
+                            onClick={() => navigate('/admin/fees', { state: { startTab: 'history' } })}
+                            className="text-indigo-600 text-sm hover:underline"
+                        >
+                            View All
+                        </button>
                     </div>
                     {stats.recentFees && stats.recentFees.length > 0 ? (
                         <div className="space-y-4">

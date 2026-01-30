@@ -18,15 +18,37 @@ export default function AdmissionForm() {
     useEffect(() => {
         if (location.state?.prefill) {
             const { prefill } = location.state;
-            const fieldsToFill = ['firstName', 'middleName', 'lastName', 'dob', 'class', 'fatherName', 'motherName', 'guardian', 'contact', 'email'];
+            const fieldsToFill = ['firstName', 'middleName', 'lastName', 'dob', 'class', 'gender', 'bloodGroup', 'fatherName', 'motherName', 'guardian', 'contact', 'email', 'address'];
 
             fieldsToFill.forEach(field => {
                 if (prefill[field]) {
-                    setValue(field, prefill[field]);
+                    let value = prefill[field];
+
+                    // Normalize Gender (Title Case)
+                    if (field === 'gender') {
+                        value = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                    }
+
+                    // Normalize Class (Ensure 'Grade' prefix if missing, or match directly)
+                    if (field === 'class') {
+                        // If incoming is "Class 1", map to "Grade 1" if needed, or keep as is if it matches
+                        // The user requested options are "Grade 1", so we might need mapping
+                        if (value.startsWith('Class ')) {
+                            value = value.replace('Class ', 'Grade ');
+                        }
+                    }
+
+                    setValue(field, value);
                 }
             });
             // If class is pre-selected, also set it explicitly just in case
-            if (prefill.class) setValue('class', prefill.class);
+            if (prefill.class) {
+                let cls = prefill.class;
+                if (cls.startsWith('Class ')) {
+                    cls = cls.replace('Class ', 'Grade ');
+                }
+                setValue('class', cls);
+            }
         }
     }, [location.state, setValue]);
 
@@ -197,9 +219,13 @@ export default function AdmissionForm() {
                                 >
                                     <option value="">Select Group</option>
                                     <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
                                     <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
                                     <option value="O+">O+</option>
-                                    {/* ... other groups */}
+                                    <option value="O-">O-</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
@@ -209,13 +235,13 @@ export default function AdmissionForm() {
                                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.class ? 'border-red-500' : 'border-slate-300'}`}
                                 >
                                     <option value="">Select Class</option>
-                                    <option value="KG1">KG1</option>
-                                    <option value="KG2">KG2</option>
-                                    <option value="Class 1">Class 1</option>
-                                    <option value="Class 2">Class 2</option>
-                                    <option value="Class 3">Class 3</option>
-                                    <option value="Class 4">Class 4</option>
-                                    <option value="Class 5">Class 5</option>
+                                    <option value="Mont 1">Mont 1</option>
+                                    <option value="Mont 2">Mont 2</option>
+                                    <option value="Grade 1">Grade 1</option>
+                                    <option value="Grade 2">Grade 2</option>
+                                    <option value="Grade 3">Grade 3</option>
+                                    <option value="Grade 4">Grade 4</option>
+                                    <option value="Grade 5">Grade 5</option>
                                 </select>
                                 {errors.class && <p className="text-xs text-red-500 mt-1">Class is required</p>}
                             </div>

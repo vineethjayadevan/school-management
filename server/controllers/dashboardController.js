@@ -27,11 +27,18 @@ const getDashboardStats = async (req, res) => {
             .limit(5)
             .populate('student', 'name');
 
+        // Get recent 5 admissions
+        const recentStudents = await Student.find()
+            .sort({ createdAt: -1 })
+            .select('name admissionNo createdAt className') // efficiently select needed fields
+            .limit(5);
+
         res.json({
             students: studentCount,
             staff: staffCount,
             revenue: totalRevenue,
-            recentFees
+            recentFees,
+            recentStudents
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

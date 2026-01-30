@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, BookOpen } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; // Use confirm context
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import TopBanner from '../../components/common/TopBanner';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { addToast } = useToast();
-    const { login, user } = useAuth(); // Get user from context
+    const { login, logout, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -16,16 +17,40 @@ export default function Login() {
     });
 
     useEffect(() => {
-        if (user) {
-            // Redirect based on role if already logged in
-            if (['superuser', 'admin'].includes(user.role)) navigate('/admin/dashboard');
-            else if (user.role === 'office_staff') navigate('/admin/enquiries');
-            else if (user.role === 'teacher') navigate('/teacher/dashboard');
-            else if (user.role === 'board_member') navigate('/board/dashboard');
-            else if (user.role === 'student') navigate('/student/dashboard');
-            else navigate('/');
-        }
-    }, [user, navigate]);
+        const checkAuthStatus = async () => {
+            if (user) {
+                const intendedRole = location.state?.role;
+
+                // Helper to check if roles are compatible
+                // e.g., 'admin' intent is compatible with 'superuser', 'admin', 'office_staff'
+                const isCompatible = (userRole, targetRole) => {
+                    if (!targetRole) return true; // No specific intent, keep logged in
+                    if (userRole === targetRole) return true;
+
+                    // Admin portal handles multiple roles
+                    if (targetRole === 'admin' && ['superuser', 'admin', 'office_staff'].includes(userRole)) return true;
+
+                    return false;
+                };
+
+                if (intendedRole && !isCompatible(user.role, intendedRole)) {
+                    // Conflicting role - logout and allow user to sign in
+                    await logout();
+                    return;
+                }
+
+                // Redirect if roles match or no specific intent
+                if (['superuser', 'admin'].includes(user.role)) navigate('/admin/dashboard');
+                else if (user.role === 'office_staff') navigate('/admin/enquiries');
+                else if (user.role === 'teacher') navigate('/teacher/dashboard');
+                else if (user.role === 'board_member') navigate('/board/dashboard');
+                else if (user.role === 'student') navigate('/student/dashboard');
+                else navigate('/');
+            }
+        };
+
+        checkAuthStatus();
+    }, [user, navigate, location.state, logout]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

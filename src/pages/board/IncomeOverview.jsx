@@ -39,7 +39,8 @@ export default function IncomeOverview() {
         amount: '',
         category: '',
         description: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        receiptNo: ''
     });
 
     const fetchData = async () => {
@@ -107,7 +108,8 @@ export default function IncomeOverview() {
                 amount: '',
                 category: categories.length > 0 ? categories[0].name : '',
                 description: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
+                receiptNo: ''
             });
             fetchData();
         } catch (error) {
@@ -120,7 +122,8 @@ export default function IncomeOverview() {
             amount: item.amount,
             category: item.category,
             description: item.description,
-            date: new Date(item.date).toISOString().split('T')[0]
+            date: new Date(item.date).toISOString().split('T')[0],
+            receiptNo: item.receiptNo || ''
         });
         setEditId(item._id);
         setShowForm(true);
@@ -237,6 +240,16 @@ export default function IncomeOverview() {
                             </select>
                         </div>
                         <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Receipt No (Optional)</label>
+                            <input
+                                type="text"
+                                value={formData.receiptNo}
+                                onChange={e => setFormData({ ...formData, receiptNo: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Enter Receipt ID"
+                            />
+                        </div>
+                        <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-500 uppercase">Amount (₹)</label>
                             <input
                                 type="number"
@@ -313,6 +326,7 @@ export default function IncomeOverview() {
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Receipt No</th>
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4">Description</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
@@ -327,6 +341,13 @@ export default function IncomeOverview() {
                                                 <Calendar size={14} className="text-slate-400" />
                                                 {new Date(item.date).toLocaleDateString()}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
+                                            {item.receiptNo ? (
+                                                <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{item.receiptNo}</span>
+                                            ) : (
+                                                <span className="text-slate-400 text-xs">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">

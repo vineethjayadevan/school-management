@@ -5,6 +5,7 @@ const otherIncomeSchema = mongoose.Schema({
     amount: { type: Number, required: true },
     date: { type: Date, default: Date.now },
     description: { type: String },
+    receiptNo: { type: String }, // Optional
     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, {
     timestamps: true

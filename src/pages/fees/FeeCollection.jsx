@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     Search, CreditCard, Banknote, IndianRupee, CheckCircle,
     History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X
@@ -11,7 +12,14 @@ import FeeReceipt from '../../components/fees/FeeReceipt';
 
 export default function FeeDashboard() {
     const { addToast } = useToast();
-    const [activeTab, setActiveTab] = useState('collect'); // 'collect' or 'history'
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState('history'); // Default to Transactions
+
+    useEffect(() => {
+        if (location.state?.startTab) {
+            setActiveTab(location.state.startTab);
+        }
+    }, [location.state]);
 
     // Data State
     const [transactions, setTransactions] = useState([]);
@@ -142,7 +150,17 @@ export default function FeeDashboard() {
             date: new Date().toISOString(),
             mode: paymentMode,
             remarks: 'Collected via Portal',
-            receiptNo: 'PREVIEW' // Temporary for preview
+            // Preliminary Receipt No for Preview
+            receiptNo: (() => {
+                const now = new Date();
+                const ts = now.getFullYear().toString() +
+                    (now.getMonth() + 1).toString().padStart(2, '0') +
+                    now.getDate().toString().padStart(2, '0') +
+                    now.getHours().toString().padStart(2, '0') +
+                    now.getMinutes().toString().padStart(2, '0') +
+                    now.getSeconds().toString().padStart(2, '0');
+                return `${ts}-${selectedStudent.admissionNo}`;
+            })()
         };
 
         setLastTransaction(transaction);
@@ -487,11 +505,49 @@ export default function FeeDashboard() {
         );
     };
 
+    // --- History Filters State ---
+    const [historySubTab, setHistorySubTab] = useState('overview'); // 'overview' | 'all'
+    const [filterClass, setFilterClass] = useState('All');
+    const [filterDateStart, setFilterDateStart] = useState('');
+    const [filterDateEnd, setFilterDateEnd] = useState('');
+
     const renderHistoryTab = () => {
         // --- Segregation Logic ---
         const recentTransactions = transactions.slice(0, 5); // Just top 5
 
-        // Group by Class
+        // Filter Logic for "All Transactions"
+        const filteredAllTransactions = transactions.filter(t => {
+            const tDate = new Date(t.paymentDate || t.createdAt);
+            const matchesClass = filterClass === 'All' ||
+                (t.student && (t.student.className === filterClass || t.student.class === filterClass));
+
+            let matchesDate = true;
+            if (filterDateStart) {
+                matchesDate = matchesDate && tDate >= new Date(filterDateStart);
+            }
+            if (filterDateEnd) {
+                // Set end date to end of day
+                const endDate = new Date(filterDateEnd);
+                endDate.setHours(23, 59, 59, 999);
+                matchesDate = matchesDate && tDate <= endDate;
+            }
+
+            return matchesClass && matchesDate;
+        });
+
+        // Unique classes for Dropdown
+        const uniqueClasses = ['All', ...new Set(transactions.map(t => t.student?.className || t.student?.class).filter(Boolean))].sort((a, b) => {
+            // Helper sort
+            const getOrder = (c) => {
+                if (c === 'All') return -1;
+                if (c.startsWith('KG')) return 0;
+                if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 10;
+                return 20;
+            };
+            return getOrder(a) - getOrder(b);
+        });
+
+        // Group by Class (for Overview)
         const groupedByClass = transactions.reduce((acc, t) => {
             const cls = t.student ? (t.student.className || t.student.class || 'Unknown') : 'Unknown';
             if (!acc[cls]) acc[cls] = [];
@@ -499,9 +555,8 @@ export default function FeeDashboard() {
             return acc;
         }, {});
 
-        // Sort Classes
+        // Sort Classes (for Overview)
         const sortedClasses = Object.keys(groupedByClass).sort((a, b) => {
-            // Helper from StudentList
             const getOrder = (c) => {
                 if (c.startsWith('KG')) return 0;
                 if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 10;
@@ -512,7 +567,7 @@ export default function FeeDashboard() {
 
         return (
             <div className="space-y-8 animate-in fade-in">
-                {/* Stats Cards */}
+                {/* Stats Cards - Always Visible */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
                         <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
@@ -543,135 +598,251 @@ export default function FeeDashboard() {
                     </div>
                 </div>
 
-                {/* 1. Recent Transactions (Compact) */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                            <History size={18} className="text-indigo-600" />
-                            Recent Activity
-                        </h3>
-                        <span className="text-xs text-slate-500">Last 5 Transactions</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
-                                <tr>
-                                    <th className="px-6 py-3">Date</th>
-                                    <th className="px-6 py-3">Student</th>
-                                    <th className="px-6 py-3">Class</th>
-                                    <th className="px-6 py-3 text-right">Amount</th>
-                                    <th className="px-6 py-3 text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 text-sm">
-                                {loadingHistory ? (
-                                    <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
-                                ) : recentTransactions.length === 0 ? (
-                                    <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No transactions found.</td></tr>
-                                ) : (
-                                    recentTransactions.map((t) => (
-                                        <tr key={t._id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
-                                            <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
-                                            <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
-                                            <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
-                                            <td className="px-6 py-3 text-center">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                {/* Sub-Tabs */}
+                <div className="flex items-center gap-4 border-b border-slate-200">
+                    <button
+                        onClick={() => setHistorySubTab('overview')}
+                        className={`pb-2 text-sm font-medium transition-colors relative ${historySubTab === 'overview' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Overview
+                        {historySubTab === 'overview' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>}
+                    </button>
+                    <button
+                        onClick={() => setHistorySubTab('all')}
+                        className={`pb-2 text-sm font-medium transition-colors relative ${historySubTab === 'all' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        All Transactions
+                        {historySubTab === 'all' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>}
+                    </button>
                 </div>
 
-                {/* 2. Segregated View by Class */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-slate-900 px-1">Class-wise Collections</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                        {sortedClasses.map(className => {
-                            const classTxns = groupedByClass[className];
-                            const clsCollected = classTxns.filter(t => t.status === 'Paid').reduce((sum, t) => sum + (t.amount || 0), 0);
-                            const clsPending = classTxns.filter(t => t.status === 'Pending' || t.status === 'Overdue').reduce((sum, t) => sum + (t.amount || 0), 0);
-                            const isExpanded = expandedClass === className;
+                {historySubTab === 'overview' ? (
+                    <>
+                        {/* 1. Recent Transactions (Compact) */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                                    <History size={18} className="text-indigo-600" />
+                                    Recent Activity
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-500">Last 5 Transactions</span>
+                                    <button onClick={() => setHistorySubTab('all')} className="text-xs text-indigo-600 font-medium hover:underline">View All</button>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
+                                        <tr>
+                                            <th className="px-6 py-3">Date</th>
+                                            <th className="px-6 py-3">Student</th>
+                                            <th className="px-6 py-3">Class</th>
+                                            <th className="px-6 py-3 text-right">Amount</th>
+                                            <th className="px-6 py-3 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-sm">
+                                        {loadingHistory ? (
+                                            <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
+                                        ) : recentTransactions.length === 0 ? (
+                                            <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No transactions found.</td></tr>
+                                        ) : (
+                                            recentTransactions.map((t) => (
+                                                <tr key={t._id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
+                                                    <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
+                                                    <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
+                                                    <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
+                                                    <td className="px-6 py-3 text-center">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                            return (
-                                <div key={className} className={`bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-2 ring-indigo-50' : 'border-slate-200'}`}>
-                                    {/* Header / Trigger */}
-                                    <div
-                                        onClick={() => toggleClass(className)}
-                                        className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-lg ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        {/* 2. Segregated View by Class */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-slate-900 px-1">Class-wise Collections</h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {sortedClasses.map(className => {
+                                    const classTxns = groupedByClass[className];
+                                    const clsCollected = classTxns.filter(t => t.status === 'Paid').reduce((sum, t) => sum + (t.amount || 0), 0);
+                                    const clsPending = classTxns.filter(t => t.status === 'Pending' || t.status === 'Overdue').reduce((sum, t) => sum + (t.amount || 0), 0);
+                                    const isExpanded = expandedClass === className;
+
+                                    return (
+                                        <div key={className} className={`bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-2 ring-indigo-50' : 'border-slate-200'}`}>
+                                            {/* Header / Trigger */}
+                                            <div
+                                                onClick={() => toggleClass(className)}
+                                                className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-2 rounded-lg ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-900 text-lg">{className}</h4>
+                                                        <p className="text-sm text-slate-500">{classTxns.length} Records</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-6 text-right">
+                                                    <div>
+                                                        <p className="text-xs text-emerald-600 uppercase font-semibold">Collected</p>
+                                                        <p className="text-lg font-bold text-emerald-700">₹{clsCollected.toLocaleString()}</p>
+                                                    </div>
+                                                    {(clsPending > 0) && (
+                                                        <div className="border-l border-slate-200 pl-6">
+                                                            <p className="text-xs text-red-500 uppercase font-semibold">Pending</p>
+                                                            <p className="text-lg font-bold text-red-600">₹{clsPending.toLocaleString()}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-900 text-lg">{className}</h4>
-                                                <p className="text-sm text-slate-500">{classTxns.length} Records</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-6 text-right">
-                                            <div>
-                                                <p className="text-xs text-emerald-600 uppercase font-semibold">Collected</p>
-                                                <p className="text-lg font-bold text-emerald-700">₹{clsCollected.toLocaleString()}</p>
-                                            </div>
-                                            {(clsPending > 0) && (
-                                                <div className="border-l border-slate-200 pl-6">
-                                                    <p className="text-xs text-red-500 uppercase font-semibold">Pending</p>
-                                                    <p className="text-lg font-bold text-red-600">₹{clsPending.toLocaleString()}</p>
+
+                                            {/* Expanded Content */}
+                                            {isExpanded && (
+                                                <div className="border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2">
+                                                    <table className="w-full text-left">
+                                                        <thead className="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-6 py-3 font-medium">Date</th>
+                                                                <th className="px-6 py-3 font-medium">Student</th>
+                                                                <th className="px-6 py-3 font-medium">Mode</th>
+                                                                <th className="px-6 py-3 font-medium text-right">Amount</th>
+                                                                <th className="px-6 py-3 font-medium text-center">Status</th>
+                                                                <th className="px-6 py-3 font-medium text-center">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-100 text-sm bg-white">
+                                                            {classTxns.map(t => (
+                                                                <tr key={t._id} className="hover:bg-slate-50">
+                                                                    <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
+                                                                    <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name}</td>
+                                                                    <td className="px-6 py-3 text-slate-600">{t.paymentMode}</td>
+                                                                    <td className="px-6 py-3 text-right font-semibold text-slate-700">₹{t.amount?.toLocaleString()}</td>
+                                                                    <td className="px-6 py-3 text-center">
+                                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-center">
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setViewingStudent(t.student);
+                                                                            }}
+                                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                                        >
+                                                                            <Info size={18} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    // ALL TRANSACTIONS VIEW
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
+                        {/* Filters */}
+                        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-4 items-center">
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-600">Class:</label>
+                                <select
+                                    value={filterClass}
+                                    onChange={(e) => setFilterClass(e.target.value)}
+                                    className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                    {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-600">Date Range:</label>
+                                <input
+                                    type="date"
+                                    value={filterDateStart}
+                                    onChange={(e) => setFilterDateStart(e.target.value)}
+                                    className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                                <span className="text-slate-400">-</span>
+                                <input
+                                    type="date"
+                                    value={filterDateEnd}
+                                    onChange={(e) => setFilterDateEnd(e.target.value)}
+                                    className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                            </div>
+                            {(filterClass !== 'All' || filterDateStart || filterDateEnd) && (
+                                <button
+                                    onClick={() => { setFilterClass('All'); setFilterDateStart(''); setFilterDateEnd(''); }}
+                                    className="text-sm text-red-500 hover:text-red-600 font-medium ml-auto"
+                                >
+                                    Clear Filters
+                                </button>
+                            )}
+                        </div>
 
-                                    {/* Expanded Content */}
-                                    {isExpanded && (
-                                        <div className="border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2">
-                                            <table className="w-full text-left">
-                                                <thead className="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
-                                                    <tr>
-                                                        <th className="px-6 py-3 font-medium">Date</th>
-                                                        <th className="px-6 py-3 font-medium">Student</th>
-                                                        <th className="px-6 py-3 font-medium">Mode</th>
-                                                        <th className="px-6 py-3 font-medium text-right">Amount</th>
-                                                        <th className="px-6 py-3 font-medium text-center">Status</th>
-                                                        <th className="px-6 py-3 font-medium text-center">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100 text-sm bg-white">
-                                                    {classTxns.map(t => (
-                                                        <tr key={t._id} className="hover:bg-slate-50">
-                                                            <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
-                                                            <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name}</td>
-                                                            <td className="px-6 py-3 text-slate-600">{t.paymentMode}</td>
-                                                            <td className="px-6 py-3 text-right font-semibold text-slate-700">₹{t.amount?.toLocaleString()}</td>
-                                                            <td className="px-6 py-3 text-center">
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
-                                                            </td>
-                                                            <td className="px-6 py-3 text-center">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setViewingStudent(t.student);
-                                                                    }}
-                                                                    className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                                >
-                                                                    <Info size={18} />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                        {/* Full Table */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
+                                    <tr>
+                                        <th className="px-6 py-3">Date</th>
+                                        <th className="px-6 py-3">Receipt No</th>
+                                        <th className="px-6 py-3">Student</th>
+                                        <th className="px-6 py-3">Class</th>
+                                        <th className="px-6 py-3">Mode</th>
+                                        <th className="px-6 py-3 text-right">Amount</th>
+                                        <th className="px-6 py-3 text-center">Status</th>
+                                        <th className="px-6 py-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-sm">
+                                    {loadingHistory ? (
+                                        <tr><td colSpan="8" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
+                                    ) : filteredAllTransactions.length === 0 ? (
+                                        <tr><td colSpan="8" className="px-6 py-10 text-center text-slate-500">No transactions match the criteria.</td></tr>
+                                    ) : (
+                                        filteredAllTransactions.map((t) => (
+                                            <tr key={t._id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
+                                                <td className="px-6 py-3 text-slate-500 text-xs font-mono">{t.receiptNo || '-'}</td>
+                                                <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
+                                                <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
+                                                <td className="px-6 py-3 text-slate-600">{t.paymentMode}</td>
+                                                <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-center">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
+                                                </td>
+                                                <td className="px-6 py-3 text-center">
+                                                    <button
+                                                        onClick={() => setViewingStudent(t.student)}
+                                                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                    >
+                                                        <Info size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
                                     )}
-                                </div>
-                            );
-                        })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 text-right">
+                            Showing {filteredAllTransactions.length} records
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         );
     };

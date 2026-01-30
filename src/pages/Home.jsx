@@ -94,7 +94,7 @@ const Navbar = () => {
     }, []);
 
     const handleLogin = (role) => {
-        navigate('/login');
+        navigate('/login', { state: { role } });
         setIsDropdownOpen(false);
     };
 

@@ -373,6 +373,7 @@ export default function BoardDashboard() {
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Ref/Receipt</th>
                                     <th className="px-6 py-4">Type</th>
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4">Description</th>
@@ -385,6 +386,21 @@ export default function BoardDashboard() {
                                     <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
                                             {new Date(t.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
+                                            {t.type === 'expense' ? (
+                                                t.referenceType === 'Receipt' ? (
+                                                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{t.referenceNo}</span>
+                                                ) : (
+                                                    <span className="text-slate-400 text-xs">Voucher</span>
+                                                )
+                                            ) : (
+                                                t.receiptNo ? (
+                                                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{t.receiptNo}</span>
+                                                ) : (
+                                                    <span className="text-slate-400 text-xs">-</span>
+                                                )
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income'
