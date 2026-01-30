@@ -20,10 +20,11 @@ app.use(cors({
         'http://localhost:5173',
         'http://localhost:5174',
         'http://127.0.0.1:5173',
-        'https://school-management-3ah63babo-vineeths-projects-c5f12fec.vercel.app',
         'https://mystemgps.com',
         'https://www.mystemgps.com',
-        process.env.CLIENT_URL
+        process.env.CLIENT_URL,
+        // Allow Vercel Preview/Production URLs dynamically
+        /^https:\/\/school-management.*\.vercel\.app$/
     ].filter(Boolean), // Allow localhost, specific vercel app, and any env var override
     credentials: true
 }));
