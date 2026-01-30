@@ -7,7 +7,7 @@ const userSchema = mongoose.Schema({
     password: { type: String, required: true },
     role: {
         type: String,
-        enum: ['superuser', 'admin', 'office_staff', 'teacher', 'student'],
+        enum: ['superuser', 'admin', 'office_staff', 'teacher', 'student', 'board_member'],
         default: 'student'
     },
     profileId: { type: mongoose.Schema.Types.ObjectId, refPath: 'role' }, // Links to Student or Staff ID

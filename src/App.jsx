@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import DashboardLayout from './layouts/DashboardLayout';
 import TeacherLayout from './layouts/TeacherLayout';
 import StudentLayout from './layouts/StudentLayout';
+import BoardLayout from './layouts/BoardLayout';
+import BoardDashboard from './pages/board/BoardDashboard';
+import ExpenseManager from './pages/board/ExpenseManager';
+import IncomeOverview from './pages/board/IncomeOverview';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -34,6 +38,7 @@ function RequireAuth({ children, allowedRoles }) {
         // Redirect based on role if they try to access unauthorized area
         if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
         if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
+        if (user.role === 'board_member') return <Navigate to="/board/dashboard" replace />;
         if (['superuser', 'admin', 'office_staff'].includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
         return <Navigate to="/login" replace />;
     }
@@ -143,6 +148,17 @@ function App() {
                     <Route path="fees" element={<StudentFees />} />
                 </Route>
 
+                {/* BOARD MEMBER ROUTES */}
+                <Route path="/board" element={
+                    <RequireAuth allowedRoles={['board_member']}>
+                        <BoardLayout />
+                    </RequireAuth>
+                }>
+                    <Route path="dashboard" element={<BoardDashboard />} />
+                    <Route path="expenses" element={<ExpenseManager />} />
+                    <Route path="income" element={<IncomeOverview />} />
+                </Route>
+
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
@@ -161,6 +177,7 @@ function RedirectHandler() {
     }
     if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
     if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
+    if (user.role === 'board_member') return <Navigate to="/board/dashboard" replace />;
 
     return <Navigate to="/login" replace />;
 }

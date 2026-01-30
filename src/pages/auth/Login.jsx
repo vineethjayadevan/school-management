@@ -31,6 +31,7 @@ export default function Login() {
             if (['superuser', 'admin'].includes(data.role)) navigate('/admin/dashboard');
             else if (data.role === 'office_staff') navigate('/admin/enquiries');
             else if (data.role === 'teacher') navigate('/teacher/dashboard');
+            else if (data.role === 'board_member') navigate('/board/dashboard');
             else if (data.role === 'student') navigate('/student/dashboard');
             else navigate('/');
         } catch (error) {
@@ -122,6 +123,7 @@ export default function Login() {
                                 <p className="text-xs text-slate-400">
                                     Demo Credentials: <br />
                                     Admin: <span className="font-mono text-slate-600">admin@school.com</span> / <span className="font-mono text-slate-600">password123</span><br />
+                                    Board: <span className="font-mono text-slate-600">board1@school.com</span> / <span className="font-mono text-slate-600">Board@20251</span><br />
                                     Teacher: <span className="font-mono text-slate-600">sarah.math@school.com</span> / <span className="font-mono text-slate-600">password123</span>
 
                                 </p>

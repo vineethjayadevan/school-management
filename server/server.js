@@ -44,6 +44,7 @@ app.use('/api/assignments', require('./routes/assignmentRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/academics', require('./routes/academicRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/finance', require('./routes/financeRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');
