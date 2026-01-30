@@ -136,8 +136,8 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - HIDDEN */}
-                    {/* <div className="relative" ref={dropdownRef}>
+                    {/* Login Portal Dropdown - RESTORED */}
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="text-slate-500 hover:text-indigo-600 font-medium transition-all flex items-center gap-1.5 text-sm py-2 px-1"
@@ -168,7 +168,7 @@ const Navbar = () => {
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div> */}
+                    </div>
 
                     {/* Mobile Menu Button */}
                     <button
@@ -200,8 +200,8 @@ const Navbar = () => {
                                     {item}
                                 </a>
                             ))}
-                            {/* Login Portals - HIDDEN */}
-                            {/* <div className="pt-4 border-t border-slate-100">
+                            {/* Login Portals - RESTORED */}
+                            <div className="pt-4 border-t border-slate-100">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-4">Login Portals</p>
                                 <div className="space-y-2">
                                     {['Admin', 'Teacher', 'Student', 'Board'].map((role) => (
@@ -215,7 +215,7 @@ const Navbar = () => {
                                         </button>
                                     ))}
                                 </div>
-                            </div> */}
+                            </div>
                         </div>
                     </motion.div>
                 )}

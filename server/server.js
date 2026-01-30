@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 // Load environment variables
 dotenv.config();
@@ -13,7 +14,7 @@ connectDB();
 const app = express();
 
 // Middleware
-// Middleware
+app.use(cookieParser()); // Cookie parser middleware
 app.use(cors({
     origin: [
         'http://localhost:5173',

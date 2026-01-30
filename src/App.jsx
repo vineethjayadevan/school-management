@@ -21,14 +21,22 @@ import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
+import { useAuth } from './context/AuthContext';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentFees from './pages/student/StudentFees';
 
 // Guard Component
+// Guard Component
 function RequireAuth({ children, allowedRoles }) {
     const location = useLocation();
-    const user = authService.getCurrentUser();
+    const { user, loading } = useAuth(); // Use context instead of direct service call
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>;
+    }
 
     if (!user) {
         return <Navigate to="/login" state={{ from: location }} replace />;
@@ -166,7 +174,10 @@ function App() {
 }
 
 function RedirectHandler() {
-    const user = authService.getCurrentUser();
+    const { user, loading } = useAuth();
+
+    if (loading) return null; // Or spinner
+
     if (!user) return <Navigate to="/login" replace />;
 
     if (['superuser', 'admin'].includes(user.role)) {

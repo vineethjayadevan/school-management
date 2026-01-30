@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, BookOpen } from 'lucide-react';
-import { authService } from '../../services/auth';
+import { useAuth } from '../../context/AuthContext'; // Use confirm context
 import { useToast } from '../../components/ui/Toast';
 import TopBanner from '../../components/common/TopBanner';
 
 export default function Login() {
     const navigate = useNavigate();
     const { addToast } = useToast();
+    const { login, user } = useAuth(); // Get user from context
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -15,27 +16,27 @@ export default function Login() {
     });
 
     useEffect(() => {
-        if (authService.isAuthenticated()) {
-            navigate('/redirect', { replace: true });
+        if (user) {
+            // Redirect based on role if already logged in
+            if (['superuser', 'admin'].includes(user.role)) navigate('/admin/dashboard');
+            else if (user.role === 'office_staff') navigate('/admin/enquiries');
+            else if (user.role === 'teacher') navigate('/teacher/dashboard');
+            else if (user.role === 'board_member') navigate('/board/dashboard');
+            else if (user.role === 'student') navigate('/student/dashboard');
+            else navigate('/');
         }
-    }, [navigate]);
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const data = await authService.login(formData.email, formData.password);
+            const data = await login(formData.email, formData.password);
             addToast('Welcome back!', 'success');
-
-            // Redirect based on role
-            if (['superuser', 'admin'].includes(data.role)) navigate('/admin/dashboard');
-            else if (data.role === 'office_staff') navigate('/admin/enquiries');
-            else if (data.role === 'teacher') navigate('/teacher/dashboard');
-            else if (data.role === 'board_member') navigate('/board/dashboard');
-            else if (data.role === 'student') navigate('/student/dashboard');
-            else navigate('/');
+            // Navigation handled by useEffect when user state updates
         } catch (error) {
-            addToast(error.message, 'error');
+            console.error(error);
+            addToast(error.response?.data?.message || 'Login failed', 'error');
         } finally {
             setLoading(false);
         }
@@ -123,9 +124,7 @@ export default function Login() {
                                 <p className="text-xs text-slate-400">
                                     Demo Credentials: <br />
                                     Admin: <span className="font-mono text-slate-600">admin@school.com</span> / <span className="font-mono text-slate-600">password123</span><br />
-                                    Board: <span className="font-mono text-slate-600">board1@school.com</span> / <span className="font-mono text-slate-600">Board@20251</span><br />
-                                    Teacher: <span className="font-mono text-slate-600">sarah.math@school.com</span> / <span className="font-mono text-slate-600">password123</span>
-
+                                    Board: <span className="font-mono text-slate-600">jayadevanv@mystemgps.com</span> / <span className="font-mono text-slate-600">jayadevanv</span><br />
                                 </p>
                             </div>
                         </div>
