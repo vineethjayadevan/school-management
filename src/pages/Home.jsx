@@ -103,7 +103,7 @@ const Navbar = () => {
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <img
-                        src="/images/logo2.jpeg"
+                        src="/images/logo3.jpeg"
                         alt="Stem Global Logo"
                         className="h-20 md:h-12 w-auto object-contain rounded-lg shrink-0"
                     />
@@ -136,8 +136,8 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - HIDDEN
-                    <div className="relative" ref={dropdownRef}>
+                    {/* Login Portal Dropdown - HIDDEN */}
+                    {/* <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="text-slate-500 hover:text-indigo-600 font-medium transition-all flex items-center gap-1.5 text-sm py-2 px-1"
@@ -200,8 +200,8 @@ const Navbar = () => {
                                     {item}
                                 </a>
                             ))}
-                            {/* Login Portals - HIDDEN
-                            <div className="pt-4 border-t border-slate-100">
+                            {/* Login Portals - HIDDEN */}
+                            {/* <div className="pt-4 border-t border-slate-100">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-4">Login Portals</p>
                                 <div className="space-y-2">
                                     {['Admin', 'Teacher', 'Student', 'Board'].map((role) => (
@@ -1544,7 +1544,7 @@ const Footer = () => (
             <div className="grid md:grid-cols-4 gap-12 mb-20">
                 <div className="col-span-1 md:col-span-2">
                     <div className="flex items-center gap-3 mb-8">
-                        <img src="/images/logo2.jpeg" alt="Stem Global Logo" className="w-12 h-12 object-contain" />
+                        <img src="/images/logo3.jpeg" alt="Stem Global Logo" className="w-12 h-12 object-contain" />
                         <span className="text-2xl font-bold text-white">STEM Global Public School</span>
                     </div>
                     <p className="text-slate-400 text-lg leading-relaxed max-w-sm mb-8">
