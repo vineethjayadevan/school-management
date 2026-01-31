@@ -9,6 +9,7 @@ import IncomeOverview from './pages/board/IncomeOverview';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
+import StudentDetails from './pages/students/StudentDetails';
 import AdmissionForm from './pages/students/AdmissionForm';
 import FeeCollection from './pages/fees/FeeCollection';
 import StaffDirectory from './pages/staff/StaffDirectory';
@@ -96,6 +97,11 @@ function App() {
                     <Route path="students" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <StudentList />
+                        </RequireAuth>
+                    } />
+                    <Route path="students/:id" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StudentDetails />
                         </RequireAuth>
                     } />
                     <Route path="admissions/new" element={

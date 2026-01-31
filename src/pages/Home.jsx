@@ -1947,7 +1947,7 @@ export default function Home() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-xs font-semibold text-slate-500 mb-1 block">Date of Birth *</label>
-                                                <input required type="date" name="dob" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-600" value={enquiryForm.dob} onChange={handleChange} />
+                                                <input required type="text" onFocus={(e) => (e.target.type = "date")} onBlur={(e) => (e.target.type = "text")} name="dob" placeholder="Date of Birth" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-600" value={enquiryForm.dob} onChange={handleChange} />
                                             </div>
                                             <div>
                                                 <label className="text-xs font-semibold text-slate-500 mb-1 block">Grade Sought *</label>

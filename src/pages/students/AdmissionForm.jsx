@@ -18,15 +18,33 @@ export default function AdmissionForm() {
     useEffect(() => {
         if (location.state?.prefill) {
             const { prefill } = location.state;
+            console.log("DEBUG: AdmissionForm Received Prefill:", prefill);
             const fieldsToFill = ['firstName', 'middleName', 'lastName', 'dob', 'class', 'gender', 'bloodGroup', 'fatherName', 'motherName', 'guardian', 'contact', 'email', 'address'];
 
             fieldsToFill.forEach(field => {
                 if (prefill[field]) {
                     let value = prefill[field];
+                    console.log(`DEBUG: Processing field ${field} with value:`, value);
 
-                    // Normalize Gender (Title Case)
+                    // Normalize Gender
                     if (field === 'gender') {
-                        value = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                        const v = value.toString().toLowerCase().trim();
+                        if (v === 'male' || v === 'm') value = 'Male';
+                        else if (v === 'female' || v === 'f') value = 'Female';
+                        else if (v === 'other') value = 'Other';
+                    }
+
+                    // Normalize Blood Group
+                    if (field === 'bloodGroup') {
+                        // Remove spaces and uppercase
+                        let v = value.toString().toUpperCase().replace(/\s/g, '');
+                        // Handle written forms
+                        v = v.replace('POSITIVE', '+').replace('NEGATIVE', '-');
+
+                        const validGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                        if (validGroups.includes(v)) {
+                            value = v;
+                        }
                     }
 
                     // Normalize Class (Ensure 'Grade' prefix if missing, or match directly)
@@ -38,7 +56,10 @@ export default function AdmissionForm() {
                         }
                     }
 
+                    console.log(`DEBUG: Setting value for ${field}:`, value);
                     setValue(field, value);
+                } else {
+                    console.log(`DEBUG: No value found for field ${field}`);
                 }
             });
             // If class is pre-selected, also set it explicitly just in case

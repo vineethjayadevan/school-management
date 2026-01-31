@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
-import StudentModal from '../../components/students/StudentModal';
 
 export default function StudentList() {
     const navigate = useNavigate();
@@ -31,29 +30,16 @@ export default function StudentList() {
         gender: 'All'  // All, Male, Female
     });
 
-    // Modal State
-    const [selectedStudentId, setSelectedStudentId] = useState(null);
-    const [modalMode, setModalMode] = useState('view');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
     useEffect(() => {
         loadStudents();
     }, []);
 
     const handleViewStudent = (id) => {
-        setSelectedStudentId(id);
-        setModalMode('view');
-        setIsModalOpen(true);
+        navigate(`/admin/students/${id}`, { state: { mode: 'view' } });
     };
 
     const handleEditStudent = (id) => {
-        setSelectedStudentId(id);
-        setModalMode('edit');
-        setIsModalOpen(true);
-    };
-
-    const handleStudentUpdated = () => {
-        loadStudents();
+        navigate(`/admin/students/${id}`, { state: { mode: 'edit' } });
     };
 
     const loadStudents = async () => {
@@ -335,13 +321,6 @@ export default function StudentList() {
                 </div>
             </div>
 
-            <StudentModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                studentId={selectedStudentId}
-                initialMode={modalMode}
-                onUpdate={handleStudentUpdated}
-            />
         </div>
     );
 }

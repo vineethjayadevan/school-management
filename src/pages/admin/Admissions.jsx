@@ -39,11 +39,14 @@ const Admissions = () => {
                     name: student.studentFirstName ? `${student.studentFirstName} ${student.studentMiddleName ? student.studentMiddleName + ' ' : ''}${student.studentLastName}` : student.studentName,
                     dob: student.dob ? new Date(student.dob).toISOString().split('T')[0] : '',
                     class: student.studentGrade,
+                    gender: student.studentGender,
+                    bloodGroup: student.studentBloodGroup,
                     fatherName: student.fatherName,
                     motherName: student.motherName,
                     guardian: student.fatherName,
                     contact: student.contactNumber,
                     email: student.email,
+                    address: student.address || '',
                     enquiryId: student._id
                 }
             }

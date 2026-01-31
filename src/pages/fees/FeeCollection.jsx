@@ -536,13 +536,22 @@ export default function FeeDashboard() {
         });
 
         // Unique classes for Dropdown
-        const uniqueClasses = ['All', ...new Set(transactions.map(t => t.student?.className || t.student?.class).filter(Boolean))].sort((a, b) => {
+        // Unique classes for Dropdown
+        const requestedClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
+        const dynamicClasses = transactions
+            .map(t => t.student?.className || t.student?.class)
+            .filter(Boolean)
+            .filter(c => !c.startsWith('Class ')); // Exclude legacy 'Class' labels
+        const uniqueClasses = ['All', ...new Set([...requestedClasses, ...dynamicClasses])].sort((a, b) => {
             // Helper sort
             const getOrder = (c) => {
                 if (c === 'All') return -1;
-                if (c.startsWith('KG')) return 0;
-                if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 10;
-                return 20;
+                if (c === 'Mont 1') return 1;
+                if (c === 'Mont 2') return 2;
+                if (c.startsWith('Grade')) return (parseInt(c.split(' ')[1]) || 0) + 10;
+                if (c.startsWith('KG')) return 5;
+                if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 20;
+                return 100;
             };
             return getOrder(a) - getOrder(b);
         });
