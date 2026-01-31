@@ -73,9 +73,9 @@ export default function Login() {
             <div className="flex-1 flex items-center justify-center p-4">
                 <button
                     onClick={() => navigate('/')}
-                    className="absolute top-24 left-6 text-white/80 hover:text-white flex items-center gap-2 font-medium transition-colors"
+                    className="absolute top-4 left-4 md:top-24 md:left-6 text-white/90 hover:text-white flex items-center gap-2 font-medium transition-colors z-10"
                 >
-                    <ArrowRight className="rotate-180" size={20} /> Back to Home
+                    <ArrowRight className="rotate-180" size={20} /> <span className="hidden md:inline">Back to Home</span><span className="md:hidden">Home</span>
                 </button>
                 <div className="w-full max-w-md">
                     {/* Glassmorphism Card */}

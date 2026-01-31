@@ -138,7 +138,11 @@ export default function FeeDashboard() {
         // and let the user override it. Validating against "Overpayment" might be needed later.
 
         // Better: Default to the standard fee amount for that type.
-        setAmount(totalFee);
+        if (feeType === 'custom') {
+            setAmount('');
+        } else {
+            setAmount(totalFee);
+        }
     };
 
     const getDueAmount = () => {
@@ -305,7 +309,7 @@ export default function FeeDashboard() {
                                         type="number"
                                         min="1"
                                         value={amount}
-                                        onChange={(e) => setAmount(Number(e.target.value))}
+                                        onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                                         className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>

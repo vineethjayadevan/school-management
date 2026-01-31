@@ -131,6 +131,11 @@ export default function DashboardLayout() {
                                 to={item.href}
                                 icon={<item.icon size={20} />}
                                 text={item.name}
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) {
+                                        setIsSidebarOpen(false);
+                                    }
+                                }}
                             />
                         ))}
                     </div>
@@ -188,10 +193,11 @@ export default function DashboardLayout() {
 }
 
 // Helper Component for Sidebar Links
-function SidebarLink({ to, icon, text }) {
+function SidebarLink({ to, icon, text, onClick }) {
     return (
         <NavLink
             to={to}
+            onClick={onClick}
             className={({ isActive }) =>
                 clsx(
                     "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",

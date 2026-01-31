@@ -14,7 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 
 export default function BoardLayout() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const { logout, user } = useAuth();
     const navigate = useNavigate();
@@ -74,6 +74,7 @@ export default function BoardLayout() {
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
+                                    onClick={() => setIsSidebarOpen(false)}
                                     className={({ isActive }) => `
                                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
                                         ${isActive

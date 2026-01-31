@@ -137,7 +137,7 @@ const Navbar = () => {
 
                 <div className="flex items-center gap-4">
                     {/* Login Portal Dropdown - Cute & Premium */}
-                    <div className="relative" ref={dropdownRef}>
+                    <div className="relative hidden lg:block" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className={`
