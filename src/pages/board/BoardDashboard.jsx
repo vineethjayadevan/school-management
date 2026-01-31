@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { useReactToPrint } from 'react-to-print';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function BoardDashboard() {
     const { user } = useAuth();
@@ -39,26 +40,121 @@ export default function BoardDashboard() {
         subcategory: ''
     });
 
-    const componentRef = useRef();
+    const downloadPDF = () => {
+        const doc = new jsPDF();
 
-    const handlePrint = useReactToPrint({
-        content: () => document.getElementById('printable-dashboard-content'),
-        documentTitle: `Financial_Report_${new Date().toISOString().split('T')[0]}`,
-        pageStyle: `
-          @page {
-            size: auto;
-            margin: 20mm;
-          }
-          @media print {
-            body { 
-              -webkit-print-color-adjust: exact; 
+        // --- Header ---
+        doc.setFontSize(20);
+        doc.setTextColor(40, 40, 100); // Dark Blue
+        doc.text('STEM Global Public School', 14, 22);
+
+        doc.setFontSize(14);
+        doc.setTextColor(100, 100, 100); // Grey
+        doc.text('Financial Transaction Report', 14, 30);
+
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 38);
+
+        let yPos = 48;
+
+        // --- Active Filters ---
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Applied Filters:', 14, yPos);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setTextColor(80, 80, 80);
+
+        const filterList = [];
+        if (filters.startDate || filters.endDate) filterList.push(`Date: ${filters.startDate || 'Start'} to ${filters.endDate || 'Now'}`);
+        if (filters.type !== 'all') filterList.push(`Type: ${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)}`);
+        if (filters.category) filterList.push(`Category: ${filters.category}`);
+        if (filters.subcategory) filterList.push(`Sub: ${filters.subcategory}`);
+        if (filters.userId && boardMembers.length > 0) {
+            const u = boardMembers.find(m => m._id === filters.userId);
+            if (u) filterList.push(`User: ${u.name}`);
+        }
+
+        if (filterList.length === 0) doc.text('- None (All Records)', 20, yPos);
+        else {
+            filterList.forEach(f => {
+                doc.text(`• ${f}`, 20, yPos);
+                yPos += 5;
+            });
+        }
+        yPos += 5;
+
+        // --- Summary Section (Mini Table) ---
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Summary:', 14, yPos);
+        yPos += 4; // Spacing for autoTable
+
+        const summaryData = [
+            ['Total Income', `Rs. ${summary?.totalIncome?.toLocaleString() || 0}`],
+            ['Total Expenses', `Rs. ${summary?.totalExpenses?.toLocaleString() || 0}`],
+            ['Net Balance', `Rs. ${summary?.netBalance?.toLocaleString() || 0}`]
+        ];
+
+        autoTable(doc, {
+            body: summaryData,
+            startY: yPos,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 40 },
+                1: { halign: 'right', cellWidth: 40 }
+            },
+        });
+
+        yPos = doc.lastAutoTable.finalY + 15;
+
+        // --- Transactions Table ---
+        doc.setFontSize(12);
+        doc.text('Detailed Transactions:', 14, yPos - 5);
+
+        const tableColumn = ["Date", "Ref/Receipt", "Type", "Category", "Description", "User", "Amount"];
+        const tableRows = transactions.map(t => [
+            new Date(t.date).toLocaleDateString(),
+            t.type === 'expense'
+                ? (t.referenceType === 'Receipt' ? `Rcpt: ${t.referenceNo}` : 'Voucher')
+                : (t.receiptNo || '-'),
+            t.type === 'income' ? 'Income' : 'Expense',
+            t.category + (t.subcategory ? ` (${t.subcategory})` : ''),
+            t.description || '-',
+            t.addedBy?.name || 'Unknown',
+            `Rs. ${t.amount?.toLocaleString()}`
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: yPos,
+            theme: 'grid',
+            headStyles: { fillColor: [63, 81, 181], textColor: 255 }, // Indigo
+            styles: { fontSize: 8, cellPadding: 3 },
+            columnStyles: {
+                6: { halign: 'right', fontStyle: 'bold' } // Amount
+            },
+            didParseCell: (data) => {
+                // Color amount column based on type
+                if (data.section === 'body' && data.column.index === 6) {
+                    const type = data.row.raw[2]; // Index 2 is Type
+                    if (type === 'Income') data.cell.styles.textColor = [22, 163, 74]; // Emerald 600
+                    else if (type === 'Expense') data.cell.styles.textColor = [220, 38, 38]; // Red 600
+                }
+            },
+            didDrawPage: (data) => {
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(`Page ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
             }
-            .print-header {
-              display: block !important;
-            }
-          }
-        `
-    });
+        });
+
+        doc.save(`Financial_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -183,49 +279,20 @@ export default function BoardDashboard() {
     ];
 
     return (
-        <div id="printable-dashboard-content" className="space-y-8">
-            {/* Print Header - Visible only in Print */}
-            <div className="hidden print-header mb-8 text-center bg-white print:block">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">STEM Global Public School</h1>
-                <h2 className="text-xl text-slate-600 font-medium">Financial Transaction Report</h2>
+        <div className="space-y-8">
+            {/* Print Header Removed (handled in PDF) */}
 
-                <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-slate-600">
-                    <p><span className="font-semibold">Generated:</span> {new Date().toLocaleDateString()}</p>
-
-                    {filters.startDate && (
-                        <p><span className="font-semibold">From:</span> {new Date(filters.startDate).toLocaleDateString()}</p>
-                    )}
-                    {filters.endDate && (
-                        <p><span className="font-semibold">To:</span> {new Date(filters.endDate).toLocaleDateString()}</p>
-                    )}
-
-                    <p><span className="font-semibold">Type:</span> <span className="capitalize">{filters.type || 'All'}</span></p>
-
-                    {filters.userId && (
-                        <p><span className="font-semibold">User:</span> {boardMembers.find(u => u._id === filters.userId)?.name || 'Unknown'}</p>
-                    )}
-
-                    {filters.category && (
-                        <p><span className="font-semibold">Category:</span> {filters.category}</p>
-                    )}
-
-                    {filters.subcategory && (
-                        <p><span className="font-semibold">Subcategory:</span> {filters.subcategory}</p>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Financial Overview</h1>
                     <p className="text-slate-500">Welcome, {user?.name}. Manage and track school finances.</p>
                 </div>
                 <button
-                    onClick={handlePrint}
+                    onClick={downloadPDF}
                     className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                 >
-                    <Printer size={18} />
-                    <span>Print Report</span>
+                    <Download size={18} />
+                    <span>Download Report</span>
                 </button>
             </div>
 
@@ -252,7 +319,7 @@ export default function BoardDashboard() {
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center flex-wrap print:hidden">
+            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center flex-wrap">
                 <div className="flex items-center gap-2">
                     <Filter size={18} className="text-slate-400" />
                     <span className="text-sm font-medium text-slate-700">Filters:</span>
@@ -350,10 +417,10 @@ export default function BoardDashboard() {
                 </button>
             </div>
 
-            {/* Printable Content Section - Table Only Wrapper */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden print:shadow-none print:border-none print:p-0 print:overflow-visible">
+            {/* Table Wrapper */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between print:hidden">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <CreditCard size={20} className="text-indigo-500" />
                         Recent Transactions

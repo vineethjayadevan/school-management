@@ -54,6 +54,13 @@ export default function StudentList() {
     };
 
     // Derived State: Unique Classes for Tabs
+    // Derived State: Unique Classes for Tabs
+    const formatClassLabel = (cls) => {
+        if (!cls) return '';
+        // Normalize: If it's "Class X", make it "Grade X"
+        return cls.replace(/^Class\s+/, 'Grade ');
+    };
+
     const matchClassOrder = (cls) => {
         // Custom sort order for classes
         if (cls === 'Mont 1') return -5;
@@ -62,13 +69,18 @@ export default function StudentList() {
         if (cls === 'UKG') return -2;
         if (cls.startsWith('KG')) return 0;
         if (cls.startsWith('Class')) return parseInt(cls.split(' ')[1]) || 10;
+        if (cls.startsWith('Grade')) return parseInt(cls.split(' ')[1]) || 10;
         return 20;
     };
 
     const uniqueClasses = useMemo(() => {
-        const dynamicClasses = [...new Set(allStudents.map(s => s.className || s.class))];
-        // Force include Mont 1 and Mont 2, plus any other classes found in data
-        const allClasses = [...new Set(['Mont 1', 'Mont 2', ...dynamicClasses])];
+        // Get all raw classes
+        const dynamicClasses = allStudents.map(s => s.className || s.class);
+        // Normalize them all to "Grade X" format
+        const normalizedClasses = dynamicClasses.map(c => formatClassLabel(c));
+
+        // Force include Mont 1 and Mont 2
+        const allClasses = [...new Set(['Mont 1', 'Mont 2', ...normalizedClasses])];
         return ['All', ...allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
     }, [allStudents]);
 
@@ -83,7 +95,9 @@ export default function StudentList() {
                 (student.rollNo?.toLowerCase() || '').includes(searchLower);
 
             // 2. Class Tab
-            const matchesClass = selectedClass === 'All' || (student.className || student.class) === selectedClass;
+            // Compare normalized values
+            const studentClassNormalized = formatClassLabel(student.className || student.class);
+            const matchesClass = selectedClass === 'All' || studentClassNormalized === selectedClass;
 
             // 3. Advanced Filters
             const matchesStatus = filters.status === 'All' || student.feesStatus === filters.status;
@@ -128,11 +142,7 @@ export default function StudentList() {
         addToast("Exported successfully", "success");
     };
 
-    // Helper to format class name for display (Class -> Grade)
-    const formatClassLabel = (cls) => {
-        if (!cls) return '';
-        return cls.replace(/^Class\s+/, 'Grade ');
-    };
+
 
     return (
         <div className="space-y-6">

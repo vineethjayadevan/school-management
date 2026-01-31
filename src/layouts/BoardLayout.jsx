@@ -40,7 +40,7 @@ export default function BoardLayout() {
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed md:static inset-y-0 left-0 z-40
+                    fixed inset-y-0 left-0 z-40
                     w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}
@@ -109,7 +109,8 @@ export default function BoardLayout() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 overflow-auto">
+            {/* Main Content */}
+            <main className="flex-1 min-w-0 overflow-auto md:ml-64 bg-slate-50 min-h-screen">
                 {/* Mobile Header */}
                 <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-600">

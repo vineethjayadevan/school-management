@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
     Search, CreditCard, Banknote, IndianRupee, CheckCircle,
-    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X
+    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { storageService } from '../../services/storage';
 import { feeStructure } from '../../services/mockData';
 import { useToast } from '../../components/ui/Toast';
@@ -23,6 +25,7 @@ export default function FeeDashboard() {
 
     // Data State
     const [transactions, setTransactions] = useState([]);
+    const [students, setStudents] = useState([]); // Store all students for stats
     const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Collection Form State
@@ -49,8 +52,12 @@ export default function FeeDashboard() {
     const loadHistory = async () => {
         setLoadingHistory(true);
         try {
-            const data = await storageService.fees.getAll();
-            setTransactions(data);
+            const [txnsData, studentsData] = await Promise.all([
+                storageService.fees.getAll(),
+                storageService.students.getAll() // Fetch students for stats
+            ]);
+            setTransactions(txnsData);
+            setStudents(studentsData);
         } catch (error) {
             console.error(error);
             addToast("Failed to load history", "error");
@@ -60,20 +67,30 @@ export default function FeeDashboard() {
     };
 
     // --- Stats Logic ---
-    const totalCollected = transactions
-        .filter(t => t.status === 'Paid')
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+    const stats = useMemo(() => {
+        // 1. Calculate Total Expected Revenue
+        const totalExpected = students.reduce((sum, student) => {
+            const cls = student.className || student.class;
+            const structure = feeStructure[cls] || { tuition: 0, materials: 0 };
+            const studentTotalFee = (structure.tuition || 0) + (structure.materials || 0);
+            return sum + studentTotalFee;
+        }, 0);
 
-    const totalPending = transactions
-        .filter(t => t.status === 'Pending' || t.status === 'Overdue')
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+        // 2. Calculate Total Collected (from ALL paid transactions)
+        const totalCollected = transactions
+            .filter(t => t.status === 'Paid')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-    const todayCollected = transactions
-        .filter(t => {
-            const tDate = new Date(t.paymentDate || t.createdAt).toDateString();
-            return tDate === new Date().toDateString() && t.status === 'Paid';
-        })
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
+        // 3. Calculate Pending
+        // Prevent negative pending if we have data inconsistencies or overpayments (optional check)
+        const pending = Math.max(0, totalExpected - totalCollected);
+
+        return {
+            expected: totalExpected,
+            collected: totalCollected,
+            pending: pending
+        };
+    }, [students, transactions]);
 
 
     // --- Collection Logic ---
@@ -511,22 +528,24 @@ export default function FeeDashboard() {
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
 
-    const renderHistoryTab = () => {
-        // --- Segregation Logic ---
-        const recentTransactions = transactions.slice(0, 5); // Just top 5
-
-        // Filter Logic for "All Transactions"
-        const filteredAllTransactions = transactions.filter(t => {
+    // --- Filter Logic (Memoized for PDF) ---
+    const filteredAllTransactions = useMemo(() => {
+        return transactions.filter(t => {
             const tDate = new Date(t.paymentDate || t.createdAt);
+            // Handle time component by stripping it for comparison if needed, or simple comparison
+            // For robust date comparing, reset time to 00:00:00 for item date if purely comparing dates? 
+            // The existing logic was simple >= / <= string comparison which works if formats match, 
+            // but here we are using Date objects.
+
             const matchesClass = filterClass === 'All' ||
                 (t.student && (t.student.className === filterClass || t.student.class === filterClass));
 
             let matchesDate = true;
             if (filterDateStart) {
-                matchesDate = matchesDate && tDate >= new Date(filterDateStart);
+                const startDate = new Date(filterDateStart);
+                matchesDate = matchesDate && tDate >= startDate;
             }
             if (filterDateEnd) {
-                // Set end date to end of day
                 const endDate = new Date(filterDateEnd);
                 endDate.setHours(23, 59, 59, 999);
                 matchesDate = matchesDate && tDate <= endDate;
@@ -534,6 +553,75 @@ export default function FeeDashboard() {
 
             return matchesClass && matchesDate;
         });
+    }, [transactions, filterClass, filterDateStart, filterDateEnd]);
+
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(18);
+        doc.setTextColor(40, 40, 100);
+        doc.text('STEM Global Public School', 14, 22);
+
+        doc.setFontSize(14);
+        doc.setTextColor(60, 60, 60);
+        doc.text('Fee Transactions Report', 14, 32);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
+
+        // Filter Summary
+        let filterText = `Class: ${filterClass}`;
+        if (filterDateStart || filterDateEnd) {
+            filterText += ` | Date: ${filterDateStart || 'Start'} - ${filterDateEnd || 'End'}`;
+        }
+        doc.text(filterText, 14, 48);
+
+        // Helper to format currency
+        const formatCurrency = (amount) => `Rs. ${amount.toLocaleString()}`;
+
+        // Table Headers and Data
+        const tableColumn = ["Date", "Receipt No", "Student", "Class", "Type", "Mode", "Status", "Amount"];
+        const tableRows = filteredAllTransactions.map(t => [
+            new Date(t.paymentDate || t.createdAt).toLocaleDateString(),
+            t.receiptNo || '-',
+            t.student?.name || 'Unknown',
+            t.student?.className || t.student?.class || '-',
+            t.type || '-',
+            t.paymentMode || '-',
+            t.status,
+            formatCurrency(t.amount || 0)
+        ]);
+
+        // Generate Table
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 55,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 }, // Indigo-600
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+                7: { halign: 'right', fontStyle: 'bold' } // Amount column is now index 7
+            },
+            didDrawPage: (data) => {
+                // Footer
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(8);
+                doc.text('Page ' + pageCount, data.settings.margin.left, doc.internal.pageSize.height - 10);
+            }
+        });
+
+        doc.save(`Transactions_${new Date().toISOString().slice(0, 10)}.pdf`);
+    };
+
+    const renderHistoryTab = () => {
+        // --- Segregation Logic ---
+        const recentTransactions = transactions.slice(0, 5); // Just top 5
+
+        // Using memoized filteredAllTransactions
+
 
         // Unique classes for Dropdown
         // Unique classes for Dropdown
@@ -584,7 +672,7 @@ export default function FeeDashboard() {
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">Total Collected</p>
-                            <h3 className="text-2xl font-bold text-slate-900">₹{totalCollected.toLocaleString()}</h3>
+                            <h3 className="text-2xl font-bold text-slate-900">₹{stats.collected.toLocaleString()}</h3>
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
@@ -593,7 +681,7 @@ export default function FeeDashboard() {
                         </div>
                         <div>
                             <p className="text-sm text-slate-500">Total Pending</p>
-                            <h3 className="text-2xl font-bold text-slate-900">₹{totalPending.toLocaleString()}</h3>
+                            <h3 className="text-2xl font-bold text-slate-900">₹{stats.pending.toLocaleString()}</h3>
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
@@ -799,6 +887,15 @@ export default function FeeDashboard() {
                                     Clear Filters
                                 </button>
                             )}
+
+                            {/* Download PDF Button */}
+                            <button
+                                onClick={downloadPDF}
+                                className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-indigo-100 transition-colors border border-indigo-200"
+                            >
+                                <Download size={16} />
+                                Download PDF
+                            </button>
                         </div>
 
                         {/* Full Table */}

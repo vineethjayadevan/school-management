@@ -99,26 +99,26 @@ const Navbar = () => {
     };
 
     return (
-        <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-2 md:py-4' : 'bg-transparent py-2 md:py-6'}`}>
+        <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-2 md:py-3' : 'bg-transparent py-2 md:py-5'}`}>
             <div className="container mx-auto px-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <img
                         src="/images/logo3.jpeg"
                         alt="Stem Global Logo"
-                        className={`transition-all duration-500 w-auto object-contain rounded-lg shrink-0 ${scrolled ? 'h-10 md:h-12' : 'h-12 md:h-12'}`}
+                        className={`transition-all duration-500 w-auto object-contain rounded-lg shrink-0 ${scrolled ? 'h-10 md:h-11' : 'h-11 md:h-12'}`}
                     />
                     <div className="flex flex-col">
-                        <span className={`text-xl md:text-2xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
+                        <span className={`text-lg md:text-xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
                             STEM Global Public School
                         </span>
-                        <span className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">
+                        <span className="text-[10px] md:text-xs font-medium text-slate-500 tracking-wide">
                             Kollannoor-Kappur Palakkad District Kerala
                         </span>
                     </div>
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="hidden lg:flex items-center gap-8 xl:gap-10">
+                <div className="hidden lg:flex items-center gap-6 xl:gap-8">
                     {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => {
                         const sectionId = item.toLowerCase().replace(/\s+/g, '');
                         const isActive = activeSection === sectionId;
@@ -126,7 +126,7 @@ const Navbar = () => {
                             <a
                                 key={item}
                                 href={`#${sectionId}`}
-                                className={`text-base font-semibold transition-colors relative group py-1 ${activeSection === sectionId ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
+                                className={`text-sm font-semibold transition-colors relative group py-1 ${activeSection === sectionId ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'}`}
                             >
                                 {item}
                                 <span className={`absolute -bottom-0 left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${activeSection === sectionId ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
@@ -136,35 +136,61 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - RESTORED */}
+                    {/* Login Portal Dropdown - Cute & Premium */}
                     <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="text-slate-500 hover:text-indigo-600 font-medium transition-all flex items-center gap-1.5 text-sm py-2 px-1"
+                            className={`
+                                relative overflow-hidden group flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-indigo-500/30
+                                ${isDropdownOpen ? 'bg-indigo-700 text-white ring-2 ring-indigo-200' : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white'}
+                            `}
                         >
-                            <Lock size={16} />
-                            <span>Login</span>
+                            <span className="relative z-10 flex items-center gap-2">
+                                <Lock size={16} className={isDropdownOpen ? '' : 'group-hover:rotate-12 transition-transform'} />
+                                <span>Login Portal</span>
+                                <ChevronDown size={14} className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </span>
+                            {/* Shine effect */}
+                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent z-0"></div>
                         </button>
 
                         <AnimatePresence>
                             {isDropdownOpen && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden p-1"
+                                    initial={{ opacity: 0, y: 15, scale: 0.95, rotateX: -10 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+                                    exit={{ opacity: 0, y: 15, scale: 0.95, rotateX: 10 }}
+                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-indigo-50 overflow-hidden origin-top-right z-50"
                                 >
-                                    {['Admin', 'Teacher', 'Student', 'Board'].map((role) => (
-                                        <button
-                                            key={role}
-                                            onClick={() => handleLogin(role === 'Board' ? 'board_member' : role.toLowerCase())}
-                                            className="w-full text-left px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-colors flex items-center gap-3 font-medium"
-                                        >
-                                            <div className={`w-2 h-2 rounded-full ${role === 'Admin' ? 'bg-red-500' : role === 'Teacher' ? 'bg-green-500' : role === 'Student' ? 'bg-blue-500' : 'bg-purple-500'}`} />
-                                            {role}
-                                        </button>
-                                    ))}
+                                    {/* Dropdown Header */}
+                                    <div className="bg-slate-50/50 p-4 border-b border-slate-100">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Authorized Access</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">For Staff & Board Members only</p>
+                                    </div>
+
+                                    <div className="p-2 space-y-1">
+                                        {[
+                                            { role: 'Admin', color: 'bg-rose-100 text-rose-600', hover: 'hover:bg-rose-50 hover:text-rose-700', icon: '🛡️' },
+                                            { role: 'Board', color: 'bg-purple-100 text-purple-600', hover: 'hover:bg-purple-50 hover:text-purple-700', icon: '👑' },
+                                            { role: 'Teacher', color: 'bg-emerald-100 text-emerald-600', hover: 'hover:bg-emerald-50 hover:text-emerald-700', icon: '👩‍🏫' },
+                                            { role: 'Student', color: 'bg-blue-100 text-blue-600', hover: 'hover:bg-blue-50 hover:text-blue-700', icon: '🎓' }
+                                        ].map((item) => (
+                                            <button
+                                                key={item.role}
+                                                onClick={() => handleLogin(item.role === 'Board' ? 'board_member' : item.role.toLowerCase())}
+                                                className={`w-full text-left px-3 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group ${item.hover}`}
+                                            >
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-sm ${item.color} group-hover:scale-110 transition-transform`}>
+                                                    {item.icon}
+                                                </div>
+                                                <div>
+                                                    <span className="block font-bold text-slate-700 text-sm group-hover:text-indigo-700 transition-colors">{item.role} Login</span>
+                                                </div>
+                                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-indigo-400" />
+                                            </button>
+                                        ))}
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -172,10 +198,10 @@ const Navbar = () => {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="lg:hidden text-slate-900 p-2"
+                        className="lg:hidden text-slate-600 hover:text-indigo-600 transition-colors p-2"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     >
-                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
                 </div>
             </div>
@@ -187,7 +213,7 @@ const Navbar = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="lg:hidden bg-white border-b border-slate-100 overflow-hidden"
+                        className="lg:hidden bg-white/95 backdrop-blur-xl border-b border-indigo-50 overflow-hidden shadow-xl"
                     >
                         <div className="flex flex-col p-6 space-y-4">
                             {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => (
@@ -195,23 +221,31 @@ const Navbar = () => {
                                     key={item}
                                     href={`#${item.toLowerCase().replace(/\s+/g, '')}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="text-base font-medium text-slate-600 hover:text-indigo-600 py-2"
+                                    className="text-base font-bold text-slate-600 hover:text-indigo-600 py-2 border-b border-slate-50 last:border-0"
                                 >
                                     {item}
                                 </a>
                             ))}
-                            {/* Login Portals - RESTORED */}
-                            <div className="pt-4 border-t border-slate-100">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-4">Login Portals</p>
-                                <div className="space-y-2">
-                                    {['Admin', 'Teacher', 'Student', 'Board'].map((role) => (
+                            {/* Login Portals - Mobile */}
+                            <div className="pt-6 mt-2">
+                                <div className="flex items-center gap-2 mb-4 px-2">
+                                    <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Restricted Access</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { role: 'Admin', color: 'bg-rose-50 text-rose-700', icon: '🛡️' },
+                                        { role: 'Board', color: 'bg-purple-50 text-purple-700', icon: '👑' },
+                                        { role: 'Teacher', color: 'bg-emerald-50 text-emerald-700', icon: '👩‍🏫' },
+                                        { role: 'Student', color: 'bg-blue-50 text-blue-700', icon: '🎓' }
+                                    ].map((item) => (
                                         <button
-                                            key={role}
-                                            onClick={() => handleLogin(role === 'Board' ? 'board_member' : role.toLowerCase())}
-                                            className="w-full text-left px-4 py-3 bg-slate-50 rounded-xl text-sm font-medium text-slate-700 flex items-center gap-3"
+                                            key={item.role}
+                                            onClick={() => handleLogin(item.role === 'Board' ? 'board_member' : item.role.toLowerCase())}
+                                            className="w-full text-left p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-100 hover:border-indigo-200 transition-all shadow-sm flex flex-col gap-2 items-center justify-center text-center group active:scale-95"
                                         >
-                                            <div className={`w-2 h-2 rounded-full ${role === 'Admin' ? 'bg-red-500' : role === 'Teacher' ? 'bg-green-500' : role === 'Student' ? 'bg-blue-500' : 'bg-purple-500'}`} />
-                                            {role} Login
+                                            <div className="text-xl group-hover:scale-110 transition-transform">{item.icon}</div>
+                                            <span className="text-xs font-bold text-slate-700">{item.role}</span>
                                         </button>
                                     ))}
                                 </div>
