@@ -8,7 +8,8 @@ import {
     Menu,
     X,
     Wallet,
-    Key
+    Key,
+    Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -28,6 +29,7 @@ export default function BoardLayout() {
         { path: '/board/dashboard', icon: LayoutDashboard, label: 'Overview' },
         { path: '/board/expenses', icon: PieChart, label: 'Expenses' },
         { path: '/board/income', icon: TrendingUp, label: 'Income & Funding' },
+        { path: '/board/shareholders', icon: Users, label: 'Shareholders' },
     ];
 
     return (

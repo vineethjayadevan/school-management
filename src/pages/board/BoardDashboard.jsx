@@ -484,7 +484,7 @@ export default function BoardDashboard() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">
-                                            {t.description || '-'}
+                                            {t.title || t.description || '-'}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {t.addedBy?.name || 'Unknown'}

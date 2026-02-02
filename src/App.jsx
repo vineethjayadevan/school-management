@@ -5,7 +5,9 @@ import StudentLayout from './layouts/StudentLayout';
 import BoardLayout from './layouts/BoardLayout';
 import BoardDashboard from './pages/board/BoardDashboard';
 import ExpenseManager from './pages/board/ExpenseManager';
+
 import IncomeOverview from './pages/board/IncomeOverview';
+import Shareholders from './pages/board/Shareholders';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -171,6 +173,7 @@ function App() {
                     <Route path="dashboard" element={<BoardDashboard />} />
                     <Route path="expenses" element={<ExpenseManager />} />
                     <Route path="income" element={<IncomeOverview />} />
+                    <Route path="shareholders" element={<Shareholders />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />

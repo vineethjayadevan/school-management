@@ -398,6 +398,90 @@ const getTransactions = async (req, res) => {
     }
 };
 
+// @desc    Get Shareholder Data (Net Worth, Share Value, Members)
+// @route   GET /api/finance/shareholders
+// @access  Private (Board Member)
+// @desc    Get Shareholder Data (Net Worth, Share Value, Members)
+// @route   GET /api/finance/shareholders
+// @access  Private (Board Member)
+const getShareholdersData = async (req, res) => {
+    try {
+        // 1. Calculate Net Worth
+        const feeIncomeAgg = await Fee.aggregate([
+            { $match: { status: 'Paid' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalFeeIncome = feeIncomeAgg.length > 0 ? feeIncomeAgg[0].total : 0;
+
+        const otherIncomeAgg = await OtherIncome.aggregate([
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalOtherIncome = otherIncomeAgg.length > 0 ? otherIncomeAgg[0].total : 0;
+
+        const expenseAgg = await Expense.aggregate([
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalExpenses = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
+
+        const totalIncome = totalFeeIncome + totalOtherIncome;
+        const netWorth = totalIncome - totalExpenses;
+
+        // 2. Get Individual Investments & Total Capital
+        // Aggregate amounts where category is 'Investment by board members'
+        const investmentAgg = await OtherIncome.aggregate([
+            { $match: { category: 'Investment by board members' } },
+            { $group: { _id: '$addedBy', totalInvested: { $sum: '$amount' } } }
+        ]);
+
+        const totalCapitalInvested = investmentAgg.reduce((acc, curr) => acc + curr.totalInvested, 0);
+
+        // 3. Calculate Operational Income (Fees + Non-Investment Income)
+        // We essentially take Total Income (Fee + Other) and subtract Capital
+        const totalIncomeReceived = totalIncome - totalCapitalInvested;
+
+        // 4. Verify Net Worth Logic (Should match user formula)
+        // NET WORTH = Total Capital Invested + Total Income Received - Total Expenses Paid
+        const calculatedNetWorth = totalCapitalInvested + totalIncomeReceived - totalExpenses;
+
+        // 5. Get Board Members
+        const shareholdersDoc = await require('../models/User').find({ role: 'board_member' }).select('-password');
+        const totalShareholders = shareholdersDoc.length;
+
+        // 6. Calculate Share Value
+        const shareValue = totalShareholders > 0 ? (calculatedNetWorth / totalShareholders) : 0;
+
+        // 7. Create Investment Map
+        const investmentMap = {};
+        investmentAgg.forEach(item => {
+            if (item._id) investmentMap[item._id.toString()] = item.totalInvested;
+        });
+
+        // 8. Enhance Shareholder Data
+        const shareholders = shareholdersDoc.map(member => {
+            const invested = investmentMap[member._id.toString()] || 0;
+            return {
+                ...member.toObject(),
+                investedAmount: invested
+            };
+        });
+
+        res.json({
+            netWorth: calculatedNetWorth,
+            components: {
+                capitalInvested: totalCapitalInvested,
+                incomeReceived: totalIncomeReceived,
+                expensesPaid: totalExpenses
+            },
+            totalShareholders,
+            shareValue,
+            shareholders
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getFinancialSummary,
     getExpenses,
@@ -412,5 +496,6 @@ module.exports = {
     addExpenseCategory,
     updateExpense,
     updateOtherIncome,
-    getTransactions
+    getTransactions,
+    getShareholdersData
 };

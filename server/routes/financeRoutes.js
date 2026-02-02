@@ -14,13 +14,16 @@ const {
     addExpenseCategory,
     updateExpense,
     updateOtherIncome,
-    getTransactions
+    getTransactions,
+    getShareholdersData
 } = require('../controllers/financeController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Protection: Only 'board_member' and 'superuser' can access these routes. 
 // 'admin' can also be allowed if transparency is required for school admins.
 const allowedRoles = authorize('board_member', 'superuser', 'admin');
+
+router.route('/shareholders').get(protect, allowedRoles, getShareholdersData);
 
 router.route('/transactions').get(protect, allowedRoles, getTransactions);
 
