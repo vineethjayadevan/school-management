@@ -62,6 +62,7 @@ const Navbar = () => {
     const [activeSection, setActiveSection] = useState('home');
     const dropdownRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isMobileLoginOpen, setIsMobileLoginOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -136,58 +137,46 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Login Portal Dropdown - Cute & Premium */}
+                    {/* Desktop Login - Small & Cute */}
                     <div className="relative hidden lg:block" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className={`
-                                relative overflow-hidden group flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-indigo-500/30
-                                ${isDropdownOpen ? 'bg-indigo-700 text-white ring-2 ring-indigo-200' : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white'}
+                                flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs transition-all duration-300 border
+                                ${isDropdownOpen
+                                    ? 'bg-indigo-50 text-indigo-600 border-indigo-200 ring-2 ring-indigo-100'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-sm'
+                                }
                             `}
                         >
-                            <span className="relative z-10 flex items-center gap-2">
-                                <Lock size={16} className={isDropdownOpen ? '' : 'group-hover:rotate-12 transition-transform'} />
-                                <span>Login Portal</span>
-                                <ChevronDown size={14} className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </span>
-                            {/* Shine effect */}
-                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent z-0"></div>
+                            <Lock size={12} className={isDropdownOpen ? 'text-indigo-500' : ''} />
+                            <span>Login</span>
+                            <ChevronDown size={12} className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         <AnimatePresence>
                             {isDropdownOpen && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: 15, scale: 0.95, rotateX: -10 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-                                    exit={{ opacity: 0, y: 15, scale: 0.95, rotateX: 10 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
-                                    className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-indigo-50 overflow-hidden origin-top-right z-50"
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden origin-top-right z-50 ring-1 ring-black/5"
                                 >
-                                    {/* Dropdown Header */}
-                                    <div className="bg-slate-50/50 p-4 border-b border-slate-100">
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Authorized Access</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">For Staff & Board Members only</p>
-                                    </div>
-
-                                    <div className="p-2 space-y-1">
+                                    <div className="py-1">
                                         {[
-                                            { role: 'Admin', color: 'bg-rose-100 text-rose-600', hover: 'hover:bg-rose-50 hover:text-rose-700', icon: '🛡️' },
-                                            { role: 'Board', color: 'bg-purple-100 text-purple-600', hover: 'hover:bg-purple-50 hover:text-purple-700', icon: '👑' },
-                                            { role: 'Teacher', color: 'bg-emerald-100 text-emerald-600', hover: 'hover:bg-emerald-50 hover:text-emerald-700', icon: '👩‍🏫' },
-                                            { role: 'Student', color: 'bg-blue-100 text-blue-600', hover: 'hover:bg-blue-50 hover:text-blue-700', icon: '🎓' }
+                                            { role: 'Admin', icon: '🛡️' },
+                                            { role: 'Board', icon: '👑' },
+                                            { role: 'Teacher', icon: '👩‍🏫' },
+                                            { role: 'Student', icon: '🎓' }
                                         ].map((item) => (
                                             <button
                                                 key={item.role}
                                                 onClick={() => handleLogin(item.role === 'Board' ? 'board_member' : item.role.toLowerCase())}
-                                                className={`w-full text-left px-3 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group ${item.hover}`}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-center gap-3 group"
                                             >
-                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-sm ${item.color} group-hover:scale-110 transition-transform`}>
-                                                    {item.icon}
-                                                </div>
-                                                <div>
-                                                    <span className="block font-bold text-slate-700 text-sm group-hover:text-indigo-700 transition-colors">{item.role} Login</span>
-                                                </div>
-                                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-indigo-400" />
+                                                <span className="text-lg group-hover:scale-110 transition-transform">{item.icon}</span>
+                                                <span className="font-medium text-slate-600 text-sm group-hover:text-indigo-600">{item.role} Login</span>
                                             </button>
                                         ))}
                                     </div>
@@ -215,41 +204,58 @@ const Navbar = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="lg:hidden bg-white/95 backdrop-blur-xl border-b border-indigo-50 overflow-hidden shadow-xl"
                     >
-                        <div className="flex flex-col p-6 space-y-4">
+                        <div className="flex flex-col p-6 space-y-2">
                             {['Home', 'About', 'Admissions', 'Campus Tour', 'Life at Campus', 'Events', 'Gallery', 'Board', 'Contact'].map((item) => (
                                 <a
                                     key={item}
                                     href={`#${item.toLowerCase().replace(/\s+/g, '')}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="text-base font-bold text-slate-600 hover:text-indigo-600 py-2 border-b border-slate-50 last:border-0"
+                                    className="text-base font-bold text-slate-600 hover:text-indigo-600 py-3 border-b border-slate-50 last:border-0"
                                 >
                                     {item}
                                 </a>
                             ))}
-                            {/* Login Portals - Mobile */}
-                            <div className="pt-6 mt-2">
-                                <div className="flex items-center gap-2 mb-4 px-2">
-                                    <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Restricted Access</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { role: 'Admin', color: 'bg-rose-50 text-rose-700', icon: '🛡️' },
-                                        { role: 'Board', color: 'bg-purple-50 text-purple-700', icon: '👑' },
-                                        { role: 'Teacher', color: 'bg-emerald-50 text-emerald-700', icon: '👩‍🏫' },
-                                        { role: 'Student', color: 'bg-blue-50 text-blue-700', icon: '🎓' }
-                                    ].map((item) => (
-                                        <button
-                                            key={item.role}
-                                            onClick={() => handleLogin(item.role === 'Board' ? 'board_member' : item.role.toLowerCase())}
-                                            className="w-full text-left p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-100 hover:border-indigo-200 transition-all shadow-sm flex flex-col gap-2 items-center justify-center text-center group active:scale-95"
+
+                            {/* Mobile Login Dropdown Item */}
+                            <div className="border-b border-slate-50 last:border-0">
+                                <button
+                                    onClick={() => setIsMobileLoginOpen(!isMobileLoginOpen)}
+                                    className="w-full flex items-center justify-between text-base font-bold text-slate-600 hover:text-indigo-600 py-3"
+                                >
+                                    <span className="flex items-center gap-2"><Lock size={16} /> Login Portal</span>
+                                    <ChevronDown size={16} className={`transition-transform duration-300 ${isMobileLoginOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isMobileLoginOpen && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden bg-slate-50 rounded-lg mb-2"
                                         >
-                                            <div className="text-xl group-hover:scale-110 transition-transform">{item.icon}</div>
-                                            <span className="text-xs font-bold text-slate-700">{item.role}</span>
-                                        </button>
-                                    ))}
-                                </div>
+                                            <div className="py-2 px-2 grid grid-cols-2 gap-2">
+                                                {[
+                                                    { role: 'Admin', icon: '🛡️' },
+                                                    { role: 'Board', icon: '👑' },
+                                                    { role: 'Teacher', icon: '👩‍🏫' },
+                                                    { role: 'Student', icon: '🎓' }
+                                                ].map((item) => (
+                                                    <button
+                                                        key={item.role}
+                                                        onClick={() => handleLogin(item.role === 'Board' ? 'board_member' : item.role.toLowerCase())}
+                                                        className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-100 shadow-sm hover:border-indigo-200 transition-all text-left"
+                                                    >
+                                                        <span className="text-lg">{item.icon}</span>
+                                                        <span className="text-xs font-bold text-slate-700">{item.role}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
+
                         </div>
                     </motion.div>
                 )}
