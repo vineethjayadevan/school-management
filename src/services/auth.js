@@ -1,33 +1,35 @@
 import api from './api';
 
-const AUTH_KEY = 'sms_auth_user';
+// AUTH_KEY removed as we use cookies now
 
 export const authService = {
     login: async (email, password) => {
+        // Cookie is set by the server automatically
         const { data } = await api.post('/auth/login', { email, password });
-        if (data.token) {
-            localStorage.setItem(AUTH_KEY, JSON.stringify(data));
-        }
         return data;
     },
 
-    logout: () => {
-        localStorage.removeItem(AUTH_KEY);
+    logout: async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
     },
 
-    getCurrentUser: () => {
-        const user = localStorage.getItem(AUTH_KEY);
+    getCurrentUser: async () => {
         try {
-            return user ? JSON.parse(user) : null;
+            const { data } = await api.get('/auth/me');
+            return data;
         } catch (error) {
-            console.error('Error parsing user data:', error);
-            localStorage.removeItem(AUTH_KEY);
+            // Not authenticated or session expired
             return null;
         }
     },
 
-    isAuthenticated: () => {
-        return !!localStorage.getItem(AUTH_KEY);
+    changePassword: async (currentPassword, newPassword) => {
+        const { data } = await api.put('/auth/change-password', { currentPassword, newPassword });
+        return data;
     }
 };
 

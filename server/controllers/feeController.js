@@ -25,15 +25,28 @@ const addFee = async (req, res) => {
             return res.status(404).json({ message: 'Student not found' });
         }
 
+        // Generate unique receipt number: YYYYMMDDHHMMSS-AdmissionNo
+        // Example: 20250130103045-1234
+        const now = new Date();
+        const timestamp = now.getFullYear().toString() +
+            (now.getMonth() + 1).toString().padStart(2, '0') +
+            now.getDate().toString().padStart(2, '0') +
+            now.getHours().toString().padStart(2, '0') +
+            now.getMinutes().toString().padStart(2, '0') +
+            now.getSeconds().toString().padStart(2, '0');
+
+        const receiptNo = `${timestamp}-${student.admissionNo}`;
+
         const fee = await Fee.create({
             student: studentId,
             feeType: type,
             amount,
+            academicYear: '2025-2026', // Hardcoded for now, should be dynamic or from request
             paymentDate: date,
             paymentMode: mode,
             status: 'Paid', // Assuming immediate payment for now
             remarks: remarks || '',
-            receiptNo: `REC${Date.now().toString().slice(-6)}`
+            receiptNo
         });
 
         // Calculate total paid including this new fee

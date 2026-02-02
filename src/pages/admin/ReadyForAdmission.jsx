@@ -28,19 +28,24 @@ const ReadyForAdmission = () => {
     };
 
     const handleAdmit = (student) => {
+        console.log("DEBUG: ReadyForAdmission Student Data:", student);
         // Navigate to Admission Form with pre-filled data
-        navigate('/admin/students/admit', {
+        navigate('/admin/admissions/new', {
             state: {
                 prefill: {
-                    name: student.studentFirstName ? `${student.studentFirstName} ${student.studentLastName}` : student.studentName,
-                    dob: student.dob ? new Date(student.dob).toISOString().split('T')[0] : '', // Format YYYY-MM-DD
-                    class: student.studentGrade, // Map Grade to class
+                    firstName: student.studentFirstName || student.firstName,
+                    middleName: student.studentMiddleName || student.middleName,
+                    lastName: student.studentLastName || student.lastName,
+                    dob: student.dob ? new Date(student.dob).toISOString().split('T')[0] : '',
+                    class: student.studentGrade || student.grade,
+                    gender: student.studentGender || student.gender,
+                    bloodGroup: student.studentBloodGroup || student.bloodGroup,
                     fatherName: student.fatherName,
                     motherName: student.motherName,
-                    guardian: student.fatherName, // Default guardian to father
-                    contact: student.contactNumber,
+                    guardian: student.fatherName || student.motherName,
+                    contact: student.contactNumber || student.phone,
                     email: student.email,
-                    address: '', // No address in enquiry yet
+                    address: student.address || '',
                     enquiryId: student._id
                 }
             }

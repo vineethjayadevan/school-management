@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
-import StudentModal from '../../components/students/StudentModal';
 
 export default function StudentList() {
     const navigate = useNavigate();
@@ -31,29 +30,16 @@ export default function StudentList() {
         gender: 'All'  // All, Male, Female
     });
 
-    // Modal State
-    const [selectedStudentId, setSelectedStudentId] = useState(null);
-    const [modalMode, setModalMode] = useState('view');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
     useEffect(() => {
         loadStudents();
     }, []);
 
     const handleViewStudent = (id) => {
-        setSelectedStudentId(id);
-        setModalMode('view');
-        setIsModalOpen(true);
+        navigate(`/admin/students/${id}`, { state: { mode: 'view' } });
     };
 
     const handleEditStudent = (id) => {
-        setSelectedStudentId(id);
-        setModalMode('edit');
-        setIsModalOpen(true);
-    };
-
-    const handleStudentUpdated = () => {
-        loadStudents();
+        navigate(`/admin/students/${id}`, { state: { mode: 'edit' } });
     };
 
     const loadStudents = async () => {
@@ -68,16 +54,34 @@ export default function StudentList() {
     };
 
     // Derived State: Unique Classes for Tabs
+    // Derived State: Unique Classes for Tabs
+    const formatClassLabel = (cls) => {
+        if (!cls) return '';
+        // Normalize: If it's "Class X", make it "Grade X"
+        return cls.replace(/^Class\s+/, 'Grade ');
+    };
+
     const matchClassOrder = (cls) => {
         // Custom sort order for classes
+        if (cls === 'Mont 1') return -5;
+        if (cls === 'Mont 2') return -4;
+        if (cls === 'LKG') return -3;
+        if (cls === 'UKG') return -2;
         if (cls.startsWith('KG')) return 0;
         if (cls.startsWith('Class')) return parseInt(cls.split(' ')[1]) || 10;
+        if (cls.startsWith('Grade')) return parseInt(cls.split(' ')[1]) || 10;
         return 20;
     };
 
     const uniqueClasses = useMemo(() => {
-        const classes = [...new Set(allStudents.map(s => s.className || s.class))]; // Handle both field names if legacy exist
-        return ['All', ...classes.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
+        // Get all raw classes
+        const dynamicClasses = allStudents.map(s => s.className || s.class);
+        // Normalize them all to "Grade X" format
+        const normalizedClasses = dynamicClasses.map(c => formatClassLabel(c));
+
+        // Force include Mont 1 and Mont 2
+        const allClasses = [...new Set(['Mont 1', 'Mont 2', ...normalizedClasses])];
+        return ['All', ...allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
     }, [allStudents]);
 
     // Derived State: Filtered Students
@@ -91,7 +95,9 @@ export default function StudentList() {
                 (student.rollNo?.toLowerCase() || '').includes(searchLower);
 
             // 2. Class Tab
-            const matchesClass = selectedClass === 'All' || (student.className || student.class) === selectedClass;
+            // Compare normalized values
+            const studentClassNormalized = formatClassLabel(student.className || student.class);
+            const matchesClass = selectedClass === 'All' || studentClassNormalized === selectedClass;
 
             // 3. Advanced Filters
             const matchesStatus = filters.status === 'All' || student.feesStatus === filters.status;
@@ -135,6 +141,8 @@ export default function StudentList() {
         document.body.removeChild(link);
         addToast("Exported successfully", "success");
     };
+
+
 
     return (
         <div className="space-y-6">
@@ -193,8 +201,9 @@ export default function StudentList() {
                                 >
                                     <option value="All">All Statuses</option>
                                     <option value="Paid">Paid</option>
-                                    <option value="overdue">Overdue</option> {/* Match case from DB usually? handled safely next? */}
-                                    <option value="Overdue">Overdue (Normalized)</option>
+                                    <option value="Partially Paid">Partially Paid</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Overdue">Overdue</option>
                                 </select>
                             </div>
                             <div>
@@ -223,7 +232,7 @@ export default function StudentList() {
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     }`}
                             >
-                                {cls}
+                                {formatClassLabel(cls)}
                             </button>
                         ))}
                     </div>
@@ -270,7 +279,7 @@ export default function StudentList() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-700">{student.className || student.class} - {student.section}</span>
+                                                <span className="text-sm font-medium text-slate-700">{formatClassLabel(student.className || student.class)} - {student.section}</span>
                                                 <span className="text-xs text-slate-500">Roll No: {student.rollNo}</span>
                                             </div>
                                         </td>
@@ -322,13 +331,6 @@ export default function StudentList() {
                 </div>
             </div>
 
-            <StudentModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                studentId={selectedStudentId}
-                initialMode={modalMode}
-                onUpdate={handleStudentUpdated}
-            />
         </div>
     );
 }

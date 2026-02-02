@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, BookOpen } from 'lucide-react';
-import { authService } from '../../services/auth';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import TopBanner from '../../components/common/TopBanner';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { addToast } = useToast();
+    const { login, logout, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -15,27 +17,51 @@ export default function Login() {
     });
 
     useEffect(() => {
-        if (authService.isAuthenticated()) {
-            navigate('/redirect', { replace: true });
-        }
-    }, [navigate]);
+        const checkAuthStatus = async () => {
+            if (user) {
+                const intendedRole = location.state?.role;
+
+                // Helper to check if roles are compatible
+                // e.g., 'admin' intent is compatible with 'superuser', 'admin', 'office_staff'
+                const isCompatible = (userRole, targetRole) => {
+                    if (!targetRole) return true; // No specific intent, keep logged in
+                    if (userRole === targetRole) return true;
+
+                    // Admin portal handles multiple roles
+                    if (targetRole === 'admin' && ['superuser', 'admin', 'office_staff'].includes(userRole)) return true;
+
+                    return false;
+                };
+
+                if (intendedRole && !isCompatible(user.role, intendedRole)) {
+                    // Conflicting role - logout and allow user to sign in
+                    await logout();
+                    return;
+                }
+
+                // Redirect if roles match or no specific intent
+                if (['superuser', 'admin'].includes(user.role)) navigate('/admin/dashboard');
+                else if (user.role === 'office_staff') navigate('/admin/enquiries');
+                else if (user.role === 'teacher') navigate('/teacher/dashboard');
+                else if (user.role === 'board_member') navigate('/board/dashboard');
+                else if (user.role === 'student') navigate('/student/dashboard');
+                else navigate('/');
+            }
+        };
+
+        checkAuthStatus();
+    }, [user, navigate, location.state, logout]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const data = await authService.login(formData.email, formData.password);
+            const data = await login(formData.email, formData.password);
             addToast('Welcome back!', 'success');
-
-            // Redirect based on role
-            if (['superuser', 'admin'].includes(data.role)) navigate('/admin/dashboard');
-            else if (data.role === 'office_staff') navigate('/admin/enquiries');
-            else if (data.role === 'teacher') navigate('/teacher/dashboard');
-            else if (data.role === 'board_member') navigate('/board/dashboard');
-            else if (data.role === 'student') navigate('/student/dashboard');
-            else navigate('/');
+            // Navigation handled by useEffect when user state updates
         } catch (error) {
-            addToast(error.message, 'error');
+            console.error(error);
+            addToast(error.response?.data?.message || 'Login failed', 'error');
         } finally {
             setLoading(false);
         }
@@ -47,9 +73,9 @@ export default function Login() {
             <div className="flex-1 flex items-center justify-center p-4">
                 <button
                     onClick={() => navigate('/')}
-                    className="absolute top-24 left-6 text-white/80 hover:text-white flex items-center gap-2 font-medium transition-colors"
+                    className="absolute top-4 left-4 md:top-24 md:left-6 text-white/90 hover:text-white flex items-center gap-2 font-medium transition-colors z-10"
                 >
-                    <ArrowRight className="rotate-180" size={20} /> Back to Home
+                    <ArrowRight className="rotate-180" size={20} /> <span className="hidden md:inline">Back to Home</span><span className="md:hidden">Home</span>
                 </button>
                 <div className="w-full max-w-md">
                     {/* Glassmorphism Card */}
@@ -123,9 +149,7 @@ export default function Login() {
                                 <p className="text-xs text-slate-400">
                                     Demo Credentials: <br />
                                     Admin: <span className="font-mono text-slate-600">admin@school.com</span> / <span className="font-mono text-slate-600">password123</span><br />
-                                    Board: <span className="font-mono text-slate-600">board1@school.com</span> / <span className="font-mono text-slate-600">Board@20251</span><br />
-                                    Teacher: <span className="font-mono text-slate-600">sarah.math@school.com</span> / <span className="font-mono text-slate-600">password123</span>
-
+                                    Board: <span className="font-mono text-slate-600">jayadevanv@mystemgps.com</span> / <span className="font-mono text-slate-600">jayadevanv</span><br />
                                 </p>
                             </div>
                         </div>

@@ -7,6 +7,7 @@ const studentSchema = mongoose.Schema({
     className: { type: String, required: true },
     section: { type: String, required: true },
     gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+    bloodGroup: { type: String },
     dob: { type: Date },
 
     // Parents Info

@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 // Load environment variables
 dotenv.config();
@@ -11,18 +12,20 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Vercel/Render/Heroku)
 
 // Middleware
-// Middleware
+app.use(cookieParser()); // Cookie parser middleware
 app.use(cors({
     origin: [
         'http://localhost:5173',
         'http://localhost:5174',
         'http://127.0.0.1:5173',
-        'https://school-management-3ah63babo-vineeths-projects-c5f12fec.vercel.app',
         'https://mystemgps.com',
         'https://www.mystemgps.com',
-        process.env.CLIENT_URL
+        process.env.CLIENT_URL,
+        // Allow Vercel Preview/Production URLs dynamically
+        /^https:\/\/school-management.*\.vercel\.app$/
     ].filter(Boolean), // Allow localhost, specific vercel app, and any env var override
     credentials: true
 }));

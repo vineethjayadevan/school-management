@@ -7,32 +7,42 @@ import {
     LogOut,
     Menu,
     X,
-    Wallet
+    Wallet,
+    Key,
+    Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 export default function BoardLayout() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const { logout, user } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
-        navigate('/');
+        navigate('/login');
     };
 
     const navItems = [
         { path: '/board/dashboard', icon: LayoutDashboard, label: 'Overview' },
         { path: '/board/expenses', icon: PieChart, label: 'Expenses' },
         { path: '/board/income', icon: TrendingUp, label: 'Income & Funding' },
+        { path: '/board/shareholders', icon: Users, label: 'Shareholders' },
     ];
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
+
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed md:static inset-y-0 left-0 z-40
+                    fixed inset-y-0 left-0 z-40
                     w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}
@@ -66,6 +76,7 @@ export default function BoardLayout() {
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
+                                    onClick={() => setIsSidebarOpen(false)}
                                     className={({ isActive }) => `
                                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
                                         ${isActive
@@ -80,7 +91,15 @@ export default function BoardLayout() {
                         </nav>
                     </div>
 
-                    <div className="mt-auto p-4 border-t border-slate-800">
+                    <div className="mt-auto p-4 border-t border-slate-800 space-y-2">
+                        <button
+                            onClick={() => setIsChangePasswordOpen(true)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
+                        >
+                            <Key size={20} />
+                            <span className="font-medium">Change Password</span>
+                        </button>
+
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center gap-3 px-3 py-2.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -93,7 +112,8 @@ export default function BoardLayout() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 overflow-auto">
+            {/* Main Content */}
+            <main className="flex-1 min-w-0 overflow-auto md:ml-64 bg-slate-50 min-h-screen">
                 {/* Mobile Header */}
                 <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-600">

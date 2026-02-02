@@ -5,10 +5,13 @@ import StudentLayout from './layouts/StudentLayout';
 import BoardLayout from './layouts/BoardLayout';
 import BoardDashboard from './pages/board/BoardDashboard';
 import ExpenseManager from './pages/board/ExpenseManager';
+
 import IncomeOverview from './pages/board/IncomeOverview';
+import Shareholders from './pages/board/Shareholders';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
+import StudentDetails from './pages/students/StudentDetails';
 import AdmissionForm from './pages/students/AdmissionForm';
 import FeeCollection from './pages/fees/FeeCollection';
 import StaffDirectory from './pages/staff/StaffDirectory';
@@ -21,14 +24,22 @@ import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
+import { useAuth } from './context/AuthContext';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentFees from './pages/student/StudentFees';
 
 // Guard Component
+// Guard Component
 function RequireAuth({ children, allowedRoles }) {
     const location = useLocation();
-    const user = authService.getCurrentUser();
+    const { user, loading } = useAuth(); // Use context instead of direct service call
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>;
+    }
 
     if (!user) {
         return <Navigate to="/login" state={{ from: location }} replace />;
@@ -88,6 +99,11 @@ function App() {
                     <Route path="students" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <StudentList />
+                        </RequireAuth>
+                    } />
+                    <Route path="students/:id" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StudentDetails />
                         </RequireAuth>
                     } />
                     <Route path="admissions/new" element={
@@ -157,6 +173,7 @@ function App() {
                     <Route path="dashboard" element={<BoardDashboard />} />
                     <Route path="expenses" element={<ExpenseManager />} />
                     <Route path="income" element={<IncomeOverview />} />
+                    <Route path="shareholders" element={<Shareholders />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -166,7 +183,10 @@ function App() {
 }
 
 function RedirectHandler() {
-    const user = authService.getCurrentUser();
+    const { user, loading } = useAuth();
+
+    if (loading) return null; // Or spinner
+
     if (!user) return <Navigate to="/login" replace />;
 
     if (['superuser', 'admin'].includes(user.role)) {

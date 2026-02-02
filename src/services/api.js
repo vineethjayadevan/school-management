@@ -5,21 +5,22 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true, // Send cookies with requests
 });
 
-// Add a request interceptor to include the auth token
-api.interceptors.request.use(
-    (config) => {
-        const user = localStorage.getItem('sms_auth_user');
-        if (user) {
-            const { token } = JSON.parse(user);
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+// Response interceptor to handle 401s (optional but good practice)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Check if we are not already on the login page to avoid loops
+            if (!window.location.pathname.startsWith('/login')) {
+                // Optionally redirect or semantic logout
+                // window.location.href = '/login'; 
             }
         }
-        return config;
-    },
-    (error) => Promise.reject(error)
+        return Promise.reject(error);
+    }
 );
 
 export default api;

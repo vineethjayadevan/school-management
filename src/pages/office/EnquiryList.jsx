@@ -72,7 +72,7 @@ const EnquiryList = () => {
                                             {enquiry.studentFirstName ? `${enquiry.studentFirstName} ${enquiry.studentLastName}` : enquiry.studentName}
                                         </h3>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusColor(enquiry.status)}`}>
-                                            {enquiry.status}
+                                            {enquiry.status === 'Admitted' ? 'Submitted' : enquiry.status}
                                         </span>
                                         <span className="text-sm text-slate-500">Grade: {enquiry.studentGrade}</span>
                                     </div>
@@ -102,7 +102,7 @@ const EnquiryList = () => {
 
                                 <div className="flex items-center gap-2 self-start flex-wrap justify-end">
                                     {/* Action Buttons */}
-                                    {enquiry.status !== 'Rejected' && enquiry.status !== 'Admitted' && enquiry.status !== 'Closed' && (
+                                    {enquiry.status !== 'Rejected' && enquiry.status !== 'Admitted' && enquiry.status !== 'Enrolled' && enquiry.status !== 'Closed' && (
                                         <>
                                             {enquiry.status === 'New' && (
                                                 <button

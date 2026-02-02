@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import TopBanner from '../components/common/TopBanner';
+import { useAuth } from '../context/AuthContext';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -23,8 +24,8 @@ export default function DashboardLayout() {
     const navigate = useNavigate();
     // Initialize sidebar based on screen width (closed on mobile default)
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
-    // Initialize user directly from storage to avoid flash of null and re-renders
-    const [user] = useState(() => authService.getCurrentUser());
+    // Use context to get user state which is already resolved
+    const { user, logout } = useAuth();
     const location = useLocation();
 
     // If for some reason user is missing (should be caught by RequireAuth), 
@@ -32,7 +33,7 @@ export default function DashboardLayout() {
     // RequireAuth in App.jsx handles the redirect security.
 
     const handleLogout = () => {
-        authService.logout();
+        logout();
         navigate('/login');
     };
 
@@ -103,7 +104,7 @@ export default function DashboardLayout() {
             {/* Sidebar */}
             <aside
                 className={clsx(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0",
                     !isSidebarOpen && "-translate-x-full lg:hidden"
                 )}
             >
@@ -130,6 +131,11 @@ export default function DashboardLayout() {
                                 to={item.href}
                                 icon={<item.icon size={20} />}
                                 text={item.name}
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) {
+                                        setIsSidebarOpen(false);
+                                    }
+                                }}
                             />
                         ))}
                     </div>
@@ -147,7 +153,7 @@ export default function DashboardLayout() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 lg:pl-64 transition-all duration-300">
                 <TopBanner />
                 {/* Topbar */}
                 <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
@@ -187,10 +193,11 @@ export default function DashboardLayout() {
 }
 
 // Helper Component for Sidebar Links
-function SidebarLink({ to, icon, text }) {
+function SidebarLink({ to, icon, text, onClick }) {
     return (
         <NavLink
             to={to}
+            onClick={onClick}
             className={({ isActive }) =>
                 clsx(
                     "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",

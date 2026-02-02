@@ -4,14 +4,23 @@ import { authService } from '../services/auth';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(authService.getCurrentUser());
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Initial load
-        const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
-        setLoading(false);
+        // Initial load - check session from backend
+        const checkAuth = async () => {
+            try {
+                const currentUser = await authService.getCurrentUser();
+                setUser(currentUser);
+            } catch (error) {
+                console.error('Session check failed', error);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkAuth();
     }, []);
 
     const login = async (email, password) => {
@@ -24,15 +33,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        authService.logout();
-        setUser(null);
+    const logout = async () => {
+        try {
+            await authService.logout();
+            setUser(null);
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
     };
 
     const updateUser = (userData) => {
         // For partial updates if needed
         const newUser = { ...user, ...userData };
-        localStorage.setItem('sms_auth_user', JSON.stringify(newUser));
         setUser(newUser);
     };
 
