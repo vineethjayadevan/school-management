@@ -53,7 +53,7 @@ export default function BoardDashboard() {
         doc.text('Financial Transaction Report', 14, 30);
 
         doc.setFontSize(10);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 38);
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}`, 14, 38);
 
         let yPos = 48;
 
@@ -116,7 +116,7 @@ export default function BoardDashboard() {
 
         const tableColumn = ["Date", "Ref/Receipt", "Type", "Category", "Description", "User", "Amount"];
         const tableRows = transactions.map(t => [
-            new Date(t.date).toLocaleDateString(),
+            new Date(t.date).toLocaleDateString('en-GB').replace(/\//g, '-'),
             t.type === 'expense'
                 ? (t.referenceType === 'Receipt' ? `Rcpt: ${t.referenceNo}` : 'Voucher')
                 : (t.receiptNo || '-'),
@@ -246,6 +246,38 @@ export default function BoardDashboard() {
             subcategory: ''
         });
         setAvailableSubcategories([]);
+        setSearchQuery('');
+    };
+
+    // Search & Highlight Logic
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredTransactions = transactions.filter(t => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        // Search in Description, Title, Category, Subcategory
+        return (
+            (t.description && t.description.toLowerCase().includes(query)) ||
+            (t.title && t.title.toLowerCase().includes(query)) ||
+            (t.category && t.category.toLowerCase().includes(query)) ||
+            (t.subcategory && t.subcategory.toLowerCase().includes(query))
+        );
+    });
+
+    const HighlightText = ({ text, highlight }) => {
+        if (!highlight || !text) return <span>{text || '-'}</span>;
+        const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
+        return (
+            <span>
+                {parts.map((part, i) =>
+                    part.toLowerCase() === highlight.toLowerCase() ? (
+                        <span key={i} className="bg-yellow-200 text-slate-800 rounded-sm px-0.5">{part}</span>
+                    ) : (
+                        part
+                    )
+                )}
+            </span>
+        );
     };
 
     if (loading && !summary) return <div className="p-8 text-center text-slate-500">Loading financial data...</div>;
@@ -323,6 +355,18 @@ export default function BoardDashboard() {
                 <div className="flex items-center gap-2">
                     <Filter size={18} className="text-slate-400" />
                     <span className="text-sm font-medium text-slate-700">Filters:</span>
+                </div>
+
+                {/* Search Input */}
+                <div className="relative">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder="Search description..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-full md:w-64"
+                    />
                 </div>
 
                 {/* Type Toggle */}
@@ -426,11 +470,11 @@ export default function BoardDashboard() {
                         Recent Transactions
                     </h3>
                     <span className="text-xs text-slate-400">
-                        Showing {transactions.length} records
+                        Showing {filteredTransactions.length} records
                     </span>
                 </div>
 
-                {transactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
                         <p>No transactions found for the selected filters.</p>
                     </div>
@@ -449,10 +493,10 @@ export default function BoardDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {transactions.map((t) => (
+                                {filteredTransactions.map((t) => (
                                     <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
-                                            {new Date(t.date).toLocaleDateString()}
+                                            {new Date(t.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
                                             {t.type === 'expense' ? (
@@ -479,12 +523,15 @@ export default function BoardDashboard() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-700">
                                             <div className="flex flex-col">
-                                                <span className="font-medium">{t.category}</span>
-                                                {t.subcategory && <span className="text-xs text-slate-500">{t.subcategory}</span>}
+                                                <span className="font-medium"><HighlightText text={t.category} highlight={searchQuery} /></span>
+                                                {t.subcategory && <span className="text-xs text-slate-500"><HighlightText text={t.subcategory} highlight={searchQuery} /></span>}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">
-                                            {t.title || t.description || '-'}
+                                        <td
+                                            className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate cursor-help"
+                                            title={t.title || t.description || ''}
+                                        >
+                                            <HighlightText text={t.title || t.description || '-'} highlight={searchQuery} />
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {t.addedBy?.name || 'Unknown'}
