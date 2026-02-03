@@ -42,10 +42,10 @@ const getStudentById = async (req, res) => {
 // @access  Private/Admin
 const createStudent = async (req, res) => {
     try {
-        const { admissionNo, name, className, section, guardian, primaryPhone } = req.body;
+        const { admissionNo, name, className, section, guardian, primaryPhone, applicationNo, submissionDate } = req.body;
 
-        if (!admissionNo || !name || !className || !section || !guardian || !primaryPhone) {
-            return res.status(400).json({ message: 'Please provide all required fields: admissionNo, name, className, section, guardian, primaryPhone' });
+        if (!admissionNo || !name || !className || !section || !guardian || !primaryPhone || !applicationNo || !submissionDate) {
+            return res.status(400).json({ message: 'Please provide all required fields including Application No, Submission Date, Admission No, Name, Class, Section, Guardian, and Phone' });
         }
 
         const studentExists = await Student.findOne({ admissionNo });

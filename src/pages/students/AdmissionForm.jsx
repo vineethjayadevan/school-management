@@ -11,8 +11,16 @@ export default function AdmissionForm() {
     const [step, setStep] = useState(1);
 
     // Prevent unregistering fields when they are hidden (vital for multi-step forms)
-    const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm({ shouldUnregister: false });
+    const { register, handleSubmit, setValue, watch, trigger, formState: { errors } } = useForm({
+        shouldUnregister: false,
+        mode: 'onChange'
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Watch boolean fields for conditional rendering
+    const hasLearningDisability = watch('hasLearningDisability');
+    const hasMedicalCondition = watch('hasMedicalCondition');
+    const hasAllergy = watch('hasAllergy');
 
     // Check for pre-fill data from ReadyForAdmission page
     useEffect(() => {
@@ -82,10 +90,11 @@ export default function AdmissionForm() {
             const newStudent = {
                 ...data,
                 name: fullName, // Backend expects 'name'
-                guardian: data.guardian || data.fatherName, // Default to fatherName if guardian not provided
+                guardian: data.fatherName || data.motherName, // Automatic mapping to Father or Mother name
                 className: data.class, // Map 'class' from form to 'className' in DB
-                primaryPhone: data.contact, // Map 'contact' from form to 'primaryPhone' in DB
-                admissionNo: data.admissionNo || `ADM${Date.now().toString().slice(-6)}`,
+                primaryPhone: data.fatherMobile, // Map mandatory 'fatherMobile' to 'primaryPhone'
+                email: data.fatherEmail || data.motherEmail, // Map available email
+                // admissionNo: data.admissionNo, // Already in data
                 status: 'Active',
                 feesStatus: 'Pending',
                 admissionDate: new Date().toISOString().split('T')[0],
@@ -127,9 +136,9 @@ export default function AdmissionForm() {
         let isValid = false;
 
         if (step === 1) {
-            isValid = await trigger(['firstName', 'lastName', 'dob', 'gender', 'class']);
+            isValid = await trigger(['applicationNo', 'submissionDate', 'admissionNo', 'firstName', 'lastName', 'dob', 'gender', 'class']);
         } else if (step === 2) {
-            isValid = await trigger(['fatherName', 'motherName', 'contact']);
+            isValid = await trigger(['fatherName', 'motherName', 'fatherMobile', 'motherMobile']);
         } else {
             isValid = true;
         }
@@ -179,10 +188,45 @@ export default function AdmissionForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-8">
                 {step === 1 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Personal Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-8">
+                        {/* Administrative Details */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Administrative Details</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Application No <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('applicationNo', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.applicationNo ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="App No"
+                                    />
+                                    {errors.applicationNo && <p className="text-xs text-red-500 mt-1">Application No is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Date of Submission <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="date"
+                                        {...register('submissionDate', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.submissionDate ? 'border-red-500' : 'border-slate-300'}`}
+                                    />
+                                    {errors.submissionDate && <p className="text-xs text-red-500 mt-1">Date is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Admission No <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('admissionNo', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.admissionNo ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="Adm No"
+                                    />
+                                    {errors.admissionNo && <p className="text-xs text-red-500 mt-1">Admission No is required</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Personal Information */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Personal Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">First Name <span className="text-red-500">*</span></label>
                                     <input
@@ -209,131 +253,423 @@ export default function AdmissionForm() {
                                     />
                                     {errors.lastName && <p className="text-xs text-red-500 mt-1">Last Name is required</p>}
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Date of Birth <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="date"
+                                        {...register('dob', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.dob ? 'border-red-500' : 'border-slate-300'}`}
+                                    />
+                                    {errors.dob && <p className="text-xs text-red-500 mt-1">Date of Birth is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Gender <span className="text-red-500">*</span></label>
+                                    <select
+                                        {...register('gender', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.gender ? 'border-red-500' : 'border-slate-300'}`}
+                                    >
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    {errors.gender && <p className="text-xs text-red-500 mt-1">Gender is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Admission Class <span className="text-red-500">*</span></label>
+                                    <select
+                                        {...register('class', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.class ? 'border-red-500' : 'border-slate-300'}`}
+                                    >
+                                        <option value="">Select Class</option>
+                                        <option value="Mont 1">Mont 1</option>
+                                        <option value="Mont 2">Mont 2</option>
+                                        <option value="Grade 1">Grade 1</option>
+                                        <option value="Grade 2">Grade 2</option>
+                                        <option value="Grade 3">Grade 3</option>
+                                        <option value="Grade 4">Grade 4</option>
+                                        <option value="Grade 5">Grade 5</option>
+                                    </select>
+                                    {errors.class && <p className="text-xs text-red-500 mt-1">Class is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Section</label>
+                                    <select
+                                        {...register('section')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                    >
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Place of Birth</label>
+                                    <input
+                                        {...register('placeOfBirth')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="City/Town"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Nationality</label>
+                                    <input
+                                        {...register('nationality')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Nationality"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Religion</label>
+                                    <input
+                                        {...register('religion')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Religion"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Caste/Community</label>
+                                    <input
+                                        {...register('caste')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Caste"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Category</label>
+                                    <select
+                                        {...register('category')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                    >
+                                        <option value="">Select Category</option>
+                                        <option value="General">General</option>
+                                        <option value="SC">SC</option>
+                                        <option value="ST">ST</option>
+                                        <option value="OBC">OBC</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Aadhar Number</label>
+                                    <input
+                                        {...register('aadharNo')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="12-digit Aadhar"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Blood Group</label>
+                                    <select
+                                        {...register('bloodGroup')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                    >
+                                        <option value="">Select Group</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Date of Birth <span className="text-red-500">*</span></label>
-                                <input
-                                    type="date"
-                                    {...register('dob', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.dob ? 'border-red-500' : 'border-slate-300'}`}
-                                />
-                                {errors.dob && <p className="text-xs text-red-500 mt-1">Date of Birth is required</p>}
+                        </div>
+
+                        {/* Previous Schooling */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Previous Education</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="col-span-1 md:col-span-2">
+                                    <label className="text-sm font-medium text-slate-700">Previous School Attended</label>
+                                    <input
+                                        {...register('previousSchool')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="School Name"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Previous Class</label>
+                                    <select
+                                        {...register('previousClass')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                    >
+                                        <option value="">Select Class</option>
+                                        <option value="Mont 1">Mont 1</option>
+                                        <option value="Mont 2">Mont 2</option>
+                                        <option value="Grade 1">Grade 1</option>
+                                        <option value="Grade 2">Grade 2</option>
+                                        <option value="Grade 3">Grade 3</option>
+                                        <option value="Grade 4">Grade 4</option>
+                                        <option value="Grade 5">Grade 5</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Medium of Instruction</label>
+                                    <input
+                                        {...register('mediumOfInstruction')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="e.g. English, Malayalam"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Gender <span className="text-red-500">*</span></label>
-                                <select
-                                    {...register('gender', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.gender ? 'border-red-500' : 'border-slate-300'}`}
-                                >
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                {errors.gender && <p className="text-xs text-red-500 mt-1">Gender is required</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Blood Group</label>
-                                <select
-                                    {...register('bloodGroup')}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                >
-                                    <option value="">Select Group</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Admission Class <span className="text-red-500">*</span></label>
-                                <select
-                                    {...register('class', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.class ? 'border-red-500' : 'border-slate-300'}`}
-                                >
-                                    <option value="">Select Class</option>
-                                    <option value="Mont 1">Mont 1</option>
-                                    <option value="Mont 2">Mont 2</option>
-                                    <option value="Grade 1">Grade 1</option>
-                                    <option value="Grade 2">Grade 2</option>
-                                    <option value="Grade 3">Grade 3</option>
-                                    <option value="Grade 4">Grade 4</option>
-                                    <option value="Grade 5">Grade 5</option>
-                                </select>
-                                {errors.class && <p className="text-xs text-red-500 mt-1">Class is required</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Section</label>
-                                <select
-                                    {...register('section')}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                >
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                </select>
+                        </div>
+
+                        {/* Health & Other Details */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Health & Other Details</h3>
+                            <div className="grid grid-cols-1 gap-6">
+                                {/* Learning Disabilities */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="hasLearningDisability" {...register('hasLearningDisability')} className="w-4 h-4 text-indigo-600 rounded" />
+                                        <label htmlFor="hasLearningDisability" className="text-sm font-medium text-slate-700">Any Learning Disabilities?</label>
+                                    </div>
+                                    {hasLearningDisability && (
+                                        <textarea
+                                            {...register('learningDisabilityDetails')}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none mt-2"
+                                            placeholder="Please provide details..."
+                                            rows={2}
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Medical Conditions */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="hasMedicalCondition" {...register('hasMedicalCondition')} className="w-4 h-4 text-indigo-600 rounded" />
+                                        <label htmlFor="hasMedicalCondition" className="text-sm font-medium text-slate-700">Medical Conditions (if any)?</label>
+                                    </div>
+                                    {hasMedicalCondition && (
+                                        <textarea
+                                            {...register('medicalConditionDetails')}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none mt-2"
+                                            placeholder="Please provide details..."
+                                            rows={2}
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Allergies */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="hasAllergy" {...register('hasAllergy')} className="w-4 h-4 text-indigo-600 rounded" />
+                                        <label htmlFor="hasAllergy" className="text-sm font-medium text-slate-700">Allergies (if any)?</label>
+                                    </div>
+                                    {hasAllergy && (
+                                        <textarea
+                                            {...register('allergyDetails')}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none mt-2"
+                                            placeholder="Please provide details..."
+                                            rows={2}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 )}
 
                 {step === 2 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Guardian Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Father's Name <span className="text-red-500">*</span></label>
-                                <input
-                                    {...register('fatherName', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.fatherName ? 'border-red-500' : 'border-slate-300'}`}
-                                />
-                                {errors.fatherName && <p className="text-xs text-red-500 mt-1">Father's Name is required</p>}
+                    <div className="space-y-8">
+                        {/* Father's Details */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Father's Details</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Father's Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('fatherName', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.fatherName ? 'border-red-500' : 'border-slate-300'}`}
+                                    />
+                                    {errors.fatherName && <p className="text-xs text-red-500 mt-1">Father's Name is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Father's Mobile <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="tel"
+                                        {...register('fatherMobile', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.fatherMobile ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="Mobile Number"
+                                    />
+                                    {errors.fatherMobile && <p className="text-xs text-red-500 mt-1">Father's Mobile is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Occupation</label>
+                                    <input
+                                        {...register('fatherOccupation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Occupation"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Designation</label>
+                                    <input
+                                        {...register('fatherDesignation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Designation"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Company Name</label>
+                                    <input
+                                        {...register('fatherCompany')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Company Name"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Office Address</label>
+                                    <input
+                                        {...register('fatherOfficeAddress')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Office Address"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Educational Qualification</label>
+                                    <input
+                                        {...register('fatherEducation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Qualification"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Annual Income</label>
+                                    <input
+                                        {...register('fatherIncome')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Annual Income"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Aadhar Number</label>
+                                    <input
+                                        {...register('fatherAadhar')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Aadhar Number"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Father's Email</label>
+                                    <input
+                                        type="email"
+                                        {...register('fatherEmail')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Email ID"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Mother's Name <span className="text-red-500">*</span></label>
-                                <input
-                                    {...register('motherName', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.motherName ? 'border-red-500' : 'border-slate-300'}`}
-                                />
-                                {errors.motherName && <p className="text-xs text-red-500 mt-1">Mother's Name is required</p>}
+                        </div>
+
+                        {/* Mother's Details */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Mother's Details</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Mother's Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('motherName', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.motherName ? 'border-red-500' : 'border-slate-300'}`}
+                                    />
+                                    {errors.motherName && <p className="text-xs text-red-500 mt-1">Mother's Name is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Mother's Mobile <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="tel"
+                                        {...register('motherMobile', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.motherMobile ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="Mobile Number"
+                                    />
+                                    {errors.motherMobile && <p className="text-xs text-red-500 mt-1">Mother's Mobile is required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Occupation</label>
+                                    <input
+                                        {...register('motherOccupation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Occupation"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Designation</label>
+                                    <input
+                                        {...register('motherDesignation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Designation"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Company Name</label>
+                                    <input
+                                        {...register('motherCompany')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Company Name"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Office Address</label>
+                                    <input
+                                        {...register('motherOfficeAddress')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Office Address"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Educational Qualification</label>
+                                    <input
+                                        {...register('motherEducation')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Qualification"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Annual Income</label>
+                                    <input
+                                        {...register('motherIncome')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Annual Income"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Aadhar Number</label>
+                                    <input
+                                        {...register('motherAadhar')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Aadhar Number"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Mother's Email</label>
+                                    <input
+                                        type="email"
+                                        {...register('motherEmail')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Email ID"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Primary Contact (Guardian)</label>
-                                <input
-                                    {...register('guardian')} // Maps to list view 'guardian'
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                    placeholder="Guardian Name"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Phone Number <span className="text-red-500">*</span></label>
-                                <input
-                                    type="tel"
-                                    {...register('contact', { required: true })}
-                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.contact ? 'border-red-500' : 'border-slate-300'}`}
-                                />
-                                {errors.contact && <p className="text-xs text-red-500 mt-1">Phone Number is required</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Email Address (Optional)</label>
-                                <input
-                                    type="email"
-                                    {...register('email')}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                    placeholder="parent@example.com"
-                                />
-                            </div>
-                            <div className="col-span-1 md:col-span-2 space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Residential Address</label>
-                                <textarea
-                                    {...register('address')}
-                                    rows={3}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                />
+                        </div>
+
+                        {/* Contact & Address */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Address</h3>
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="col-span-1 space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Residential Address</label>
+                                    <textarea
+                                        {...register('address')}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Residential Address"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

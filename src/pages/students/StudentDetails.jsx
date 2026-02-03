@@ -57,17 +57,52 @@ export default function StudentDetails() {
             reset({
                 name: data.name,
                 admissionNo: data.admissionNo,
+                applicationNo: data.applicationNo,
+                submissionDate: data.submissionDate ? new Date(data.submissionDate).toISOString().split('T')[0] : '',
                 rollNo: data.rollNo,
                 className: data.className || data.class,
                 section: data.section,
                 gender: data.gender,
                 dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
                 bloodGroup: data.bloodGroup,
+                placeOfBirth: data.placeOfBirth,
+                nationality: data.nationality,
+                religion: data.religion,
+                caste: data.caste,
+                category: data.category,
+                aadharNo: data.aadharNo,
+                previousSchool: data.previousSchool,
+                previousClass: data.previousClass,
+                mediumOfInstruction: data.mediumOfInstruction,
+                hasLearningDisability: data.hasLearningDisability,
+                learningDisabilityDetails: data.learningDisabilityDetails,
+                hasMedicalCondition: data.hasMedicalCondition,
+                medicalConditionDetails: data.medicalConditionDetails,
+                hasAllergy: data.hasAllergy,
+                allergyDetails: data.allergyDetails,
                 guardian: data.guardian,
                 fatherName: data.fatherName,
+                fatherOccupation: data.fatherOccupation,
+                fatherDesignation: data.fatherDesignation,
+                fatherCompany: data.fatherCompany,
+                fatherOfficeAddress: data.fatherOfficeAddress,
+                fatherEducation: data.fatherEducation,
+                fatherIncome: data.fatherIncome,
+                fatherAadhar: data.fatherAadhar,
+                fatherMobile: data.fatherMobile,
+                fatherEmail: data.fatherEmail,
                 motherName: data.motherName,
-                primaryPhone: data.primaryPhone || data.contact,
-                email: data.email,
+                motherOccupation: data.motherOccupation,
+                motherDesignation: data.motherDesignation,
+                motherCompany: data.motherCompany,
+                motherOfficeAddress: data.motherOfficeAddress,
+                motherEducation: data.motherEducation,
+                motherIncome: data.motherIncome,
+                motherAadhar: data.motherAadhar,
+                motherMobile: data.motherMobile,
+                motherEmail: data.motherEmail,
+                primaryPhone: data.primaryPhone || data.contact, // This is usually mapped from fatherMobile now
+                email: data.email, // This is mapped from father/mother email usually
                 address: data.address,
                 feesStatus: data.feesStatus
             });
@@ -166,12 +201,24 @@ export default function StudentDetails() {
                     {/* Mode: VIEW */}
                     {mode === 'view' ? (
                         <>
-                            {/* Academic & Basic Info Card */}
+                            {/* Administrative & Academic Details */}
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <Book size={16} /> Academic Information
+                                    <Book size={16} /> Administrative & Academic Info
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Application No</p>
+                                        <p className="font-semibold text-lg">{student.applicationNo || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Admission No</p>
+                                        <p className="font-semibold text-lg">{student.admissionNo}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Date of Submission</p>
+                                        <p className="font-medium">{student.submissionDate ? new Date(student.submissionDate).toLocaleDateString() : 'N/A'}</p>
+                                    </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Class & Section</p>
                                         <p className="font-semibold text-lg">{student.className || student.class} - {student.section}</p>
@@ -189,12 +236,16 @@ export default function StudentDetails() {
                                 </div>
                             </div>
 
-                            {/* Personal Details Card */}
+                            {/* Personal Information */}
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <User size={16} /> Personal & Guardian Details
+                                    <User size={16} /> Personal Information
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8">
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Full Name</p>
+                                        <p className="font-medium text-lg">{student.name}</p>
+                                    </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Date of Birth</p>
                                         <p className="font-medium flex items-center gap-2">
@@ -210,35 +261,142 @@ export default function StudentDetails() {
                                         <p className="text-xs text-slate-500 mb-1">Blood Group</p>
                                         <p className="font-medium">{student.bloodGroup || 'N/A'}</p>
                                     </div>
-                                    <div className="md:col-span-2 border-t border-slate-100 my-2"></div>
                                     <div>
-                                        <p className="text-xs text-slate-500 mb-1">Father's Name</p>
-                                        <p className="font-medium">{student.fatherName || 'N/A'}</p>
+                                        <p className="text-xs text-slate-500 mb-1">Place of Birth</p>
+                                        <p className="font-medium">{student.placeOfBirth || 'N/A'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 mb-1">Mother's Name</p>
-                                        <p className="font-medium">{student.motherName || 'N/A'}</p>
+                                        <p className="text-xs text-slate-500 mb-1">Nationality</p>
+                                        <p className="font-medium">{student.nationality || 'N/A'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 mb-1">Primary Guardian</p>
-                                        <p className="font-medium">{student.guardian}</p>
+                                        <p className="text-xs text-slate-500 mb-1">Religion</p>
+                                        <p className="font-medium">{student.religion || 'N/A'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 mb-1">Contact Number</p>
-                                        <p className="font-medium flex items-center gap-2">
-                                            <Phone size={14} className="text-slate-400" />
-                                            {student.primaryPhone || student.contact}
+                                        <p className="text-xs text-slate-500 mb-1">Caste</p>
+                                        <p className="font-medium">{student.caste || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Category</p>
+                                        <p className="font-medium">{student.category || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Aadhar Number</p>
+                                        <p className="font-medium">{student.aadharNo || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Previous Education */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Previous Education</h3>
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="col-span-1 lg:col-span-2">
+                                        <p className="text-xs text-slate-500 mb-1">School Attended</p>
+                                        <p className="font-medium">{student.previousSchool || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-1">Details</p>
+                                        <p className="text-sm text-slate-600">
+                                            {student.previousClass ? `Class: ${student.previousClass}` : ''}
+                                            {student.mediumOfInstruction ? ` • Medium: ${student.mediumOfInstruction}` : ''}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Email Address</p>
-                                        <p className="font-medium flex items-center gap-2">
-                                            <span className="text-slate-400">@</span>
-                                            {student.email || 'N/A'}
-                                        </p>
+                                </div>
+                            </div>
+
+                            {/* Health & Other Details */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <Ban size={16} /> Health & Other Details
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className={`p-4 rounded-lg border ${student.hasLearningDisability ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                        <p className="font-semibold text-sm mb-1">Learning Disability</p>
+                                        <p className="text-xs text-slate-600">{student.hasLearningDisability ? student.learningDisabilityDetails : 'None Reported'}</p>
                                     </div>
-                                    <div className="md:col-span-2">
-                                        <p className="text-xs text-slate-500 mb-1">Address</p>
+                                    <div className={`p-4 rounded-lg border ${student.hasMedicalCondition ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                        <p className="font-semibold text-sm mb-1">Medical Condition</p>
+                                        <p className="text-xs text-slate-600">{student.hasMedicalCondition ? student.medicalConditionDetails : 'None Reported'}</p>
+                                    </div>
+                                    <div className={`p-4 rounded-lg border ${student.hasAllergy ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                        <p className="font-semibold text-sm mb-1">Allergies</p>
+                                        <p className="text-xs text-slate-600">{student.hasAllergy ? student.allergyDetails : 'None Reported'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Parent Details */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <User size={16} /> Parents & Guardian Details
+                                </h3>
+
+                                <div className="space-y-8">
+                                    {/* Father */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-2 mb-4">Father's Information</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Name</p>
+                                                <p className="font-medium">{student.fatherName || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Mobile</p>
+                                                <p className="font-medium flex items-center gap-2">
+                                                    <Phone size={14} className="text-slate-400" />
+                                                    {student.fatherMobile || 'N/A'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Email</p>
+                                                <p className="font-medium text-xs break-all">{student.fatherEmail || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Occupation</p>
+                                                <p className="font-medium">{student.fatherOccupation || 'N/A'}</p>
+                                            </div>
+                                            <div className="col-span-1 md:col-span-2">
+                                                <p className="text-xs text-slate-500 mb-1">Office Address</p>
+                                                <p className="font-medium text-sm">{student.fatherOfficeAddress || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mother */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-pink-600 border-b border-pink-100 pb-2 mb-4">Mother's Information</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Name</p>
+                                                <p className="font-medium">{student.motherName || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Mobile</p>
+                                                <p className="font-medium flex items-center gap-2">
+                                                    <Phone size={14} className="text-slate-400" />
+                                                    {student.motherMobile || 'N/A'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Email</p>
+                                                <p className="font-medium text-xs break-all">{student.motherEmail || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Occupation</p>
+                                                <p className="font-medium">{student.motherOccupation || 'N/A'}</p>
+                                            </div>
+                                            <div className="col-span-1 md:col-span-2">
+                                                <p className="text-xs text-slate-500 mb-1">Office Address</p>
+                                                <p className="font-medium text-sm">{student.motherOfficeAddress || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-slate-600 border-b border-slate-100 pb-2 mb-4">Residential Address</h4>
                                         <p className="font-medium flex items-start gap-2">
                                             <MapPin size={14} className="text-slate-400 mt-1" />
                                             {student.address || 'N/A'}
@@ -251,36 +409,61 @@ export default function StudentDetails() {
                         /* Mode: EDIT Form */
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                             <form id="edit-student-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                                {/* Academic Edit */}
+
+                                {/* Administrative */}
                                 <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Academic Info</h3>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Administrative Info</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Application No</label>
+                                            <input {...register("applicationNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Submission Date</label>
+                                            <input type="date" {...register("submissionDate")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Admission No</label>
+                                            <input {...register("admissionNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Class</label>
-                                            <input {...register("className")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <select {...register("className")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="Mont 1">Mont 1</option>
+                                                <option value="Mont 2">Mont 2</option>
+                                                <option value="Grade 1">Grade 1</option>
+                                                <option value="Grade 2">Grade 2</option>
+                                                <option value="Grade 3">Grade 3</option>
+                                                <option value="Grade 4">Grade 4</option>
+                                                <option value="Grade 5">Grade 5</option>
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Section</label>
-                                            <input {...register("section")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <select {...register("section")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Roll No</label>
                                             <input {...register("rollNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">Admission No</label>
-                                            <input {...register("admissionNo")} disabled className="w-full p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-500 cursor-not-allowed" />
-                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Personal Edit */}
+                                {/* Personal */}
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Personal Info</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="col-span-1 md:col-span-2">
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
                                             <input {...register("name", { required: true })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">DOB</label>
+                                            <input type="date" {...register("dob")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
@@ -292,49 +475,160 @@ export default function StudentDetails() {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Blood Group</label>
-                                            <input {...register("bloodGroup")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <select {...register("bloodGroup")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="">Select</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">Date of Birth</label>
-                                            <input type="date" {...register("dob")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Nationality</label>
+                                            <input {...register("nationality")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Religion</label>
+                                            <input {...register("religion")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Caste</label>
+                                            <input {...register("caste")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                                            <select {...register("category")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="General">General</option>
+                                                <option value="SC">SC</option>
+                                                <option value="ST">ST</option>
+                                                <option value="OBC">OBC</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Aadhar No</label>
+                                            <input {...register("aadharNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Contact Edit */}
+                                {/* Previous Education */}
                                 <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Guardian & Contact</h3>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Father's Name</label>
-                                                <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mother's Name</label>
-                                                <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Guardian Name</label>
-                                                <input {...register("guardian")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Phone</label>
-                                                <input {...register("primaryPhone")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
+                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Previous Education</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Previous School</label>
+                                            <input {...register("previousSchool")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">Email Address</label>
-                                            <input {...register("email")} type="email" className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Previous Class</label>
+                                            <input {...register("previousClass")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">Address</label>
-                                            <textarea {...register("address")} rows={2} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Medium</label>
+                                            <input {...register("mediumOfInstruction")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Health */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Health Details</h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
+                                                <input type="checkbox" {...register("hasMedicalCondition")} className="rounded text-indigo-600" />
+                                                Has Medical Condition?
+                                            </label>
+                                            <textarea {...register("medicalConditionDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
+                                                <input type="checkbox" {...register("hasAllergy")} className="rounded text-indigo-600" />
+                                                Has Allergies?
+                                            </label>
+                                            <textarea {...register("allergyDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Parents */}
+                                <div className="space-y-6">
+                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Parents & Guardian</h3>
+
+                                    {/* Father */}
+                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                        <h4 className="text-xs font-bold text-slate-700">Father's Info</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                <input {...register("fatherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                <input {...register("fatherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                <input {...register("fatherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                <input {...register("fatherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Designation</label>
+                                                <input {...register("fatherDesignation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Income</label>
+                                                <input {...register("fatherIncome")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mother */}
+                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                        <h4 className="text-xs font-bold text-slate-700">Mother's Info</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                <input {...register("motherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                <input {...register("motherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                <input {...register("motherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                <input {...register("motherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-700 mb-1">Residential Address</label>
+                                        <textarea {...register("address")} rows={3} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                    </div>
+                                </div>
+
                             </form>
                         </div>
                     )}
