@@ -429,7 +429,7 @@ export default function ExpenseManager() {
                                     <th className="px-6 py-4">Title</th>
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
-                                    <th className="px-6 py-4 text-center">Actions</th>
+                                    {/* <th className="px-6 py-4 text-center">Actions</th> */}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -438,7 +438,7 @@ export default function ExpenseManager() {
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
                                             <div className="flex items-center gap-2">
                                                 <Calendar size={14} className="text-slate-400" />
-                                                {new Date(expense.date).toLocaleDateString()}
+                                                {new Date(expense.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
@@ -450,7 +450,7 @@ export default function ExpenseManager() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className="font-medium text-slate-900">{expense.title}</p>
-                                            <p className="text-xs text-slate-400 truncate max-w-xs">{expense.description}</p>
+                                            <p className="text-xs text-slate-400 truncate max-w-xs" title={expense.description}>{expense.description}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
@@ -466,8 +466,8 @@ export default function ExpenseManager() {
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">
                                             ₹{expense.amount.toLocaleString()}
                                         </td>
+                                        {/* Actions Column Hidden
                                         <td className="px-6 py-4 text-center">
-                                            {/* Always show actions as we only fetch own expenses */}
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
                                                     onClick={() => handleEdit(expense)}
@@ -484,7 +484,8 @@ export default function ExpenseManager() {
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
-                                        </td>
+                                        </td> 
+                                        */}
                                     </tr>
                                 ))}
                             </tbody>

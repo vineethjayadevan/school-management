@@ -1,85 +1,90 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const colors = require('colors');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const User = require('../models/User');
 const OtherIncome = require('../models/OtherIncome');
 const IncomeCategory = require('../models/IncomeCategory');
-const User = require('../models/User');
-const connectDB = require('../config/db');
 
-// Load env vars
-dotenv.config({ path: './server/.env' });
-
-const seedShajiIncome = async () => {
+const seedPDFData = async () => {
     try {
-        await connectDB();
-        console.log('Connected to MongoDB...'.green);
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('Connected to DB...');
 
-        // 1. Find User
-        const user = await User.findOne({ email: 'shajip@mystemgps.com' });
+        // 1. Find User "Shaji P"
+        let user = await User.findOne({ name: { $regex: 'Shaji P', $options: 'i' } });
         if (!user) {
-            console.error('User shajip@mystemgps.com not found.'.red);
-            process.exit(1);
+            console.log('User "Shaji P" not found. Searching for any admin/board member to assign...');
+            user = await User.findOne({ role: { $in: ['board_member', 'admin'] } });
+            if (!user) {
+                console.error('❌ No suitable user found to assign these records.');
+                process.exit(1);
+            }
+            console.log(`⚠️ "Shaji P" not found. Assigning to: ${user.name} (${user.role})`);
+        } else {
+            console.log(`✅ User Found: ${user.name}`);
         }
-        console.log(`Assigning income to: ${user.name}`.blue);
 
-        // 2. Define Entries
-        // Donation Recieved (category Donations) - 10000
-        // Balance Amount from Annual Day Collection (category Miscallaneous) - 26500
-        // Recieved from Building owner (category Donation) - 15000 -> Map to 'Donations'
+        // 2. Define Records
+        // Date: 4/2/2026. Assuming D/M/Y based on Indian context usually, so Feb 4th or April 2nd?
+        // Given standard Asian/UK format DD/MM/YYYY, 4/2 is Feb 4th.
+        // Let's use Feb 4th, 2026.
+        const date = new Date('2026-02-04');
 
-        const entries = [
+        const records = [
             {
-                category: 'Donations',
-                description: 'Donation Recieved',
-                amount: 10000
-            },
-            {
-                category: 'Miscellaneous',
-                description: 'Balance Amount from Annual Day Collection',
-                amount: 26500
-            },
-            {
-                category: 'Donations',
+                categoryName: 'Donations',
                 description: 'Recieved from Building owner',
-                amount: 15000
+                amount: 15000,
+                date: date
+            },
+            {
+                categoryName: 'Miscellaneous', // Need to check if this category exists or map to 'Others'
+                description: 'Balance Amount from Annual Day Collection',
+                amount: 26500,
+                date: date
+            },
+            {
+                categoryName: 'Donations',
+                description: 'Donation Recieved',
+                amount: 10000,
+                date: date
             }
         ];
 
-        let addedCount = 0;
+        // 3. Insert Records
+        for (const rec of records) {
+            // Ensure Category Exists
+            let category = await IncomeCategory.findOne({ name: rec.categoryName });
+            if (!category) {
+                console.log(`Creating Category: ${rec.categoryName}`);
+                category = await IncomeCategory.create({
+                    name: rec.categoryName,
+                    description: 'Created from PDF Import'
+                });
+            }
 
-        for (const entry of entries) {
-            // Check for duplicate (optional but safe)
-            /* const existing = await OtherIncome.findOne({
+            // Create Income Record
+            const income = new OtherIncome({
+                category: rec.categoryName, // Schema stores String currently
+                amount: rec.amount,
+                description: rec.description,
+                date: rec.date,
                 addedBy: user._id,
-                amount: entry.amount,
-                category: entry.category,
-                description: entry.description
+                receiptNo: '' // "-" in PDF
             });
 
-            if (existing) {
-                console.log(`Entry '${entry.description}' already exists. Skipping.`);
-                continue;
-            } */
-
-            await OtherIncome.create({
-                category: entry.category,
-                amount: entry.amount,
-                description: entry.description,
-                date: new Date(), // User didn't specify date, defaulting to now or maybe seed script runtime
-                addedBy: user._id
-            });
-
-            console.log(`Added: ${entry.description} (${entry.category}) - ${entry.amount}`.green);
-            addedCount++;
+            await income.save();
+            console.log(`Created Record: ₹${rec.amount} - ${rec.description}`);
         }
 
-        console.log(`\nSuccessfully seeded ${addedCount} additional income records.`.green.inverse);
-        process.exit();
+        console.log('\n✅ PDF Data Import Complete!');
+        process.exit(0);
 
     } catch (error) {
-        console.error(`${error}`.red.inverse);
+        console.error('Import Failed:', error);
         process.exit(1);
     }
 };
 
-seedShajiIncome();
+seedPDFData();

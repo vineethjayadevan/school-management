@@ -330,7 +330,7 @@ export default function IncomeOverview() {
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4">Description</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
-                                    <th className="px-6 py-4 text-center">Actions</th>
+                                    {/* <th className="px-6 py-4 text-center">Actions</th> */}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -339,7 +339,7 @@ export default function IncomeOverview() {
                                         <td className="px-6 py-4 text-slate-600 text-sm">
                                             <div className="flex items-center gap-2">
                                                 <Calendar size={14} className="text-slate-400" />
-                                                {new Date(item.date).toLocaleDateString()}
+                                                {new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
@@ -355,11 +355,12 @@ export default function IncomeOverview() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-medium text-slate-900">
-                                            <p className="text-sm text-slate-600 font-normal line-clamp-1">{item.description || '-'}</p>
+                                            <p className="text-sm text-slate-600 font-normal line-clamp-1" title={item.description}>{item.description || '-'}</p>
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">
                                             + ₹{item.amount.toLocaleString()}
                                         </td>
+                                        {/* Actions Column Hidden
                                         <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
@@ -378,6 +379,7 @@ export default function IncomeOverview() {
                                                 </button>
                                             </div>
                                         </td>
+                                        */}
                                     </tr>
                                 ))}
                             </tbody>

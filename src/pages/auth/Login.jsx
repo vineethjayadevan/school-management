@@ -73,9 +73,10 @@ export default function Login() {
             <div className="flex-1 flex items-center justify-center p-4">
                 <button
                     onClick={() => navigate('/')}
-                    className="absolute top-4 left-4 md:top-24 md:left-6 text-white/90 hover:text-white flex items-center gap-2 font-medium transition-colors z-10"
+                    className="absolute top-6 left-6 md:top-24 md:left-6 text-white hover:text-white/80 flex items-center gap-2 font-medium transition-colors z-50 shadow-sm"
                 >
-                    <ArrowRight className="rotate-180" size={20} /> <span className="hidden md:inline">Back to Home</span><span className="md:hidden">Home</span>
+                    <ArrowRight className="rotate-180" size={20} />
+                    <span>Back to Home</span>
                 </button>
                 <div className="w-full max-w-md">
                     {/* Glassmorphism Card */}
@@ -145,13 +146,7 @@ export default function Login() {
                                 </button>
                             </form>
 
-                            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                                <p className="text-xs text-slate-400">
-                                    Demo Credentials: <br />
-                                    Admin: <span className="font-mono text-slate-600">admin@school.com</span> / <span className="font-mono text-slate-600">password123</span><br />
-                                    Board: <span className="font-mono text-slate-600">jayadevanv@mystemgps.com</span> / <span className="font-mono text-slate-600">jayadevanv</span><br />
-                                </p>
-                            </div>
+
                         </div>
                     </div>
                 </div>

@@ -48,14 +48,22 @@ export default function BoardLayout() {
                 `}
             >
                 <div className="h-full flex flex-col">
-                    <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                            <Wallet className="text-white" size={24} />
+                    <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                                <Wallet className="text-white" size={24} />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-lg leading-tight">Board Portal</h1>
+                                <p className="text-xs text-slate-400">Financial Management</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-bold text-lg leading-tight">Board Portal</h1>
-                            <p className="text-xs text-slate-400">Financial Management</p>
-                        </div>
+                        <button
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
 
                     <div className="p-4">
