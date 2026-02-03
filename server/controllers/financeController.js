@@ -9,31 +9,25 @@ const ExpenseCategory = require('../models/ExpenseCategory');
 // @access  Private (Board Member/Admin)
 const getFinancialSummary = async (req, res) => {
     try {
-        // 1. Calculate Total Fee Income (Only 'Paid' status)
-        const feeIncomeAgg = await Fee.aggregate([
-            { $match: { status: 'Paid' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
-        const totalFeeIncome = feeIncomeAgg.length > 0 ? feeIncomeAgg[0].total : 0;
-
-        // 2. Calculate Total Other Income
+        // 1. Calculate Total Other Income (Manual Entries)
         const otherIncomeAgg = await OtherIncome.aggregate([
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const totalOtherIncome = otherIncomeAgg.length > 0 ? otherIncomeAgg[0].total : 0;
 
-        // 3. Calculate Total Expenses
+        // 2. Calculate Total Expenses
         const expenseAgg = await Expense.aggregate([
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const totalExpenses = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
 
-        const totalIncome = totalFeeIncome + totalOtherIncome;
+        // Total Income is now JUST Other Income (Manual Entries)
+        const totalIncome = totalOtherIncome;
         const netBalance = totalIncome - totalExpenses;
 
         res.json({
             totalIncome,
-            totalFeeIncome,
+            totalFeeIncome: 0, // No longer used for income calc, but keeping key for frontend compat if needed (or 0)
             totalOtherIncome,
             totalExpenses,
             netBalance
@@ -406,24 +400,21 @@ const getTransactions = async (req, res) => {
 // @access  Private (Board Member)
 const getShareholdersData = async (req, res) => {
     try {
-        // 1. Calculate Net Worth
-        const feeIncomeAgg = await Fee.aggregate([
-            { $match: { status: 'Paid' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
-        const totalFeeIncome = feeIncomeAgg.length > 0 ? feeIncomeAgg[0].total : 0;
+        // 1. Calculate Net Worth (Based ONLY on Manual OtherIncome)
 
+        // Manual Income (OtherIncome)
         const otherIncomeAgg = await OtherIncome.aggregate([
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const totalOtherIncome = otherIncomeAgg.length > 0 ? otherIncomeAgg[0].total : 0;
 
+        // Expenses
         const expenseAgg = await Expense.aggregate([
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const totalExpenses = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
 
-        const totalIncome = totalFeeIncome + totalOtherIncome;
+        const totalIncome = totalOtherIncome; // No Fees included
         const netWorth = totalIncome - totalExpenses;
 
         // 2. Get Individual Investments & Total Capital
