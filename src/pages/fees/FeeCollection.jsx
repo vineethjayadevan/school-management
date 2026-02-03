@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
     Search, CreditCard, Banknote, IndianRupee, CheckCircle,
-    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download
+    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download, Printer
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -140,6 +140,14 @@ export default function FeeDashboard() {
         // Better: Default to the standard fee amount for that type.
         if (feeType === 'custom') {
             setAmount('');
+        } else if (feeType === 'conveyance') {
+            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
+            setAmount(conveyanceFee);
+        } else if (feeType === 'full') {
+            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
+            setAmount(totalFee + conveyanceFee);
         } else {
             setAmount(totalFee);
         }
@@ -152,7 +160,14 @@ export default function FeeDashboard() {
         const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
 
         if (feeType === 'full') {
-            return (structure.tuition || 0) + (structure.materials || 0);
+            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
+            return (structure.tuition || 0) + (structure.materials || 0) + conveyanceFee;
+        }
+
+        if (feeType === 'conveyance') {
+            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+            return slab > 0 ? 200 + (slab * 100) : 0;
         }
         return structure[feeType] || 0;
     };
@@ -166,7 +181,11 @@ export default function FeeDashboard() {
 
         const transaction = {
             studentId: selectedStudent.id || selectedStudent._id,
-            type: feeType === 'full' ? 'Full Fee (Tuition + Materials)' : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
+            type: feeType === 'full'
+                ? 'Full Fee (Tuition + Materials + Conveyance)'
+                : feeType === 'conveyance'
+                    ? 'Conveyance Fee'
+                    : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
             amount: Number(amount),
             date: new Date().toISOString(),
             mode: paymentMode,
@@ -241,6 +260,22 @@ export default function FeeDashboard() {
 
     // --- Render Helpers ---
 
+    const renderReprintModal = () => {
+        if (!reprintTransaction) return null;
+        return (
+            <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
+                <div className="w-full max-w-3xl">
+                    <FeeReceipt
+                        transaction={reprintTransaction}
+                        student={reprintTransaction.student}
+                        onNext={() => setReprintTransaction(null)}
+                        isPreview={false}
+                    />
+                </div>
+            </div>
+        );
+    };
+
     const renderReceipt = () => (
         <FeeReceipt
             transaction={lastTransaction}
@@ -297,6 +332,9 @@ export default function FeeDashboard() {
                                 >
                                     <option value="tuition">Tuition Fee</option>
                                     <option value="materials">Materials Fee</option>
+                                    {selectedStudent.conveyanceSlab && parseInt(selectedStudent.conveyanceSlab) > 0 && (
+                                        <option value="conveyance">Conveyance Fee</option>
+                                    )}
                                     <option value="full">Full Fee (Total)</option>
                                     <option value="custom">Custom / Partial Payment</option>
                                 </select>
@@ -347,6 +385,21 @@ export default function FeeDashboard() {
                         <span>Standard Fee</span>
                         <span>₹{selectedStudent ? getDueAmount() : 0}</span>
                     </div>
+
+                    {/* Pending Fees Display */}
+                    {selectedStudent && (
+                        <div className="flex justify-between text-amber-400">
+                            <span>Total Pending To Date</span>
+                            {(() => {
+                                const details = getStudentFeeDetails(selectedStudent);
+                                const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+                                const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+                                const totalPending = totalDue - totalPaid;
+                                return <span className="font-bold">₹{totalPending.toLocaleString()}</span>;
+                            })()}
+                        </div>
+                    )}
+
                     <div className="h-px bg-slate-700 my-2"></div>
                     <div className="flex justify-between text-xl font-bold">
                         <span>Paying Now</span>
@@ -373,6 +426,7 @@ export default function FeeDashboard() {
 
     // --- Detailed View Logic ---
     const [viewingStudent, setViewingStudent] = useState(null);
+    const [reprintTransaction, setReprintTransaction] = useState(null);
 
     const getStudentFeeDetails = (student) => {
         if (!student) return [];
@@ -387,7 +441,23 @@ export default function FeeDashboard() {
         );
 
         // Calculate status per category
-        return Object.entries(structure).map(([type, dueAmount]) => {
+        const categories = Object.entries(structure).map(([type, dueAmount]) => ({ type, due: dueAmount }));
+
+        // Add Conveyance if applicable
+        if (student.conveyanceSlab && parseInt(student.conveyanceSlab) > 0) {
+            const slab = parseInt(student.conveyanceSlab);
+            // Assuming 10 months for annual fee calculation if not monthly? 
+            // The requirement says "Monthly Fee". 
+            // If the fee structure (Tuition/Materials) is Annual, then conveyance should probably be annualized for consistency in this view?
+            // "Slab 1 (₹300)" -> Is this monthly? 
+            // In StudentDetails.jsx it says "Monthly Conveyance Fee".
+            // So for "Annual" fee tracking, we might want to multiply by 10 or 12?
+            // For now, let's treat it as a one-time "Conveyance Fee" entry for simplicity or assume the dashboard shows "Total Annual Due".
+            // Let's assume 10 months academic year.
+            categories.push({ type: 'conveyance', due: (200 + (slab * 100)) * 10 });
+        }
+
+        return categories.map(({ type, due: dueAmount }) => {
             const paidAmount = payments
                 .filter(t => {
                     if (t.feeType?.toLowerCase().includes('full')) return true; // Full fee covers everything
@@ -407,6 +477,11 @@ export default function FeeDashboard() {
                         // We need to be careful not to double count if we just sum it up.
                         // Better approach for display:
                         // If "Full Fee" transaction exists, override calculation to PAID.
+                        if (type === 'conveyance') {
+                            // Extract conveyance part from full fee?
+                            // Full fee usually implies everything.
+                            return sum + dueAmount;
+                        }
                         return sum + (type === 'tuition' ? 20000 : 6500); // Hacky but works for this rigid structure
                     }
                     return sum + (t.amount || 0);
@@ -452,6 +527,11 @@ export default function FeeDashboard() {
                             <h2 className="text-xl font-bold text-slate-900">Fee Details</h2>
                             <p className="text-slate-500 text-sm">
                                 {viewingStudent.name} ({viewingStudent.className || viewingStudent.class})
+                                {viewingStudent.conveyanceSlab && parseInt(viewingStudent.conveyanceSlab) > 0 && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                        Conveyance Slab: {viewingStudent.conveyanceSlab}
+                                    </span>
+                                )}
                             </p>
                         </div>
                         <button
@@ -620,6 +700,73 @@ export default function FeeDashboard() {
         doc.save(`Transactions_${new Date().toISOString().slice(0, 10)}.pdf`);
     };
 
+    const generateClassReport = (className, studentsInClass) => {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(18);
+        doc.setTextColor(40, 40, 100);
+        doc.text('STEM Global Public School', 14, 22);
+
+        doc.setFontSize(14);
+        doc.setTextColor(60, 60, 60);
+        doc.text(`Class Fee Report - ${className}`, 14, 32);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
+
+        const tableColumn = ["Admission No", "Student Name", "Total Fee", "Paid", "Pending", "Status"];
+
+        // Calculate totals
+        let totalClassFee = 0;
+        let totalClassPaid = 0;
+        let totalClassPending = 0;
+
+        const tableRows = studentsInClass.map(student => {
+            const details = getStudentFeeDetails(student);
+            const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+            const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+            const totalPending = totalDue - totalPaid;
+
+            totalClassFee += totalDue;
+            totalClassPaid += totalPaid;
+            totalClassPending += totalPending;
+
+            return [
+                student.admissionNo,
+                student.name,
+                `Rs. ${totalDue.toLocaleString()}`,
+                `Rs. ${totalPaid.toLocaleString()}`,
+                `Rs. ${totalPending.toLocaleString()}`,
+                student.feesStatus || 'Pending'
+            ];
+        });
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+                2: { halign: 'right' },
+                3: { halign: 'right', textColor: [22, 163, 74] }, // Green
+                4: { halign: 'right', textColor: [220, 38, 38], fontStyle: 'bold' } // Red
+            },
+        });
+
+        // Summary Footer
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Total Class Pending: Rs. ${totalClassPending.toLocaleString()}`, 14, finalY);
+        doc.text(`Total Class Collected: Rs. ${totalClassPaid.toLocaleString()}`, 14, finalY + 7);
+
+        doc.save(`Fee_Report_${className}_${new Date().toISOString().slice(0, 10)}.pdf`);
+    };
+
     const renderHistoryTab = () => {
         // --- Segregation Logic ---
         const recentTransactions = transactions.slice(0, 5); // Just top 5
@@ -649,19 +796,25 @@ export default function FeeDashboard() {
         });
 
         // Group by Class (for Overview)
-        const groupedByClass = transactions.reduce((acc, t) => {
-            const cls = t.student ? (t.student.className || t.student.class || 'Unknown') : 'Unknown';
+        // Group Students by Class (for Class-wise View)
+        // Instead of transactions, we now group STUDENTS
+        const studentsByClass = students.reduce((acc, s) => {
+            const cls = s.className || s.class || 'Unknown';
             if (!acc[cls]) acc[cls] = [];
-            acc[cls].push(t);
+            acc[cls].push(s);
             return acc;
         }, {});
 
-        // Sort Classes (for Overview)
-        const sortedClasses = Object.keys(groupedByClass).sort((a, b) => {
+        // Sort Classes
+        const sortedClasses = Object.keys(studentsByClass).sort((a, b) => {
             const getOrder = (c) => {
-                if (c.startsWith('KG')) return 0;
-                if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 10;
-                return 20;
+                if (c === 'All') return -1;
+                if (c === 'Mont 1') return 1;
+                if (c === 'Mont 2') return 2;
+                if (c.startsWith('Grade')) return (parseInt(c.split(' ')[1]) || 0) + 10;
+                if (c.startsWith('KG')) return 5;
+                if (c.startsWith('Class')) return parseInt(c.split(' ')[1]) || 20;
+                return 100;
             };
             return getOrder(a) - getOrder(b);
         });
@@ -740,6 +893,7 @@ export default function FeeDashboard() {
                                             <th className="px-6 py-3">Class</th>
                                             <th className="px-6 py-3 text-right">Amount</th>
                                             <th className="px-6 py-3 text-center">Status</th>
+                                            <th className="px-6 py-3 text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 text-sm">
@@ -757,6 +911,15 @@ export default function FeeDashboard() {
                                                     <td className="px-6 py-3 text-center">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
                                                     </td>
+                                                    <td className="px-6 py-3 text-center">
+                                                        <button
+                                                            onClick={() => setReprintTransaction(t)}
+                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                            title="Download Receipt"
+                                                        >
+                                                            <Download size={16} />
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))
                                         )}
@@ -765,14 +928,29 @@ export default function FeeDashboard() {
                             </div>
                         </div>
 
-                        {/* 2. Segregated View by Class */}
+                        {/* 2. Segregated View by Class (Student Roster) */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-bold text-slate-900 px-1">Class-wise Collections</h3>
                             <div className="grid grid-cols-1 gap-4">
                                 {sortedClasses.map(className => {
-                                    const classTxns = groupedByClass[className];
-                                    const clsCollected = classTxns.filter(t => t.status === 'Paid').reduce((sum, t) => sum + (t.amount || 0), 0);
-                                    const clsPending = classTxns.filter(t => t.status === 'Pending' || t.status === 'Overdue').reduce((sum, t) => sum + (t.amount || 0), 0);
+                                    const studentsInClass = studentsByClass[className];
+
+                                    // Calculate Class Financials
+                                    let clsCollected = 0;
+                                    let clsPending = 0;
+                                    let clsTotalFee = 0;
+
+                                    studentsInClass.forEach(s => {
+                                        const details = getStudentFeeDetails(s);
+                                        const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+                                        const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+                                        const totalPending = totalDue - totalPaid;
+
+                                        clsTotalFee += totalDue;
+                                        clsCollected += totalPaid;
+                                        clsPending += totalPending;
+                                    });
+
                                     const isExpanded = expandedClass === className;
 
                                     return (
@@ -788,10 +966,10 @@ export default function FeeDashboard() {
                                                     </div>
                                                     <div>
                                                         <h4 className="font-bold text-slate-900 text-lg">{className}</h4>
-                                                        <p className="text-sm text-slate-500">{classTxns.length} Records</p>
+                                                        <p className="text-sm text-slate-500">{studentsInClass.length} Students</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-6 text-right">
+                                                <div className="flex gap-6 text-right items-center">
                                                     <div>
                                                         <p className="text-xs text-emerald-600 uppercase font-semibold">Collected</p>
                                                         <p className="text-lg font-bold text-emerald-700">₹{clsCollected.toLocaleString()}</p>
@@ -802,46 +980,72 @@ export default function FeeDashboard() {
                                                             <p className="text-lg font-bold text-red-600">₹{clsPending.toLocaleString()}</p>
                                                         </div>
                                                     )}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            generateClassReport(className, studentsInClass);
+                                                        }}
+                                                        className="ml-4 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 hover:border-indigo-300 transition-colors flex items-center gap-2"
+                                                        title="Print Class Report"
+                                                    >
+                                                        <Printer size={18} />
+                                                        <span className="text-sm font-semibold">Print Report</span>
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {/* Expanded Content */}
+                                            {/* Expanded Content: Student List */}
                                             {isExpanded && (
                                                 <div className="border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2">
                                                     <table className="w-full text-left">
                                                         <thead className="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
                                                             <tr>
-                                                                <th className="px-6 py-3 font-medium">Date</th>
-                                                                <th className="px-6 py-3 font-medium">Student</th>
-                                                                <th className="px-6 py-3 font-medium">Mode</th>
-                                                                <th className="px-6 py-3 font-medium text-right">Amount</th>
+                                                                <th className="px-6 py-3 font-medium">Student Name</th>
+                                                                <th className="px-6 py-3 font-medium">Admission No</th>
+                                                                <th className="px-6 py-3 font-medium text-right">Total Fee</th>
+                                                                <th className="px-6 py-3 font-medium text-right">Paid</th>
+                                                                <th className="px-6 py-3 font-medium text-right">Pending</th>
                                                                 <th className="px-6 py-3 font-medium text-center">Status</th>
                                                                 <th className="px-6 py-3 font-medium text-center">Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-slate-100 text-sm bg-white">
-                                                            {classTxns.map(t => (
-                                                                <tr key={t._id} className="hover:bg-slate-50">
-                                                                    <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
-                                                                    <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name}</td>
-                                                                    <td className="px-6 py-3 text-slate-600">{t.paymentMode}</td>
-                                                                    <td className="px-6 py-3 text-right font-semibold text-slate-700">₹{t.amount?.toLocaleString()}</td>
-                                                                    <td className="px-6 py-3 text-center">
-                                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
-                                                                    </td>
-                                                                    <td className="px-6 py-3 text-center">
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setViewingStudent(t.student);
-                                                                            }}
-                                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                                        >
-                                                                            <Info size={18} />
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
+                                                            {studentsInClass.map(s => {
+                                                                const details = getStudentFeeDetails(s);
+                                                                const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+                                                                const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+                                                                const totalPending = totalDue - totalPaid;
+
+                                                                return (
+                                                                    <tr key={s._id || s.id} className="hover:bg-slate-50">
+                                                                        <td className="px-6 py-3 font-medium text-slate-900">{s.name}</td>
+                                                                        <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.admissionNo}</td>
+                                                                        <td className="px-6 py-3 text-right text-slate-600">₹{totalDue.toLocaleString()}</td>
+                                                                        <td className="px-6 py-3 text-right font-semibold text-emerald-600">₹{totalPaid.toLocaleString()}</td>
+                                                                        <td className="px-6 py-3 text-right font-bold text-red-600">₹{totalPending.toLocaleString()}</td>
+                                                                        <td className="px-6 py-3 text-center">
+                                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                                                                ${s.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                                                                                    s.feesStatus === 'Overdue' ? 'bg-red-100 text-red-700' :
+                                                                                        'bg-yellow-100 text-yellow-700'}`}>
+                                                                                {s.feesStatus || 'Pending'}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="px-6 py-3 text-center">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setViewingStudent(s);
+                                                                                }}
+                                                                                className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                                                title="View Info"
+                                                                            >
+                                                                                <Info size={18} />
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -935,12 +1139,22 @@ export default function FeeDashboard() {
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    <button
-                                                        onClick={() => setViewingStudent(t.student)}
-                                                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                    >
-                                                        <Info size={16} />
-                                                    </button>
+                                                    <div className="flex justify-center gap-2">
+                                                        <button
+                                                            onClick={() => setViewingStudent(t.student)}
+                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                            title="View Details"
+                                                        >
+                                                            <Info size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setReprintTransaction(t)}
+                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                            title="Download Receipt"
+                                                        >
+                                                            <Download size={16} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -987,6 +1201,7 @@ export default function FeeDashboard() {
             )}
 
             {/* Fee Details Modal */}
+            {renderReprintModal()}
             {renderFeeDetailsModal()}
         </div>
     );
