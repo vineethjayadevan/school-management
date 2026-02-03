@@ -68,28 +68,35 @@ export default function FeeDashboard() {
 
     // --- Stats Logic ---
     const stats = useMemo(() => {
-        // 1. Calculate Total Expected Revenue
-        const totalExpected = students.reduce((sum, student) => {
+        // Optimization: Pre-calculate total paid per student
+        const paymentsByStudent = transactions.reduce((acc, t) => {
+            if (t.status === 'Paid') {
+                const sId = t.studentId || (t.student?._id) || (t.student?.id);
+                if (sId) {
+                    acc[sId] = (acc[sId] || 0) + (t.amount || 0);
+                }
+            }
+            return acc;
+        }, {});
+
+        return students.reduce((acc, student) => {
             const cls = student.className || student.class;
             const structure = feeStructure[cls] || { tuition: 0, materials: 0 };
-            const studentTotalFee = (structure.tuition || 0) + (structure.materials || 0);
-            return sum + studentTotalFee;
-        }, 0);
 
-        // 2. Calculate Total Collected (from ALL paid transactions)
-        const totalCollected = transactions
-            .filter(t => t.status === 'Paid')
-            .reduce((sum, t) => sum + (t.amount || 0), 0);
+            // Conveyance Logic
+            const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+            const conveyanceFee = slab > 0 ? (200 + (slab * 100)) : 0;
 
-        // 3. Calculate Pending
-        // Prevent negative pending if we have data inconsistencies or overpayments (optional check)
-        const pending = Math.max(0, totalExpected - totalCollected);
+            const studentTotalDue = (structure.tuition || 0) + (structure.materials || 0) + conveyanceFee;
+            const studentPaid = paymentsByStudent[student.id || student._id] || 0;
+            const studentPending = Math.max(0, studentTotalDue - studentPaid);
 
-        return {
-            expected: totalExpected,
-            collected: totalCollected,
-            pending: pending
-        };
+            acc.expected += studentTotalDue;
+            acc.collected += studentPaid;
+            acc.pending += studentPending;
+
+            return acc;
+        }, { expected: 0, collected: 0, pending: 0 });
     }, [students, transactions]);
 
 
@@ -264,7 +271,14 @@ export default function FeeDashboard() {
         if (!reprintTransaction) return null;
         return (
             <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
-                <div className="w-full max-w-3xl">
+                <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white relative">
+                    <button
+                        onClick={() => setReprintTransaction(null)}
+                        className="absolute right-4 top-4 z-50 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+                        title="Close Preview"
+                    >
+                        <X size={20} className="text-slate-600" />
+                    </button>
                     <FeeReceipt
                         transaction={reprintTransaction}
                         student={reprintTransaction.student}
