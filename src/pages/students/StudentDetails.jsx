@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban } from 'lucide-react';
+import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
 
@@ -88,7 +89,7 @@ export default function StudentDetails() {
                 fatherOfficeAddress: data.fatherOfficeAddress,
                 fatherEducation: data.fatherEducation,
                 fatherIncome: data.fatherIncome,
-                fatherAadhar: data.fatherAadhar,
+                fatherAadhar: data.aadharNo, // Assuming fatherAadhar maps to student's aadhar for now
                 fatherMobile: data.fatherMobile,
                 fatherEmail: data.fatherEmail,
                 motherName: data.motherName,
@@ -104,7 +105,8 @@ export default function StudentDetails() {
                 primaryPhone: data.primaryPhone || data.contact, // This is usually mapped from fatherMobile now
                 email: data.email, // This is mapped from father/mother email usually
                 address: data.address,
-                feesStatus: data.feesStatus
+                feesStatus: data.feesStatus,
+                conveyanceSlab: data.conveyanceSlab || '0'
             });
         } catch (error) {
             console.error(error);
@@ -299,8 +301,8 @@ export default function StudentDetails() {
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Details</p>
                                         <p className="text-sm text-slate-600">
-                                            {student.previousClass ? `Class: ${student.previousClass}` : ''}
-                                            {student.mediumOfInstruction ? ` • Medium: ${student.mediumOfInstruction}` : ''}
+                                            {student.previousClass ? `Class: ${student.previousClass} ` : ''}
+                                            {student.mediumOfInstruction ? ` • Medium: ${student.mediumOfInstruction} ` : ''}
                                         </p>
                                     </div>
                                 </div>
@@ -402,6 +404,26 @@ export default function StudentDetails() {
                                             {student.address || 'N/A'}
                                         </p>
                                     </div>
+
+                                    {/* Conveyance Display */}
+                                    <div className="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-gray-100">
+                                        <h4 className="text-sm font-medium text-gray-900 mb-2">Transport Details</h4>
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                                <Bus size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {student.conveyanceSlab && student.conveyanceSlab > 0
+                                                        ? `Slab ${student.conveyanceSlab} (₹${200 + (parseInt(student.conveyanceSlab) * 100)})`
+                                                        : 'Not Applicable'}
+                                                </p>
+                                                <p className="text-xs text-gray-500">Monthly Conveyance Fee</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
                                 </div>
                             </div>
                         </>
@@ -519,7 +541,7 @@ export default function StudentDetails() {
                                 {/* Previous Education */}
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Previous Education</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div className="col-span-1 md:col-span-2">
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Previous School</label>
                                             <input {...register("previousSchool")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
@@ -627,6 +649,24 @@ export default function StudentDetails() {
                                         <label className="block text-xs font-medium text-slate-700 mb-1">Residential Address</label>
                                         <textarea {...register("address")} rows={3} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                     </div>
+
+                                    {/* Conveyance Slab */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-700 mb-1">Conveyance Slab</label>
+                                        <select
+                                            {...register('conveyanceSlab')}
+                                            className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        >
+                                            <option value="0">Not Applicable</option>
+                                            <option value="1">Slab 1 (₹300)</option>
+                                            <option value="2">Slab 2 (₹400)</option>
+                                            <option value="3">Slab 3 (₹500)</option>
+                                            <option value="4">Slab 4 (₹600)</option>
+                                            <option value="5">Slab 5 (₹700)</option>
+                                        </select>
+                                    </div>
+
+
                                 </div>
 
                             </form>

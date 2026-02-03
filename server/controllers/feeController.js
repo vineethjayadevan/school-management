@@ -73,6 +73,11 @@ const addFee = async (req, res) => {
             student.feesStatus = 'Pending';
         }
 
+        // Sanitize fields that might cause validation errors if they are empty strings but have enums
+        if (student.previousClass === '') {
+            student.previousClass = undefined;
+        }
+
         await student.save();
 
         res.status(201).json(fee);

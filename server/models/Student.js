@@ -57,6 +57,9 @@ const studentSchema = mongoose.Schema({
     previousClass: { type: String, enum: ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
     mediumOfInstruction: { type: String },
 
+    // Conveyance
+    conveyanceSlab: { type: Number, enum: [0, 1, 2, 3, 4, 5], default: 0 }, // 0 = Not Applicable
+
     // Health & Special Needs
     hasLearningDisability: { type: Boolean, default: false },
     learningDisabilityDetails: { type: String },
