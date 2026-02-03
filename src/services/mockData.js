@@ -79,6 +79,19 @@ export const feeStructure = {
     'Class 1': { tuition: 20000, materials: 6500 },
     'KG 1': { tuition: 20000, materials: 6500 },
     'KG 2': { tuition: 20000, materials: 6500 },
+    // New mappings for updated class names
+    'Mont 1': { tuition: 20000, materials: 6500 },
+    'Mont 2': { tuition: 20000, materials: 6500 },
+    'Grade 1': { tuition: 20000, materials: 6500 },
+    'Grade 2': { tuition: 20000, materials: 6500 },
+    'Grade 3': { tuition: 20000, materials: 6500 },
+    'Grade 4': { tuition: 20000, materials: 6500 },
+    'Grade 5': { tuition: 20000, materials: 6500 },
+    'Grade 6': { tuition: 20000, materials: 6500 },
+    'Grade 7': { tuition: 20000, materials: 6500 },
+    'Grade 8': { tuition: 20000, materials: 6500 },
+    'Grade 9': { tuition: 20000, materials: 6500 },
+    'Grade 10': { tuition: 20000, materials: 6500 },
 };
 
 export const mockFees = [
