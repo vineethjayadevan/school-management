@@ -401,14 +401,19 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                                     </h3>
                                     <div className="flex gap-2 justify-between">
                                         {/* Location */}
-                                        <div className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-white p-2 rounded-2xl transition-all duration-300 flex-1 hover:shadow-xl hover:shadow-indigo-900/5 border border-transparent hover:border-slate-100 min-w-0">
+                                        <a
+                                            href="https://maps.app.goo.gl/Rfmy5nMw33EQ29yD6?g_st=aw"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col items-center gap-2 group cursor-pointer hover:bg-white p-2 rounded-2xl transition-all duration-300 flex-1 hover:shadow-xl hover:shadow-indigo-900/5 border border-transparent hover:border-slate-100 min-w-0"
+                                        >
                                             <div className="w-14 h-14 bg-white rounded-xl p-1 shadow-sm border border-slate-200 group-hover:scale-105 transition-transform duration-300">
                                                 <div className="w-full h-full bg-slate-50 rounded-lg flex items-center justify-center">
                                                     <MapPin size={24} className="text-indigo-600" />
                                                 </div>
                                             </div>
                                             <span className="text-[10px] font-bold text-slate-600 text-center tracking-wide whitespace-nowrap">Locate Us</span>
-                                        </div>
+                                        </a>
 
                                         <div className="w-px bg-slate-200 my-2 shrink-0"></div>
 
@@ -1607,7 +1612,7 @@ const Footer = () => (
                     <ul className="space-y-4 text-slate-400">
                         <li>
                             <a
-                                href="https://www.google.com/maps/search/?api=1&query=STEM+Global+Public+School+Eravakkad+Kerala"
+                                href="https://maps.app.goo.gl/Rfmy5nMw33EQ29yD6?g_st=aw"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex gap-3 hover:text-indigo-400 transition-colors group"
