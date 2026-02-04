@@ -15,7 +15,8 @@ import {
     MessageSquare,
     Briefcase,
     Calendar,
-    UserPlus
+    UserPlus,
+    DollarSign
 } from 'lucide-react';
 import clsx from 'clsx';
 import { authService } from '../services/auth';
@@ -63,23 +64,29 @@ export default function DashboardLayout() {
             allowed: ['superuser', 'admin']
         },
         {
-            name: 'Academics',
-            href: '/admin/academics',
-            icon: GraduationCap,
-            allowed: ['superuser', 'admin']
-        },
-        {
-            name: 'Manage Events',
-            href: '/admin/events',
-            icon: Calendar,
-            allowed: ['superuser', 'admin']
-        },
-        {
             name: 'Staff',
             href: '/admin/staff',
             icon: Briefcase,
             allowed: ['superuser', 'admin']
         },
+        {
+            name: 'Salaries',
+            href: '/admin/salaries',
+            icon: DollarSign,
+            allowed: ['superuser', 'admin']
+        },
+        // {
+        //     name: 'Academics',
+        //     href: '/admin/academics',
+        //     icon: GraduationCap,
+        //     allowed: ['superuser', 'admin']
+        // },
+        // {
+        //     name: 'Manage Events',
+        //     href: '/admin/events',
+        //     icon: Calendar,
+        //     allowed: ['superuser', 'admin']
+        // },
         {
             name: 'User Management',
             href: '/admin/users',

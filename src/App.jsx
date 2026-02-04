@@ -22,6 +22,7 @@ import Login from './pages/auth/Login';
 import Home from './pages/Home';
 import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
+import SalaryManager from './pages/admin/SalaryManager';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
 import { useAuth } from './context/AuthContext';
@@ -131,6 +132,11 @@ function App() {
                     <Route path="staff" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <StaffDirectory />
+                        </RequireAuth>
+                    } />
+                    <Route path="salaries" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <SalaryManager />
                         </RequireAuth>
                     } />
                     <Route path="events" element={

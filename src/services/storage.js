@@ -44,7 +44,10 @@ export const storageService = {
                 id: s._id,
                 contact: s.phone, // Map phone -> contact
                 subject: s.subjects && s.subjects.length > 0 ? s.subjects[0] : 'N/A', // Map subjects[] -> single subject string (for UI)
-                joinDate: s.joiningDate // Map joiningDate -> joinDate
+                joinDate: s.joiningDate, // Map joiningDate -> joinDate
+                fixedSalary: s.salary || 0,
+                paymentMode: s.paymentMode || 'Cash',
+                category: s.category || 'Teacher'
             }));
         },
         add: async (staffMember) => {
@@ -54,7 +57,11 @@ export const storageService = {
                 ...staffMember,
                 phone: staffMember.contact,
                 subjects: [staffMember.subject],
-                joiningDate: staffMember.joinDate
+                joiningDate: staffMember.joinDate,
+                // Pass salary fields as is
+                category: staffMember.category,
+                salary: staffMember.fixedSalary,
+                paymentMode: staffMember.paymentMode
             };
             const { data } = await api.post('/staff', payload);
             return {
@@ -64,6 +71,32 @@ export const storageService = {
                 subject: data.subjects[0],
                 joinDate: data.joiningDate
             };
+        },
+        update: async (id, staffMember) => {
+            const payload = {
+                ...staffMember,
+                phone: staffMember.contact,
+                subjects: [staffMember.subject],
+                joiningDate: staffMember.joinDate,
+                category: staffMember.category,
+                salary: staffMember.fixedSalary,
+                paymentMode: staffMember.paymentMode
+            };
+            const { data } = await api.put(`/staff/${id}`, payload);
+            return {
+                ...data,
+                id: data._id,
+                contact: data.phone,
+                subject: data.subjects && data.subjects.length > 0 ? data.subjects[0] : 'N/A',
+                joinDate: data.joiningDate,
+                fixedSalary: data.salary || 0,
+                paymentMode: data.paymentMode || 'Cash',
+                category: data.category || 'Teacher'
+            };
+        },
+        remove: async (id) => {
+            const { data } = await api.delete(`/staff/${id}`);
+            return data;
         }
     },
     dashboard: {
@@ -97,6 +130,20 @@ export const storageService = {
         },
         getFees: async () => {
             const { data } = await api.get('/fees/student');
+            return data;
+        }
+    },
+    salaries: {
+        getByMonth: async (month) => {
+            const { data } = await api.get(`/salaries?month=${month}`);
+            return data;
+        },
+        pay: async (id, paymentMode, remarks) => {
+            const { data } = await api.put(`/salaries/${id}/pay`, { paymentMode, remarks });
+            return data;
+        },
+        getSummary: async (month) => {
+            const { data } = await api.get(`/salaries/summary?month=${month}`);
             return data;
         }
     }

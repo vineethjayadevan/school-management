@@ -59,7 +59,62 @@ const addStaff = async (req, res) => {
     }
 };
 
+// @desc    Update staff
+// @route   PUT /api/staff/:id
+// @access  Private
+const updateStaff = async (req, res) => {
+    try {
+        const staff = await Staff.findById(req.params.id);
+
+        if (!staff) {
+            return res.status(404).json({ message: 'Staff not found' });
+        }
+
+        // Update fields
+        staff.name = req.body.name || staff.name;
+        staff.role = req.body.role || staff.role;
+        staff.email = req.body.email || staff.email;
+        staff.phone = req.body.phone || req.body.contact || staff.phone;
+        staff.qualification = req.body.qualification || staff.qualification;
+        staff.joiningDate = req.body.joiningDate || staff.joiningDate;
+        staff.category = req.body.category || staff.category;
+        staff.salary = req.body.salary !== undefined ? req.body.salary : staff.salary;
+        staff.paymentMode = req.body.paymentMode || staff.paymentMode;
+        staff.status = req.body.status || staff.status;
+
+        // Handle subjects update
+        if (req.body.subjects) {
+            staff.subjects = Array.isArray(req.body.subjects) ? req.body.subjects : [req.body.subjects];
+        }
+
+        const updatedStaff = await staff.save();
+        res.json(updatedStaff);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// @desc    Delete staff
+// @route   DELETE /api/staff/:id
+// @access  Private
+const deleteStaff = async (req, res) => {
+    try {
+        const staff = await Staff.findById(req.params.id);
+
+        if (!staff) {
+            return res.status(404).json({ message: 'Staff not found' });
+        }
+
+        await staff.deleteOne();
+        res.json({ message: 'Staff removed' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getStaff,
     addStaff,
+    updateStaff,
+    deleteStaff
 };
