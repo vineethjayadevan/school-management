@@ -104,26 +104,31 @@ export default function DashboardLayout() {
             {/* Sidebar */}
             <aside
                 className={clsx(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-[100] w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col h-full",
                     !isSidebarOpen && "-translate-x-full lg:hidden"
                 )}
             >
-                <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white">
-                            S
+                {/* Sidebar Header */}
+                <div className="p-4 border-b border-slate-800 flex items-center justify-between shrink-0 gap-2">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400 shrink-0">
+                            <GraduationCap size={20} />
                         </div>
-                        <span className="font-semibold text-lg">School Admin</span>
+                        <span className="font-bold text-lg leading-tight">
+                            STEM Global Public <br />
+                            School
+                        </span>
                     </div>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="lg:hidden text-slate-400 hover:text-white"
+                        className="lg:hidden text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-md transition-colors shrink-0"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-80px)] custom-scrollbar">
+                {/* Navigation */}
+                <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
                     <div className="space-y-1">
                         {filteredNavigation.map((item) => (
                             <SidebarLink
@@ -141,7 +146,8 @@ export default function DashboardLayout() {
                     </div>
                 </nav>
 
-                <div className="absolute bottom-0 w-full p-4 border-t border-slate-800 bg-slate-900 z-10">
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors w-full px-3 py-2 rounded-lg hover:bg-slate-800"
@@ -188,6 +194,14 @@ export default function DashboardLayout() {
                     <Outlet />
                 </main>
             </div>
+
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
         </div>
     );
 }
