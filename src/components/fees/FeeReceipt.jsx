@@ -1,11 +1,13 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 // import { useReactToPrint } from 'react-to-print'; // Removed
-import { Printer, Download, CheckCircle, School } from 'lucide-react';
+import { Printer, Download, CheckCircle, School, Loader2, AlertTriangle } from 'lucide-react';
 import { SCHOOL_INFO } from '../../utils/schoolInfo';
 import html2pdf from 'html2pdf.js';
 
 const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
     const componentRef = useRef();
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleDownload = () => {
         const element = componentRef.current;
@@ -19,9 +21,19 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
         html2pdf().set(opt).from(element).save();
     };
 
-    const handleConfirm = async () => {
-        if (onConfirm) {
-            await onConfirm();
+    const initiateConfirm = () => {
+        setShowConfirmDialog(true);
+    };
+
+    const proceedWithPayment = async () => {
+        setShowConfirmDialog(false);
+        setIsProcessing(true);
+        try {
+            if (onConfirm) {
+                await onConfirm();
+            }
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -29,7 +41,49 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
     const schoolInfo = SCHOOL_INFO;
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in zoom-in-95 duration-200">
+        <div className="max-w-2xl mx-auto space-y-6 animate-in zoom-in-95 duration-200 relative">
+
+            {/* Confirmation Dialog Overlay */}
+            {showConfirmDialog && (
+                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform scale-100 animate-in zoom-in-95">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900">Confirm Payment?</h3>
+                            <p className="text-slate-500">
+                                Are you sure you want to process this payment of <span className="font-bold text-slate-800">₹{Number(transaction.amount).toLocaleString()}</span>?
+                                <br />This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3 w-full pt-2">
+                                <button
+                                    onClick={() => setShowConfirmDialog(false)}
+                                    className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={proceedWithPayment}
+                                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all"
+                                >
+                                    Yes, Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Processing Loader Overlay */}
+            {isProcessing && (
+                <div className="fixed inset-0 bg-white/80 z-[90] flex flex-col items-center justify-center backdrop-blur-[2px]">
+                    <Loader2 size={48} className="text-indigo-600 animate-spin mb-4" />
+                    <p className="text-lg font-semibold text-indigo-900">Processing Payment...</p>
+                    <p className="text-sm text-slate-500">Please wait while we generate the challan</p>
+                </div>
+            )}
+
             {/* Action Bar */}
             <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <div className={`flex items-center gap-2 font-bold ${isPreview ? 'text-amber-600' : 'text-green-600'}`}>
@@ -48,15 +102,17 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                 <div className="flex gap-3">
                     <button
                         onClick={onNext}
-                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                        disabled={isProcessing}
+                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors disabled:opacity-50"
                     >
                         {isPreview ? 'Back / Edit' : 'Close / Next'}
                     </button>
 
                     {isPreview ? (
                         <button
-                            onClick={handleConfirm}
-                            className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 font-medium transition-shadow hover:shadow-lg hover:shadow-emerald-500/30"
+                            onClick={initiateConfirm}
+                            disabled={isProcessing}
+                            className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 font-medium transition-shadow hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <CheckCircle size={18} />
                             Confirm & Pay
