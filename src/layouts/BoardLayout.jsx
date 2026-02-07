@@ -29,7 +29,8 @@ export default function BoardLayout() {
         { path: '/board/dashboard', icon: LayoutDashboard, label: 'Overview' },
         { path: '/board/expenses', icon: PieChart, label: 'Expenses' },
         { path: '/board/income', icon: TrendingUp, label: 'Income & Funding' },
-        { path: '/board/shareholders', icon: Users, label: 'Shareholders' },
+        { path: '/board/cashflow', icon: Users, label: 'Cashflow' },
+        { path: '/board/accounting', icon: PieChart, label: 'Accounting' },
     ];
 
     return (
