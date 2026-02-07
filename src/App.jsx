@@ -7,7 +7,12 @@ import BoardDashboard from './pages/board/BoardDashboard';
 import ExpenseManager from './pages/board/ExpenseManager';
 
 import IncomeOverview from './pages/board/IncomeOverview';
-import Shareholders from './pages/board/Shareholders';
+import Cashflow from './pages/board/Cashflow';
+import AccountingDashboard from './pages/board/accounting/AccountingDashboard';
+import ProfitAndLoss from './pages/board/accounting/ProfitAndLoss';
+import BalanceSheet from './pages/board/accounting/BalanceSheet';
+import AssetRegister from './pages/board/accounting/AssetRegister';
+import Adjustments from './pages/board/accounting/Adjustments';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -179,7 +184,13 @@ function App() {
                     <Route path="dashboard" element={<BoardDashboard />} />
                     <Route path="expenses" element={<ExpenseManager />} />
                     <Route path="income" element={<IncomeOverview />} />
-                    <Route path="shareholders" element={<Shareholders />} />
+                    <Route path="cashflow" element={<Cashflow />} />
+                    <Route path="accounting" element={<AccountingDashboard />}>
+                        <Route path="pnl" element={<ProfitAndLoss />} />
+                        <Route path="balance-sheet" element={<BalanceSheet />} />
+                        <Route path="assets" element={<AssetRegister />} />
+                        <Route path="adjustments" element={<Adjustments />} />
+                    </Route>
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />

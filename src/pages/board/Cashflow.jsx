@@ -97,7 +97,7 @@ const ValuationProjectionModal = ({ isOpen, onClose, currentNetWorth, totalShare
     );
 };
 
-export default function Shareholders() {
+export default function Cashflow() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showTooltip, setShowTooltip] = useState(false);
@@ -149,7 +149,7 @@ export default function Shareholders() {
 
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Shareholders</h1>
+                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Cashflow</h1>
                     <p className="text-slate-500 mt-1">Equity distribution and share value analysis</p>
                 </div>
                 <button
