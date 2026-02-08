@@ -45,6 +45,12 @@ const migrateInvestments = async () => {
                 // So yes, we should DELETE them from OtherIncome so they don't double count or count as revenue.
 
                 await OtherIncome.findByIdAndDelete(inv._id);
+            } else {
+                // Even if it exists in Capital (duplicate run), we should arguably delete the old OtherIncome 
+                // to prevent double counting in legacy reports, assuming the Capital entry is the "source of truth" now.
+                // Let's delete it to be safe and clean.
+                await OtherIncome.findByIdAndDelete(inv._id);
+                console.log(`Removed duplicate source record for ${inv._id}`);
             }
         }
 

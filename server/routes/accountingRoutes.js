@@ -4,7 +4,10 @@ const {
     getProfitAndLoss,
     getBalanceSheet,
     addAsset,
-    getAssets
+    getAssets,
+    addAdjustment,
+    getAdjustments,
+    deleteAdjustment
 } = require('../controllers/accountingController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -19,5 +22,12 @@ router.route('/balance-sheet')
 router.route('/assets')
     .get(protect, allowedRoles, getAssets)
     .post(protect, allowedRoles, addAsset);
+
+router.route('/adjustments')
+    .get(protect, allowedRoles, getAdjustments)
+    .post(protect, allowedRoles, addAdjustment);
+
+router.route('/adjustments/:id')
+    .delete(protect, allowedRoles, deleteAdjustment);
 
 module.exports = router;
