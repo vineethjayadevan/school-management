@@ -270,5 +270,25 @@ module.exports = {
     getProfitAndLoss,
     getBalanceSheet,
     addAsset,
-    getAssets
+    getAssets,
+    addAdjustment: async (req, res) => {
+        try {
+            const adjustment = await Adjustment.create({ ...req.body, addedBy: req.user._id });
+            res.status(201).json(adjustment);
+        } catch (error) { res.status(400).json({ message: error.message }); }
+    },
+    getAdjustments: async (req, res) => {
+        try {
+            const adjustments = await Adjustment.find().sort({ date: -1 });
+            res.json(adjustments);
+        } catch (error) { res.status(500).json({ message: error.message }); }
+    },
+    deleteAdjustment: async (req, res) => {
+        try {
+            const adjustment = await Adjustment.findById(req.params.id);
+            if (!adjustment) return res.status(404).json({ message: 'Adjustment not found' });
+            await adjustment.deleteOne();
+            res.json({ message: 'Adjustment removed' });
+        } catch (error) { res.status(500).json({ message: error.message }); }
+    }
 };
