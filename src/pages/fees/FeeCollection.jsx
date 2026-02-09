@@ -867,210 +867,217 @@ export default function FeeDashboard() {
                 </div>
 
                 {/* Sub-Tabs */}
-                <div className="flex items-center gap-4 border-b border-slate-200">
+                <div className="flex items-center gap-4 border-b border-slate-200 overflow-x-auto">
                     <button
                         onClick={() => setHistorySubTab('overview')}
-                        className={`pb-2 text-sm font-medium transition-colors relative ${historySubTab === 'overview' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`pb-2 text-sm font-medium transition-colors relative whitespace-nowrap ${historySubTab === 'overview' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Overview
                         {historySubTab === 'overview' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>}
                     </button>
                     <button
+                        onClick={() => setHistorySubTab('class_view')}
+                        className={`pb-2 text-sm font-medium transition-colors relative whitespace-nowrap ${historySubTab === 'class_view' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Class-wise Collections
+                        {historySubTab === 'class_view' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>}
+                    </button>
+                    <button
                         onClick={() => setHistorySubTab('all')}
-                        className={`pb-2 text-sm font-medium transition-colors relative ${historySubTab === 'all' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`pb-2 text-sm font-medium transition-colors relative whitespace-nowrap ${historySubTab === 'all' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         All Transactions
                         {historySubTab === 'all' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>}
                     </button>
                 </div>
 
-                {historySubTab === 'overview' ? (
-                    <>
-                        {/* 1. Recent Transactions (Compact) */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                                    <History size={18} className="text-indigo-600" />
-                                    Recent Activity
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-slate-500">Last 5 Transactions</span>
-                                    <button onClick={() => setHistorySubTab('all')} className="text-xs text-indigo-600 font-medium hover:underline">View All</button>
-                                </div>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
-                                        <tr>
-                                            <th className="px-6 py-3">Date</th>
-                                            <th className="px-6 py-3">Student</th>
-                                            <th className="px-6 py-3">Class</th>
-                                            <th className="px-6 py-3 text-right">Amount</th>
-                                            <th className="px-6 py-3 text-center">Status</th>
-                                            <th className="px-6 py-3 text-center">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 text-sm">
-                                        {loadingHistory ? (
-                                            <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
-                                        ) : recentTransactions.length === 0 ? (
-                                            <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No transactions found.</td></tr>
-                                        ) : (
-                                            recentTransactions.map((t) => (
-                                                <tr key={t._id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
-                                                    <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
-                                                    <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
-                                                    <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
-                                                    <td className="px-6 py-3 text-center">
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
-                                                    </td>
-                                                    <td className="px-6 py-3 text-center">
-                                                        <button
-                                                            onClick={() => setReprintTransaction(t)}
-                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                            title="Download Receipt"
-                                                        >
-                                                            <Download size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                {historySubTab === 'overview' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
+                        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                                <History size={18} className="text-indigo-600" />
+                                Recent Activity
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500">Last 5 Transactions</span>
+                                <button onClick={() => setHistorySubTab('all')} className="text-xs text-indigo-600 font-medium hover:underline">View All</button>
                             </div>
                         </div>
-
-                        {/* 2. Segregated View by Class (Student Roster) */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-slate-900 px-1">Class-wise Collections</h3>
-                            <div className="grid grid-cols-1 gap-4">
-                                {sortedClasses.map(className => {
-                                    const studentsInClass = studentsByClass[className];
-
-                                    // Calculate Class Financials
-                                    let clsCollected = 0;
-                                    let clsPending = 0;
-                                    let clsTotalFee = 0;
-
-                                    studentsInClass.forEach(s => {
-                                        const details = getStudentFeeDetails(s);
-                                        const totalDue = details.reduce((sum, d) => sum + d.due, 0);
-                                        const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
-                                        const totalPending = totalDue - totalPaid;
-
-                                        clsTotalFee += totalDue;
-                                        clsCollected += totalPaid;
-                                        clsPending += totalPending;
-                                    });
-
-                                    const isExpanded = expandedClass === className;
-
-                                    return (
-                                        <div key={className} className={`bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-2 ring-indigo-50' : 'border-slate-200'}`}>
-                                            {/* Header / Trigger */}
-                                            <div
-                                                onClick={() => toggleClass(className)}
-                                                className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-2 rounded-lg ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-900 text-lg">{className}</h4>
-                                                        <p className="text-sm text-slate-500">{studentsInClass.length} Students</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-6 text-right items-center">
-                                                    <div>
-                                                        <p className="text-xs text-emerald-600 uppercase font-semibold">Collected</p>
-                                                        <p className="text-lg font-bold text-emerald-700">₹{clsCollected.toLocaleString()}</p>
-                                                    </div>
-                                                    {(clsPending > 0) && (
-                                                        <div className="border-l border-slate-200 pl-6">
-                                                            <p className="text-xs text-red-500 uppercase font-semibold">Pending</p>
-                                                            <p className="text-lg font-bold text-red-600">₹{clsPending.toLocaleString()}</p>
-                                                        </div>
-                                                    )}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
+                                    <tr>
+                                        <th className="px-6 py-3">Date</th>
+                                        <th className="px-6 py-3">Student</th>
+                                        <th className="px-6 py-3">Class</th>
+                                        <th className="px-6 py-3 text-right">Amount</th>
+                                        <th className="px-6 py-3 text-center">Status</th>
+                                        <th className="px-6 py-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-sm">
+                                    {loadingHistory ? (
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
+                                    ) : recentTransactions.length === 0 ? (
+                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No transactions found.</td></tr>
+                                    ) : (
+                                        recentTransactions.map((t) => (
+                                            <tr key={t._id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
+                                                <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
+                                                <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
+                                                <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-center">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
+                                                </td>
+                                                <td className="px-6 py-3 text-center">
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            generateClassReport(className, studentsInClass);
-                                                        }}
-                                                        className="ml-4 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 hover:border-indigo-300 transition-colors flex items-center gap-2"
-                                                        title="Print Class Report"
+                                                        onClick={() => setReprintTransaction(t)}
+                                                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                        title="Download Receipt"
                                                     >
-                                                        <Printer size={18} />
-                                                        <span className="text-sm font-semibold">Print Report</span>
+                                                        <Download size={16} />
                                                     </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {historySubTab === 'class_view' && (
+                    <div className="space-y-4 animate-in fade-in">
+                        <h3 className="text-lg font-bold text-slate-900 px-1">Class-wise Collections</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                            {sortedClasses.map(className => {
+                                const studentsInClass = studentsByClass[className];
+
+                                // Calculate Class Financials
+                                let clsCollected = 0;
+                                let clsPending = 0;
+                                let clsTotalFee = 0;
+
+                                studentsInClass.forEach(s => {
+                                    const details = getStudentFeeDetails(s);
+                                    const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+                                    const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+                                    const totalPending = totalDue - totalPaid;
+
+                                    clsTotalFee += totalDue;
+                                    clsCollected += totalPaid;
+                                    clsPending += totalPending;
+                                });
+
+                                const isExpanded = expandedClass === className;
+
+                                return (
+                                    <div key={className} className={`bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${isExpanded ? 'border-indigo-200 ring-2 ring-indigo-50' : 'border-slate-200'}`}>
+                                        {/* Header / Trigger */}
+                                        <div
+                                            onClick={() => toggleClass(className)}
+                                            className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={`p-2 rounded-lg ${isExpanded ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 text-lg">{className}</h4>
+                                                    <p className="text-sm text-slate-500">{studentsInClass.length} Students</p>
                                                 </div>
                                             </div>
-
-                                            {/* Expanded Content: Student List */}
-                                            {isExpanded && (
-                                                <div className="border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2">
-                                                    <table className="w-full text-left">
-                                                        <thead className="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
-                                                            <tr>
-                                                                <th className="px-6 py-3 font-medium">Student Name</th>
-                                                                <th className="px-6 py-3 font-medium">Admission No</th>
-                                                                <th className="px-6 py-3 font-medium text-right">Total Fee</th>
-                                                                <th className="px-6 py-3 font-medium text-right">Paid</th>
-                                                                <th className="px-6 py-3 font-medium text-right">Pending</th>
-                                                                <th className="px-6 py-3 font-medium text-center">Status</th>
-                                                                <th className="px-6 py-3 font-medium text-center">Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-slate-100 text-sm bg-white">
-                                                            {studentsInClass.map(s => {
-                                                                const details = getStudentFeeDetails(s);
-                                                                const totalDue = details.reduce((sum, d) => sum + d.due, 0);
-                                                                const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
-                                                                const totalPending = totalDue - totalPaid;
-
-                                                                return (
-                                                                    <tr key={s._id || s.id} className="hover:bg-slate-50">
-                                                                        <td className="px-6 py-3 font-medium text-slate-900">{s.name}</td>
-                                                                        <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.admissionNo}</td>
-                                                                        <td className="px-6 py-3 text-right text-slate-600">₹{totalDue.toLocaleString()}</td>
-                                                                        <td className="px-6 py-3 text-right font-semibold text-emerald-600">₹{totalPaid.toLocaleString()}</td>
-                                                                        <td className="px-6 py-3 text-right font-bold text-red-600">₹{totalPending.toLocaleString()}</td>
-                                                                        <td className="px-6 py-3 text-center">
-                                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                                                                ${s.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                                                                                    s.feesStatus === 'Overdue' ? 'bg-red-100 text-red-700' :
-                                                                                        'bg-yellow-100 text-yellow-700'}`}>
-                                                                                {s.feesStatus || 'Pending'}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="px-6 py-3 text-center">
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setViewingStudent(s);
-                                                                                }}
-                                                                                className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                                                title="View Info"
-                                                                            >
-                                                                                <Info size={18} />
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
+                                            <div className="flex gap-6 text-right items-center">
+                                                <div>
+                                                    <p className="text-xs text-emerald-600 uppercase font-semibold">Collected</p>
+                                                    <p className="text-lg font-bold text-emerald-700">₹{clsCollected.toLocaleString()}</p>
                                                 </div>
-                                            )}
+                                                {(clsPending > 0) && (
+                                                    <div className="border-l border-slate-200 pl-6">
+                                                        <p className="text-xs text-red-500 uppercase font-semibold">Pending</p>
+                                                        <p className="text-lg font-bold text-red-600">₹{clsPending.toLocaleString()}</p>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        generateClassReport(className, studentsInClass);
+                                                    }}
+                                                    className="ml-4 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 hover:border-indigo-300 transition-colors flex items-center gap-2"
+                                                    title="Print Class Report"
+                                                >
+                                                    <Printer size={18} />
+                                                    <span className="text-sm font-semibold">Print Report</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+
+                                        {/* Expanded Content: Student List */}
+                                        {isExpanded && (
+                                            <div className="border-t border-slate-100 bg-slate-50/30 animate-in slide-in-from-top-2">
+                                                <table className="w-full text-left">
+                                                    <thead className="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
+                                                        <tr>
+                                                            <th className="px-6 py-3 font-medium">Student Name</th>
+                                                            <th className="px-6 py-3 font-medium">Admission No</th>
+                                                            <th className="px-6 py-3 font-medium text-right">Total Fee</th>
+                                                            <th className="px-6 py-3 font-medium text-right">Paid</th>
+                                                            <th className="px-6 py-3 font-medium text-right">Pending</th>
+                                                            <th className="px-6 py-3 font-medium text-center">Status</th>
+                                                            <th className="px-6 py-3 font-medium text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 text-sm bg-white">
+                                                        {studentsInClass.map(s => {
+                                                            const details = getStudentFeeDetails(s);
+                                                            const totalDue = details.reduce((sum, d) => sum + d.due, 0);
+                                                            const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
+                                                            const totalPending = totalDue - totalPaid;
+
+                                                            return (
+                                                                <tr key={s._id || s.id} className="hover:bg-slate-50">
+                                                                    <td className="px-6 py-3 font-medium text-slate-900">{s.name}</td>
+                                                                    <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.admissionNo}</td>
+                                                                    <td className="px-6 py-3 text-right text-slate-600">₹{totalDue.toLocaleString()}</td>
+                                                                    <td className="px-6 py-3 text-right font-semibold text-emerald-600">₹{totalPaid.toLocaleString()}</td>
+                                                                    <td className="px-6 py-3 text-right font-bold text-red-600">₹{totalPending.toLocaleString()}</td>
+                                                                    <td className="px-6 py-3 text-center">
+                                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                                                            ${s.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                                                                                s.feesStatus === 'Overdue' ? 'bg-red-100 text-red-700' :
+                                                                                    'bg-yellow-100 text-yellow-700'}`}>
+                                                                            {s.feesStatus || 'Pending'}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-center">
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setViewingStudent(s);
+                                                                            }}
+                                                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
+                                                                            title="View Info"
+                                                                        >
+                                                                            <Info size={18} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </>
-                ) : (
+                    </div>
+                )}
+
+                {historySubTab === 'all' && (
                     // ALL TRANSACTIONS VIEW
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
                         {/* Filters */}
