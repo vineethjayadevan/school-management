@@ -20,16 +20,12 @@ const getProfitAndLoss = async (req, res) => {
 
         // 1. REVENUE
         // Cash Inflows
-        const fees = await Fee.aggregate([
-            { $match: { paymentDate: { $gte: start, $lte: end }, status: 'Paid' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
         const otherIncome = await OtherIncome.aggregate([
             { $match: { date: { $gte: start, $lte: end } } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
-        const cashRevenue = (fees[0]?.total || 0) + (otherIncome[0]?.total || 0);
+        const cashRevenue = (otherIncome[0]?.total || 0);
 
         // Accrual Adjustments (Revenue)
         const adjustments = await Adjustment.find({
@@ -70,12 +66,8 @@ const getProfitAndLoss = async (req, res) => {
             { $match: { date: { $gte: start, $lte: end } } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const salaries = await Salary.aggregate([
-            { $match: { paymentDate: { $gte: start, $lte: end }, status: 'Paid' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
 
-        const cashExpenses = (expenses[0]?.total || 0) + (salaries[0]?.total || 0);
+        const cashExpenses = (expenses[0]?.total || 0);
 
         // Accrual Adjustments (Expenses)
         const expAdjustments = await Adjustment.find({
@@ -151,16 +143,16 @@ const getBalanceSheet = async (req, res) => {
         // 1. ASSETS
 
         // Cash & Bank (All time Cash In - All time Cash Out)
-        const fees = await Fee.aggregate([{ $match: { paymentDate: { $lte: asOfDate }, status: 'Paid' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
+        // Removed Fees (Admin) from Cash In
         const otherInc = await OtherIncome.aggregate([{ $match: { date: { $lte: asOfDate } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
         const caps = await Capital.aggregate([{ $match: { date: { $lte: asOfDate }, type: 'Investment' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
         const capsOut = await Capital.aggregate([{ $match: { date: { $lte: asOfDate }, type: 'Withdrawal' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
 
+        // Removed Salary (Admin) from Cash Out
         const totExp = await Expense.aggregate([{ $match: { date: { $lte: asOfDate } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
-        const totSal = await Salary.aggregate([{ $match: { paymentDate: { $lte: asOfDate }, status: 'Paid' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
 
-        const totalCashIn = (fees[0]?.total || 0) + (otherInc[0]?.total || 0) + (caps[0]?.total || 0);
-        const totalCashOut = (totExp[0]?.total || 0) + (totSal[0]?.total || 0) + (capsOut[0]?.total || 0);
+        const totalCashIn = (otherInc[0]?.total || 0) + (caps[0]?.total || 0);
+        const totalCashOut = (totExp[0]?.total || 0) + (capsOut[0]?.total || 0);
         const cashBalance = totalCashIn - totalCashOut;
 
         // Fixed Assets (Net Block)
@@ -176,41 +168,15 @@ const getBalanceSheet = async (req, res) => {
         });
 
         // Current Assets (Receivables, Prepaids)
-        // Receivables: Pending Fees (Due <= asOfDate)
-        const receivables = await Fee.aggregate([
-            { $match: { dueDate: { $lte: asOfDate }, status: { $in: ['Pending', 'Overdue'] } } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
+        // Removed Fees Receivables
 
-        // Adjustments define the balance of Prepaids/AccruedIncome?
-        // Or do they define the DELTA? 
-        // If we assumed they define the DELTA in P&L, then Balance Sheet value = Sum of all Adjustments?
-        // Actually, normally Adjustments are reversals.
-        // Let's assume for simplicity: The user manually inputs "Current Value of Prepaid Expenses" in a separate Balance Sheet adjustment form? No, too complex.
-        // Let's assume Adjustments are CUMULATIVE for Balance Sheet items.
-        // Sum of all 'Prepaid Expense' adjustments = Current Prepaid Asset? 
-        // No, because expense consumes prepaid.
-        // SIMPLIFICATON: We ignore manual Prepaids/Accruals for Balance Sheet unless we implement a full ledger. 
-        // Constraint: "Simplicity".
-        // Let's stick to:
-        // Cash
-        // + Fixed Assets
-        // + Fee Receivables (Automated)
-        // Ignore manual accruals for BS for now unless user adds them as 'Assets'.
-
-        const totalAssets = cashBalance + fixedAssetsValue + (receivables[0]?.total || 0);
+        // Adjustments remain for manual assets if any, but simplified here:
+        const totalAssets = cashBalance + fixedAssetsValue;
 
         // 2. LIABILITIES
-        // Unearned Income (Fees paid for Future Years)
-        // Simple logic: Fees paid where academicYear > current? Or manual? 
-        // Let's skip complex unearned fee logic for now, stick to basic.
-        // Accounts Payable? (Salaries Pending)
-        const pendingSalaries = await Salary.aggregate([
-            { $match: { month: { $lte: new Date().toISOString().slice(0, 7) }, status: 'Pending' } }, // Loose date match
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
+        // Removed Pending Salaries
 
-        const totalLiabilities = (pendingSalaries[0]?.total || 0);
+        const totalLiabilities = 0;
 
         // 3. EQUITY
         // Capital Invested
@@ -229,7 +195,7 @@ const getBalanceSheet = async (req, res) => {
             assets: {
                 cash: cashBalance,
                 fixedAssets: fixedAssetsValue,
-                receivables: (receivables[0]?.total || 0),
+                receivables: 0,
                 total: totalAssets
             },
             liabilities: {
