@@ -496,7 +496,8 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                             { text: "Second Home for kids", icon: "🏠", color: "bg-rose-50 text-rose-700 border-rose-200" },
                             { text: "Montessori System", icon: "🧩", color: "bg-orange-50 text-orange-700 border-orange-200" },
                             { text: "CBSE Syllabus", icon: "📚", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-                            { text: "STEM Education", icon: "🔬", color: "bg-teal-50 text-teal-700 border-teal-200" }
+                            { text: "STEM Education", icon: "🔬", color: "bg-teal-50 text-teal-700 border-teal-200" },
+                            { text: "Door-to-Door Transportation Facility", icon: "🚌", color: "bg-yellow-50 text-yellow-700 border-yellow-200" }
                         ].map((item, idx) => (
                             <motion.div
                                 key={idx}
@@ -505,7 +506,7 @@ const Hero = ({ onRegister, onContact, onViewFees }) => {
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.05 }}
                                 whileHover={{ scale: 1.05, y: -2 }}
-                                className={`flex items-center justify-center md:justify-start gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border shadow-sm font-bold text-xs md:text-base cursor-default transition-all duration-300 ${item.color}`}
+                                className={`flex items-center justify-center md:justify-start gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border shadow-sm font-bold text-xs md:text-base cursor-default transition-all duration-300 ${item.color} ${idx === 10 ? 'col-span-2 md:col-span-auto' : ''}`}
                             >
                                 <span className="text-base md:text-xl drop-shadow-sm">{item.icon}</span>
                                 <span className="tracking-wide text-center md:text-left">{item.text}</span>
@@ -1904,7 +1905,8 @@ export default function Home() {
                                         "Second Home for Kids",
                                         "Montessori System",
                                         "CBSE Syllabus",
-                                        "STEM Education"
+                                        "STEM Education",
+                                        "Door-to-Door Transportation Facility"
                                     ].map((feature, idx) => (
                                         <div key={idx} className="flex items-start gap-3 text-base md:text-lg text-slate-700 font-medium bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                                             <CheckCircle size={20} className="text-green-500 mt-0.5 shrink-0" />
