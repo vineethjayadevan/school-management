@@ -51,6 +51,8 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/salaries', require('./routes/salaryRoutes'));
 app.use('/api/accounting', require('./routes/accountingRoutes'));
 
+app.use('/api/upload', require('./routes/uploadRoutes'));
+
 app.get('/', (req, res) => {
     res.send('API is running...');
 });

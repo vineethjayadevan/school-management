@@ -2,9 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus } from 'lucide-react';
+import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus, Trash2, ExternalLink, Upload, File, Download } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
+import api from '../../services/api';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import Accordion from '../../components/ui/Accordion';
 
 export default function StudentDetails() {
     const { id } = useParams();
@@ -16,6 +19,11 @@ export default function StudentDetails() {
     const [mode, setMode] = useState(location.state?.mode || 'view');
     const [loading, setLoading] = useState(true);
     const [student, setStudent] = useState(null);
+    const [documents, setDocuments] = useState([]); // State for documents (existing + pending previews)
+    const [pendingUploads, setPendingUploads] = useState({}); // Stores File objects: { category: File }
+    const [uploading, setUploading] = useState(false); // General loading state during submit
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [documentToDelete, setDocumentToDelete] = useState(null);
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
     useEffect(() => {
@@ -53,6 +61,8 @@ export default function StudentDetails() {
             };
 
             setStudent(studentWithFees);
+            setDocuments(data.documents || []); // Initialize documents state
+            setPendingUploads({});
 
             // Pre-fill form for edit mode
             reset({
@@ -116,14 +126,144 @@ export default function StudentDetails() {
         }
     };
 
-    const onSubmit = async (data) => {
-        setLoading(true);
+    const handleFileUpload = (e, category) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Store file in pendingUploads
+        setPendingUploads(prev => ({ ...prev, [category]: file }));
+
+        // Temporary preview in documents list
+        const tempDoc = {
+            name: file.name,
+            url: URL.createObjectURL(file), // Temporary URL for preview
+            type: file.type,
+            category: category,
+            isPending: true // Flag to identify pending uploads
+        };
+
+        setDocuments(prev => {
+            const filtered = prev.filter(d => d.category !== category);
+            return [...filtered, tempDoc];
+        });
+
+        // Reset file input
+        e.target.value = null;
+    };
+
+    const handleDeleteClick = (doc) => {
+        setDocumentToDelete(doc);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!documentToDelete) return;
+
+        const doc = documentToDelete;
+
+        if (doc.isPending) {
+            // Remove from pending uploads (UI only)
+            setPendingUploads(prev => {
+                const newState = { ...prev };
+                delete newState[doc.category];
+                return newState;
+            });
+            setDocuments(prev => prev.filter(d => d.name !== doc.name));
+            setIsDeleteModalOpen(false);
+            setDocumentToDelete(null);
+        } else {
+            try {
+                // 1. Delete from GCS
+                await api.delete('/upload', { data: { fileName: doc.url } });
+
+                // 2. Update Student Record in DB (Remove from documents array)
+                const updatedDocs = documents.filter(d => d.url !== doc.url && !d.isPending);
+
+                await storageService.students.update(id, {
+                    documents: updatedDocs
+                });
+
+                // 3. Update UI
+                setDocuments(prev => prev.filter(d => d.url !== doc.url));
+                addToast("Document deleted successfully", "success");
+
+                // Re-fetch to ensure sync
+                fetchStudent();
+
+            } catch (error) {
+                console.error("Delete failed", error);
+                addToast("Failed to delete document", "error");
+            } finally {
+                setIsDeleteModalOpen(false);
+                setDocumentToDelete(null);
+            }
+        }
+    };
+
+    const handleDownload = async (doc) => {
         try {
-            const updatedStudent = await storageService.students.update(id, {
-                ...data,
+            const response = await api.get('/upload/signed-url', {
+                params: { fileName: doc.url }
             });
 
-            // Re-fetch to normalize state (especially fee calcs which aren't in form)
+            if (response.data.signedUrl) {
+                window.open(response.data.signedUrl, '_blank');
+            } else {
+                addToast("Failed to get download link", "error");
+            }
+        } catch (error) {
+            console.error("Download failed", error);
+            addToast("Failed to download document", "error");
+        }
+    };
+
+    const onSubmit = async (data) => {
+        setUploading(true);
+        try {
+
+
+            // 2. Process Uploads
+            const uploadedDocs = [];
+            const categoriesToUpload = Object.keys(pendingUploads);
+
+            if (categoriesToUpload.length > 0) {
+                await Promise.all(categoriesToUpload.map(async (category) => {
+                    const file = pendingUploads[category];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('category', category);
+                    formData.append('studentId', id);
+
+                    const response = await api.post('/upload', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+
+                    uploadedDocs.push({
+                        name: response.data.name,
+                        url: response.data.url,
+                        type: response.data.type,
+                        category: category
+                    });
+                }));
+            }
+
+            // 3. Merge Documents
+            // Filter out deleted and pending docs from current state (we have the real list in 'student.documents' minus deleted)
+            // Actually, 'documents' state has the latest UI view. 
+            // We should take the non-pending, non-deleted existing docs + new uploaded docs.
+
+            const existingDocs = documents.filter(d => !d.isPending);
+            // Note: documents state already has deleted ones removed.
+
+            const finalDocuments = [...existingDocs, ...uploadedDocs];
+
+            // 4. Update Student
+            const updatedStudent = await storageService.students.update(id, {
+                ...data,
+                documents: finalDocuments
+            });
+
+            // Re-fetch to normalize state
             await fetchStudent();
 
             setMode('view');
@@ -131,7 +271,8 @@ export default function StudentDetails() {
         } catch (error) {
             console.error(error);
             addToast("Failed to update student", "error");
-            setLoading(false);
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -185,9 +326,19 @@ export default function StudentDetails() {
                             <button
                                 form="edit-student-form"
                                 type="submit"
-                                className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2"
+                                disabled={uploading}
+                                className={`px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2 ${uploading ? 'opacity-75 cursor-not-allowed' : ''}`}
                             >
-                                <Save size={16} /> Save Changes
+                                {uploading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={16} /> Save Changes
+                                    </>
+                                )}
                             </button>
                         </div>
                     )}
@@ -287,6 +438,40 @@ export default function StudentDetails() {
                                         <p className="text-xs text-slate-500 mb-1">Aadhar Number</p>
                                         <p className="font-medium">{student.aadharNo || 'N/A'}</p>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Documents (View Mode) */}
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <File size={16} /> Documents
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {documents.length > 0 ? (
+                                        documents.map((doc, index) => (
+                                            <div key={index} className="flex items-center p-3 border border-slate-200 rounded-lg group">
+                                                <div className="p-2 rounded-lg mr-3 bg-indigo-50 text-indigo-600">
+                                                    <FileText size={20} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-slate-500 uppercase mb-0.5">{doc.category || 'Document'}</p>
+                                                    <p className="text-sm font-medium text-slate-900 truncate" title={doc.name}>{doc.name}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDownload(doc)}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+                                                    title="Download/View Document"
+                                                >
+                                                    <Download size={18} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-1 md:col-span-2 text-center py-8 text-slate-500 italic border-2 border-dashed border-slate-200 rounded-lg">
+                                            No documents uploaded
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -433,8 +618,7 @@ export default function StudentDetails() {
                             <form id="edit-student-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
                                 {/* Administrative */}
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Administrative Info</h3>
+                                <Accordion title="Administrative Info" icon={Book} defaultOpen={true}>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Application No</label>
@@ -473,11 +657,10 @@ export default function StudentDetails() {
                                             <input {...register("rollNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
-                                </div>
+                                </Accordion>
 
                                 {/* Personal */}
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Personal Info</h3>
+                                <Accordion title="Personal Info" icon={User}>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         <div className="col-span-1 md:col-span-2">
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
@@ -536,11 +719,10 @@ export default function StudentDetails() {
                                             <input {...register("aadharNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
-                                </div>
+                                </Accordion>
 
                                 {/* Previous Education */}
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Previous Education</h3>
+                                <Accordion title="Previous Education" icon={Book}>
                                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div className="col-span-1 md:col-span-2">
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Previous School</label>
@@ -555,11 +737,10 @@ export default function StudentDetails() {
                                             <input {...register("mediumOfInstruction")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
-                                </div>
+                                </Accordion>
 
                                 {/* Health */}
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Health Details</h3>
+                                <Accordion title="Health Details" icon={Ban}>
                                     <div className="grid grid-cols-1 gap-4">
                                         <div>
                                             <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
@@ -576,98 +757,167 @@ export default function StudentDetails() {
                                             <textarea {...register("allergyDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
-                                </div>
+                                </Accordion>
 
                                 {/* Parents */}
-                                <div className="space-y-6">
-                                    <h3 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-1">Parents & Guardian</h3>
-
-                                    {/* Father */}
-                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
-                                        <h4 className="text-xs font-bold text-slate-700">Father's Info</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
-                                                <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
-                                                <input {...register("fatherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
-                                                <input {...register("fatherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
-                                                <input {...register("fatherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
-                                                <input {...register("fatherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Designation</label>
-                                                <input {...register("fatherDesignation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Income</label>
-                                                <input {...register("fatherIncome")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Mother */}
-                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
-                                        <h4 className="text-xs font-bold text-slate-700">Mother's Info</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
-                                                <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
-                                                <input {...register("motherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
-                                                <input {...register("motherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
-                                                <input {...register("motherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
-                                                <input {...register("motherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                <Accordion title="Parents & Guardian & Address" icon={User}>
+                                    <div className="space-y-6">
+                                        {/* Father */}
+                                        <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                            <h4 className="text-xs font-bold text-slate-700">Father's Info</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                    <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                    <input {...register("fatherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                    <input {...register("fatherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                    <input {...register("fatherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                    <input {...register("fatherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Designation</label>
+                                                    <input {...register("fatherDesignation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Income</label>
+                                                    <input {...register("fatherIncome")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {/* Mother */}
+                                        <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                            <h4 className="text-xs font-bold text-slate-700">Mother's Info</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                    <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                    <input {...register("motherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                    <input {...register("motherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                    <input {...register("motherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                    <input {...register("motherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Address */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Residential Address</label>
+                                            <textarea {...register("address")} rows={3} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+
+                                        {/* Conveyance Slab */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Conveyance Slab</label>
+                                            <select
+                                                {...register('conveyanceSlab')}
+                                                className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            >
+                                                <option value="0">Not Applicable</option>
+                                                <option value="1">Slab 1 (₹300)</option>
+                                                <option value="2">Slab 2 (₹400)</option>
+                                                <option value="3">Slab 3 (₹500)</option>
+                                                <option value="4">Slab 4 (₹600)</option>
+                                                <option value="5">Slab 5 (₹700)</option>
+                                            </select>
+                                        </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Address */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Residential Address</label>
-                                        <textarea {...register("address")} rows={3} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+
+                                {/* Documents Upload (Edit Mode) */}
+                                <Accordion title="Documents" icon={File}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {['Birth Certificate', 'Transfer Certificate', 'Previous Marksheet', 'Aadhar Card', 'Other'].map((category) => {
+                                            const uploadedDoc = documents.find(d => d.category === category);
+                                            const isUploading = uploading[category];
+
+                                            return (
+                                                <div key={category} className="space-y-2">
+                                                    <label className="block text-xs font-semibold text-slate-700">{category}</label>
+
+                                                    {uploadedDoc ? (
+                                                        <div className={`flex items-center justify-between p-3 border rounded-lg ${uploadedDoc.isPending ? 'border-amber-200 bg-amber-50/50' : 'border-emerald-200 bg-emerald-50/50'}`}>
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                <div className={`p-1.5 rounded ${uploadedDoc.isPending ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                                    <FileText size={16} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="text-xs font-medium text-slate-900 truncate max-w-[150px]">{uploadedDoc.name}</p>
+                                                                        {uploadedDoc.isPending && (
+                                                                            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Pending</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {!uploadedDoc.isPending && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDownload(uploadedDoc)}
+                                                                            className="text-[10px] text-indigo-600 hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+                                                                        >
+                                                                            Download <Download size={10} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteClick(uploadedDoc)}
+                                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                                                title="Remove Document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="relative">
+                                                            <input
+                                                                type="file"
+                                                                id={`doc-upload-${category}`}
+                                                                onChange={(e) => handleFileUpload(e, category)}
+                                                                className="hidden"
+                                                                disabled={isUploading}
+                                                            />
+                                                            <label
+                                                                htmlFor={`doc-upload-${category}`}
+                                                                className={`flex flex-col items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/30 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <Upload size={18} className="text-slate-400" />
+                                                                <span className="text-xs font-medium text-slate-600">
+                                                                    {isUploading ? "Uploading..." : "Click to Upload"}
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-
-                                    {/* Conveyance Slab */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Conveyance Slab</label>
-                                        <select
-                                            {...register('conveyanceSlab')}
-                                            className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                        >
-                                            <option value="0">Not Applicable</option>
-                                            <option value="1">Slab 1 (₹300)</option>
-                                            <option value="2">Slab 2 (₹400)</option>
-                                            <option value="3">Slab 3 (₹500)</option>
-                                            <option value="4">Slab 4 (₹600)</option>
-                                            <option value="5">Slab 5 (₹700)</option>
-                                        </select>
-                                    </div>
-
-
-                                </div>
+                                </Accordion>
 
                             </form>
                         </div>
@@ -739,6 +989,19 @@ export default function StudentDetails() {
                     </div>
                 </div>
             </div>
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setDocumentToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="Delete Document"
+                message={`Are you sure you want to delete ${documentToDelete?.category}? This action cannot be undone.`}
+                confirmText="Delete"
+                isDanger={true}
+            />
         </div>
     );
 }

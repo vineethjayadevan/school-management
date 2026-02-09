@@ -73,7 +73,8 @@ const studentSchema = mongoose.Schema({
     documents: [{
         name: { type: String },
         url: { type: String },
-        type: { type: String } // e.g., 'pdf', 'jpg'
+        type: { type: String }, // MIME type
+        category: { type: String } // 'Birth Certificate', 'Transfer Certificate', 'Previous Marksheet', 'Aadhar Card', 'Others'
     }],
 
     // Status
