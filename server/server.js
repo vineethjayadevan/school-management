@@ -50,7 +50,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/salaries', require('./routes/salaryRoutes'));
 app.use('/api/accounting', require('./routes/accountingRoutes'));
-app.use('/api/test', require('./routes/testRoutes'));
+
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.get('/', (req, res) => {
