@@ -1,6 +1,6 @@
 const Salary = require('../models/Salary');
 const Staff = require('../models/Staff');
-const Expense = require('../models/Expense');
+
 const ExpenseCategory = require('../models/ExpenseCategory');
 
 // @desc    Get salaries for a specific month (Auto-generate if missing for active staff)
@@ -80,26 +80,9 @@ const paySalary = async (req, res) => {
 
         await salary.save();
 
-        // 2. Create Expense Record
-        // Find 'Salary' subcategory or fallback
-        // We'll assume 'Operational Expenses' -> 'Salary' or just 'Salary' category based on system setup.
-        // For robustness, we'll try to find an appropriate category.
+        // Expense creation removed as per requirement (Only Board Members manage expenses)
 
-        // Hardcoding standard categories for now, but ideally query DB
-        const expensePayload = {
-            title: `Salary - ${salary.staff.name}`,
-            category: 'Operational Expenses', // Common default
-            subcategory: 'Salary',
-            amount: salary.amount,
-            date: new Date(),
-            description: `Monthly salary for ${salary.staff.name} (${salary.month})`,
-            referenceType: 'Voucher',
-            addedBy: req.user._id
-        };
-
-        await Expense.create(expensePayload);
-
-        res.json({ message: 'Salary paid and expense recorded', salary });
+        res.json({ message: 'Salary paid successfully', salary });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
