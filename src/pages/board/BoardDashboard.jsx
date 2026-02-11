@@ -10,14 +10,17 @@ import {
     Download,
     X,
     Calendar,
+    FileSpreadsheet, // Add this
     Search
 } from 'lucide-react';
-import api from '../../services/api';
+import api from '../../services/api'; // Keep existing imports
 import { useAuth } from '../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx'; // Import xlsx
 
 export default function BoardDashboard() {
+    // ... existing state ...
     const { user } = useAuth();
     const [summary, setSummary] = useState(null);
     const [transactions, setTransactions] = useState([]);
@@ -30,6 +33,10 @@ export default function BoardDashboard() {
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [availableSubcategories, setAvailableSubcategories] = useState([]);
 
+    // We need to split income categories into 'income' and 'capital' for the UI
+    // But the API returns all. We'll filter them in the UI.
+    const [allIncomeCategories, setAllIncomeCategories] = useState([]);
+
     // Filter State
     const [filters, setFilters] = useState({
         type: 'all',
@@ -39,6 +46,88 @@ export default function BoardDashboard() {
         category: '',
         subcategory: ''
     });
+
+    const [activeTab, setActiveTab] = useState('cash');
+
+    const downloadExcel = () => {
+        // 1. Prepare Data
+        const reportIncome = transactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        const reportExpense = transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        const reportCapital = transactions
+            .filter(t => t.type === 'capital')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        // Filter Summary String
+        const filterParts = [];
+        if (filters.startDate || filters.endDate) filterParts.push(`Date: ${filters.startDate || 'Start'} to ${filters.endDate || 'Now'}`);
+        if (filters.type !== 'all') filterParts.push(`Type: ${filters.type}`);
+        if (filters.category) filterParts.push(`Category: ${filters.category}`);
+        if (filters.subcategory) filterParts.push(`Sub: ${filters.subcategory}`);
+        if (filters.userId && boardMembers.length > 0) {
+            const u = boardMembers.find(m => m._id === filters.userId);
+            if (u) filterParts.push(`User: ${u.name}`);
+        }
+        const filterString = filterParts.length > 0 ? filterParts.join(', ') : 'All Records';
+
+        // 2. Build Worksheet Rows
+        const wsData = [
+            ['STEM Global Public School'],
+            ['Financial Transaction Report'],
+            [`Generated on: ${new Date().toLocaleDateString('en-GB')}`],
+            [],
+            ['Applied Filters:', filterString],
+            [],
+            ['Financial Summary'],
+            ['Total Income', reportIncome],
+            ['Total Expenses', reportExpense],
+            ['Total Capital (Inflow)', reportCapital],
+            [],
+            ['Detailed Transactions'],
+            ['Date', 'Ref/Receipt', 'Type', 'Category', 'Description', 'User', 'Amount'] // Headers
+        ];
+
+        // Add Transaction Rows
+        transactions.forEach(t => {
+            wsData.push([
+                new Date(t.date).toLocaleDateString('en-GB'),
+                t.type === 'expense'
+                    ? (t.referenceType === 'Receipt' ? `Rcpt: ${t.referenceNo}` : 'Voucher')
+                    : (t.receiptNo || '-'),
+                t.type === 'income' ? 'Income' : t.type === 'capital' ? 'Capital' : 'Expense',
+                t.category + (t.subcategory ? ` (${t.subcategory})` : ''),
+                t.description || '-',
+                t.addedBy?.name || 'Unknown',
+                t.amount
+            ]);
+        });
+
+        // 3. Create Workbook and Sheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // 4. Formatting (Column Widths)
+        const wscols = [
+            { wch: 12 }, // Date
+            { wch: 15 }, // Ref
+            { wch: 10 }, // Type
+            { wch: 30 }, // Category
+            { wch: 40 }, // Description
+            { wch: 15 }, // User
+            { wch: 12 }  // Amount
+        ];
+        ws['!cols'] = wscols;
+
+        XLSX.utils.book_append_sheet(wb, ws, "Financial Report");
+
+        // 5. Save File
+        XLSX.writeFile(wb, `Financial_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
 
     const downloadPDF = () => {
         const doc = new jsPDF();
@@ -91,10 +180,23 @@ export default function BoardDashboard() {
         doc.text('Financial Summary:', 14, yPos);
         yPos += 4; // Spacing for autoTable
 
+        // Calculate type-specific totals for the report
+        const reportIncome = transactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        const reportExpense = transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        const reportCapital = transactions
+            .filter(t => t.type === 'capital')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+
         const summaryData = [
-            ['Total Income', `Rs. ${summary?.totalIncome?.toLocaleString() || 0}`],
-            ['Total Expenses', `Rs. ${summary?.totalExpenses?.toLocaleString() || 0}`],
-            ['Net Balance', `Rs. ${summary?.netBalance?.toLocaleString() || 0}`]
+            ['Total Income', `Rs. ${reportIncome.toLocaleString()}`],
+            ['Total Expenses', `Rs. ${reportExpense.toLocaleString()}`],
+            ['Total Capital (Inflow)', `Rs. ${reportCapital.toLocaleString()}`]
         ];
 
         autoTable(doc, {
@@ -103,7 +205,7 @@ export default function BoardDashboard() {
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2 },
             columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 40 },
+                0: { fontStyle: 'bold', cellWidth: 50 },
                 1: { halign: 'right', cellWidth: 40 }
             },
         });
@@ -120,7 +222,7 @@ export default function BoardDashboard() {
             t.type === 'expense'
                 ? (t.referenceType === 'Receipt' ? `Rcpt: ${t.referenceNo}` : 'Voucher')
                 : (t.receiptNo || '-'),
-            t.type === 'income' ? 'Income' : 'Expense',
+            t.type === 'income' ? 'Income' : t.type === 'capital' ? 'Capital' : 'Expense',
             t.category + (t.subcategory ? ` (${t.subcategory})` : ''),
             t.description || '-',
             t.addedBy?.name || 'Unknown',
@@ -142,6 +244,7 @@ export default function BoardDashboard() {
                 if (data.section === 'body' && data.column.index === 6) {
                     const type = data.row.raw[2]; // Index 2 is Type
                     if (type === 'Income') data.cell.styles.textColor = [22, 163, 74]; // Emerald 600
+                    else if (type === 'Capital') data.cell.styles.textColor = [37, 99, 235]; // Blue 600
                     else if (type === 'Expense') data.cell.styles.textColor = [220, 38, 38]; // Red 600
                 }
             },
@@ -171,7 +274,8 @@ export default function BoardDashboard() {
                 api.get('/finance/categories')
             ]);
             setExpenseCategories(expCatRes.data);
-            setIncomeCategories(incCatRes.data);
+            setAllIncomeCategories(incCatRes.data);
+            // Split provided for easier debugging if needed, but we filter on the fly
         } catch (err) {
             console.error('Failed to load categories', err);
         }
@@ -221,11 +325,15 @@ export default function BoardDashboard() {
                 newFilters.subcategory = '';
                 setAvailableSubcategories([]);
             }
+
             if (key === 'category') {
                 newFilters.subcategory = '';
-                // Update subcategories if type is expense
+                // Update subcategories based on type
                 if (prev.type === 'expense') {
                     const catObj = expenseCategories.find(c => c.name === value);
+                    setAvailableSubcategories(catObj ? catObj.subcategories : []);
+                } else if (prev.type === 'income' || prev.type === 'capital') {
+                    const catObj = allIncomeCategories.find(c => c.name === value);
                     setAvailableSubcategories(catObj ? catObj.subcategories : []);
                 } else {
                     setAvailableSubcategories([]);
@@ -283,72 +391,13 @@ export default function BoardDashboard() {
     if (loading && !summary) return <div className="p-8 text-center text-slate-500">Loading financial data...</div>;
     if (error) return <div className="p-8 text-center text-red-500 flex items-center justify-center gap-2"><AlertCircle /> {error}</div>;
 
-    const cards = [
-        {
-            title: 'Total Income',
-            value: `₹${summary?.totalIncome?.toLocaleString() || 0}`,
-            subtext: `Fees: ₹${summary?.totalFeeIncome?.toLocaleString()} | Other: ₹${summary?.totalOtherIncome?.toLocaleString()}`,
-            icon: TrendingUp,
-            color: 'bg-emerald-500',
-            textColor: 'text-emerald-500'
-        },
-        {
-            title: 'Total Expenses',
-            value: `₹${summary?.totalExpenses?.toLocaleString() || 0}`,
-            subtext: 'Operational & Capital',
-            icon: TrendingDown,
-            color: 'bg-rose-500',
-            textColor: 'text-rose-500'
-        },
-        {
-            title: 'Net Balance',
-            value: `₹${summary?.netBalance?.toLocaleString() || 0}`,
-            subtext: 'Available Funds',
-            icon: DollarSign,
-            color: 'bg-indigo-500',
-            textColor: 'text-indigo-500'
-        }
-    ];
 
-    return (
+
+
+
+    const renderCashLedger = () => (
         <div className="space-y-8">
-            {/* Print Header Removed (handled in PDF) */}
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Financial Overview</h1>
-                    <p className="text-slate-500">Welcome, {user?.name}. Manage and track school finances.</p>
-                </div>
-                <button
-                    onClick={downloadPDF}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                >
-                    <Download size={18} />
-                    <span>Download Report</span>
-                </button>
-            </div>
-
-            {/* Summary Cards - Visible in Print now */}
-            <div className="grid md:grid-cols-3 gap-6">
-                {cards.map((card, index) => (
-                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
-                        <div className="relative z-10">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-3 rounded-xl ${card.color} bg-opacity-10 ${card.textColor}`}>
-                                    <card.icon size={24} />
-                                </div>
-                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${card.color} bg-opacity-10 ${card.textColor}`}>
-                                    LIVE
-                                </span>
-                            </div>
-                            <h3 className="text-slate-500 font-medium mb-1">{card.title}</h3>
-                            <p className="text-3xl font-bold text-slate-900 mb-2">{card.value}</p>
-                            <p className="text-xs text-slate-400">{card.subtext}</p>
-                        </div>
-                        <div className={`absolute -right-6 -bottom-6 w-32 h-32 rounded-full ${card.color} opacity-5 group-hover:scale-110 transition-transform`} />
-                    </div>
-                ))}
-            </div>
 
             {/* Filter Bar */}
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center flex-wrap">
@@ -371,7 +420,7 @@ export default function BoardDashboard() {
 
                 {/* Type Toggle */}
                 <div className="flex bg-slate-100 p-1 rounded-lg">
-                    {['all', 'income', 'expense'].map((type) => (
+                    {['all', 'income', 'expense', 'capital'].map((type) => (
                         <button
                             key={type}
                             onClick={() => handleFilterChange('type', type)}
@@ -408,14 +457,17 @@ export default function BoardDashboard() {
                         {filters.type === 'expense' && expenseCategories.map(cat => (
                             <option key={cat._id} value={cat.name}>{cat.name}</option>
                         ))}
-                        {filters.type === 'income' && incomeCategories.map(cat => (
-                            <option key={cat._id} value={cat.name}>{cat.name}</option>
-                        ))}
+                        {(filters.type === 'income' || filters.type === 'capital') && allIncomeCategories
+                            .filter(cat => cat.type === filters.type)
+                            .map(cat => (
+                                <option key={cat._id} value={cat.name}>{cat.name}</option>
+                            ))
+                        }
                     </select>
                 )}
 
-                {/* Subcategory Dropdown - Only for Expenses */}
-                {filters.type === 'expense' && availableSubcategories.length > 0 && (
+                {/* Subcategory Dropdown - Now for ALL types */}
+                {filters.type !== 'all' && availableSubcategories.length > 0 && (
                     <select
                         value={filters.subcategory}
                         onChange={(e) => handleFilterChange('subcategory', e.target.value)}
@@ -463,7 +515,6 @@ export default function BoardDashboard() {
 
             {/* Table Wrapper */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <CreditCard size={20} className="text-indigo-500" />
@@ -516,9 +567,11 @@ export default function BoardDashboard() {
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income'
                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                : 'bg-rose-50 text-rose-700 border border-rose-100'
+                                                : t.type === 'capital'
+                                                    ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                                                    : 'bg-rose-50 text-rose-700 border border-rose-100'
                                                 }`}>
-                                                {t.type === 'income' ? 'Income' : 'Expense'}
+                                                {t.type === 'income' ? 'Income' : t.type === 'capital' ? 'Capital' : 'Expense'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-700">
@@ -536,9 +589,11 @@ export default function BoardDashboard() {
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {t.addedBy?.name || 'Unknown'}
                                         </td>
-                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600'
+                                            : t.type === 'capital' ? 'text-blue-600'
+                                                : 'text-rose-600'
                                             }`}>
-                                            {t.type === 'income' ? '+' : '-'} ₹{t.amount?.toLocaleString()}
+                                            {t.type === 'income' || t.type === 'capital' ? '+' : '-'} ₹{t.amount?.toLocaleString()}
                                         </td>
                                     </tr>
                                 ))}
@@ -546,6 +601,77 @@ export default function BoardDashboard() {
                         </table>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+
+    const renderComingSoon = (title) => (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
+            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="text-indigo-500" size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 mb-2">{title}</h2>
+            <p className="text-slate-500">This feature is currently under development.</p>
+        </div>
+    );
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Financial Ledger</h1>
+                    <p className="text-slate-500">Welcome, {user?.name}. Manage and track school finances.</p>
+                </div>
+                {activeTab === 'cash' && (
+                    <div className="flex gap-2">
+                        <button
+                            onClick={downloadExcel}
+                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                        >
+                            <FileSpreadsheet size={18} />
+                            <span>Download Excel</span>
+                        </button>
+                        <button
+                            onClick={downloadPDF}
+                            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                        >
+                            <Download size={18} />
+                            <span>Download Report</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Tabs */}
+            <div className="border-b border-slate-200">
+                <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                    {['Cash Ledger', 'Revenue Ledger', 'Expense Ledger', 'Receivable/Payable Ledger'].map((tab) => {
+                        const key = tab.toLowerCase().replace(/[\s/]+/g, '_').replace('_ledger', '');
+
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key)}
+                                className={`
+                                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                                ${activeTab === key
+                                        ? 'border-indigo-500 text-indigo-600'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
+                            `}
+                            >
+                                {tab}
+                            </button>
+                        )
+                    })}
+                </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-6">
+                {activeTab === 'cash' && renderCashLedger()}
+                {activeTab === 'revenue' && renderComingSoon('Revenue Ledger')}
+                {activeTab === 'expense' && renderComingSoon('Expense Ledger')}
+                {activeTab === 'receivable_payable' && renderComingSoon('Receivable/Payable Ledger')}
             </div>
         </div>
     );

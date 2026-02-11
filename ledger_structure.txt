@@ -1,0 +1,124 @@
+================================================
+           CURRENT CASH LEDGER STRUCTURE
+================================================
+
+--- CAPITAL (Inflows) ---
+
+Category: Asset Sale Proceeds
+  - Sale of Fixed Assets
+  - Sale of Scrap / Old Items
+
+Category: Capital Introduced
+  - Investment by Board Members
+  - Additional Capital Contribution
+  - Founder / Promoter Capital
+
+Category: Loans Received
+  - Bank / Financial Institution Loans
+  - Director / Board Member Loans
+  - Short-Term Loans
+
+Category: Other Non-Operating Receipts
+  - Insurance Claim Received
+  - Refunds / Reimbursements Received
+  - Extraordinary / One-time Receipts
+
+Category: Refundable Deposits & Advances
+  - Security Deposits Received
+  - Caution Deposits
+  - Advances Received (Refundable)
+
+
+--- REVENUE INCOME ---
+
+Category: Donations
+  - General Donations (Revenue)
+  - Capital Donations (Restricted)
+
+Category: Grants
+  - Revenue Grants
+  - Capital Grants
+
+Category: Other Operating Income
+  - Late Fees / Fines
+  - Certificate / Examination Charges
+  - Interest Received
+  - Miscellaneous Operating Income
+
+Category: Sponsorships
+  - Event Sponsorships
+  - Program / Activity Sponsorships
+
+Category: Student Fees
+  - Tuition Fees
+  - Admission / Registration Fees
+  - Transport Fees
+  - Other Academic Fees
+
+
+--- EXPENSES ---
+
+Category: Academic & Educational Expenses
+  - Books & Learning Materials
+  - Lab & Classroom Consumables
+  - Examination Expenses
+  - Library / Educational Tools
+
+Category: Administrative Expenses
+  - Office Supplies
+  - Printing & Stationery
+  - Software Subscriptions
+  - Communication Expenses
+  - Miscellaneous Admin
+
+Category: Advertisement & Marketing
+  - Advertisement
+
+Category: Events & Activities
+  - Annual Day
+  - Sports Day
+  - Cultural Programs
+  - Competitions
+
+Category: Financial Expenses
+  - Bank Charges
+  - Payment Gateway Charges
+  - Loan Interest
+  - Penalties / Late Fees
+
+Category: Infrastructure & Construction
+  - Building Construction
+  - Furniture
+  - Classroom Setup
+  - Repairs & Renovation
+
+Category: Maintenance & Housekeeping
+  - Cleaning & Security
+  - Pest Control
+  - Minor Maintenance
+
+Category: Professional & Statutory Expenses
+  - Audit & Accounting
+  - Legal & Consultancy
+  - Government Fees & Licenses
+
+Category: Staff & Human Resources
+  - Salaries & Wages
+  - Teaching Staff Payments
+  - Non-Teaching Staff Payments
+  - Contract / Guest Faculty
+  - Staff Welfare & Training
+
+Category: Transport Expenses
+  - Fuel
+  - Vehicle Maintenance
+  - Driver Salary
+  - Insurance & Permits
+
+Category: Utilities
+  - Electricity
+  - Water
+  - Internet
+  - Telephone
+
+================================================

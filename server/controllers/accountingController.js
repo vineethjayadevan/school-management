@@ -11,17 +11,41 @@ const OtherIncome = require('../models/OtherIncome');
 // @access  Private (Board Member)
 const getProfitAndLoss = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, basis } = req.query;
         if (!startDate || !endDate) return res.status(400).json({ message: 'Date range required' });
 
         const start = new Date(startDate);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
+        let incomeMatch = { date: { $gte: start, $lte: end } };
+        let expenseMatch = { date: { $gte: start, $lte: end } };
+
+        if (basis === 'cash') {
+            // Filter Income: Exclude Capital Categories & Specific Subcategories
+            incomeMatch.category = {
+                $nin: [
+                    'Asset Sale Proceeds',
+                    'Capital Introduced',
+                    'Loans Received',
+                    'Other Non-Operating Receipts',
+                    'Refundable Deposits & Advances'
+                ]
+            };
+            incomeMatch.subcategory = {
+                $nin: ['Capital Donations (Restricted)', 'Capital Grants']
+            };
+
+            // Filter Expenses: Exclude Capital Expenditures
+            expenseMatch.subcategory = {
+                $nin: ['Building Construction', 'Furniture', 'Classroom Setup']
+            };
+        }
+
         // 1. REVENUE
         // Cash Inflows
         const otherIncome = await OtherIncome.aggregate([
-            { $match: { date: { $gte: start, $lte: end } } },
+            { $match: incomeMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
@@ -32,6 +56,32 @@ const getProfitAndLoss = async (req, res) => {
             date: { $gte: start, $lte: end },
             type: { $in: ['Accrued Income', 'Unearned Income'] }
         });
+
+        // Note: If separate Capital collection exists, we would sum that too. 
+        // Currently assuming Capital Inflows are in OtherIncome/Capital collections.
+
+        const totalCapitalInflow_CapitalModel = await Capital.aggregate([
+            { $match: { date: { $lte: end }, type: 'Investment' } }, // Assuming 'Investment' adds to cash
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+
+        // Need to verify if 'Capital' model is used for "Loans Received" etc or if they are in OtherIncome.
+        // The user's ledger structure implies they are Types/Categories.
+        // Let's assume for now they are in `OtherIncome` based on previous tasks, 
+        // BUT if `Capital` model handles specific things like "Investment by Board Members", we need to be careful.
+
+        // Cash = (Sum of all Income collections) - (Sum of all Expense collections)
+
+        const totalIncomeAggr = await OtherIncome.aggregate([
+            { $match: { date: { $lte: end } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+
+        // If Capital.js is used for "Shareholder Capital", we add it. 
+        const capitalModelAggr = await Capital.aggregate([
+            { $match: { date: { $lte: end } } },
+            { $group: { _id: '$type', total: { $sum: '$amount' } } }
+        ]);
 
         let revenueAdjustments = 0;
         // Simple logic: Add Accrued Income (Income earned but not received), Subtract Unearned Income (Received but not earned)
@@ -63,7 +113,7 @@ const getProfitAndLoss = async (req, res) => {
         // 2. EXPENSES
         // Cash Outflows
         const expenses = await Expense.aggregate([
-            { $match: { date: { $gte: start, $lte: end } } },
+            { $match: expenseMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
@@ -129,89 +179,212 @@ const getProfitAndLoss = async (req, res) => {
     }
 };
 
-// @desc    Get Balance Sheet
+// @desc    Get Balance Sheet (Cash Basis)
 // @route   GET /api/accounting/balance-sheet
-// @access  Private
+// @access  Private (Board Member)
 const getBalanceSheet = async (req, res) => {
     try {
-        const { date } = req.query;
+        const { date, basis } = req.query;
         if (!date) return res.status(400).json({ message: 'As of Date is required' });
 
-        const asOfDate = new Date(date);
-        asOfDate.setHours(23, 59, 59, 999);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
 
-        // 1. ASSETS
+        if (basis === 'cash') {
+            // -------------------------------------------------------------------------
+            // 1. CASH & BANK BALANCE (ASSET)
+            // Logic: Total Cash In - Total Cash Out (All categories)
+            // -------------------------------------------------------------------------
 
-        // Cash & Bank (All time Cash In - All time Cash Out)
-        // Removed Fees (Admin) from Cash In
-        const otherInc = await OtherIncome.aggregate([{ $match: { date: { $lte: asOfDate } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
-        const caps = await Capital.aggregate([{ $match: { date: { $lte: asOfDate }, type: 'Investment' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
-        const capsOut = await Capital.aggregate([{ $match: { date: { $lte: asOfDate }, type: 'Withdrawal' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
+            const totalIncomeAggr = await OtherIncome.aggregate([
+                { $match: { date: { $lte: end } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
 
-        // Removed Salary (Admin) from Cash Out
-        const totExp = await Expense.aggregate([{ $match: { date: { $lte: asOfDate } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]);
+            // Capital / OtherIncome Aggregation
+            // Note: 'OtherIncome' now includes Capital Introduced as a category.
+            // We do NOT use the legacy 'Capital' model here to avoid double counting.
 
-        const totalCashIn = (otherInc[0]?.total || 0) + (caps[0]?.total || 0);
-        const totalCashOut = (totExp[0]?.total || 0) + (capsOut[0]?.total || 0);
-        const cashBalance = totalCashIn - totalCashOut;
+            const totalCashIn = (totalIncomeAggr[0]?.total || 0);
 
-        // Fixed Assets (Net Block)
-        // Cost - Accumulated Depreciation
-        const assets = await Asset.find({ purchaseDate: { $lte: asOfDate } });
-        let fixedAssetsValue = 0;
-        assets.forEach(asset => {
-            const ageInDays = (asOfDate - asset.purchaseDate) / (1000 * 60 * 60 * 24);
-            const years = ageInDays / 365;
-            const annualDep = (asset.purchaseCost - (asset.salvageValue || 0)) / (asset.usefulLifeYears || 5);
-            const accumDep = Math.min(annualDep * years, asset.purchaseCost - (asset.salvageValue || 0)); // Cap at depreciable amount
-            fixedAssetsValue += (asset.purchaseCost - accumDep);
-        });
+            const totalExpenseAggr = await Expense.aggregate([
+                { $match: { date: { $lte: end } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
 
-        // Current Assets (Receivables, Prepaids)
-        // Removed Fees Receivables
+            const totalCashOut = (totalExpenseAggr[0]?.total || 0);
 
-        // Adjustments remain for manual assets if any, but simplified here:
-        const totalAssets = cashBalance + fixedAssetsValue;
+            const cashBalance = totalCashIn - totalCashOut;
 
-        // 2. LIABILITIES
-        // Removed Pending Salaries
+            // -------------------------------------------------------------------------
+            // 2. FIXED ASSETS (ASSET)
+            // Logic: Sum(Fixed Asset Expenses) - Sum(Asset Sale Proceeds)
+            // -------------------------------------------------------------------------
 
-        const totalLiabilities = 0;
+            // Fixed Asset Expenses
+            const fixedAssetsCostAggr = await Expense.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        subcategory: { $in: ['Building Construction', 'Furniture', 'Classroom Setup'] }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
 
-        // 3. EQUITY
-        // Capital Invested
-        const capital = (caps[0]?.total || 0) - (capsOut[0]?.total || 0);
+            // Asset Sale Proceeds (Recovery of Capital)
+            const assetSalesAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        category: 'Asset Sale Proceeds'
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
 
-        // Retained Earnings (Profit since beginning)
-        // Assets - Liabilities - Capital
-        const retainedEarnings = totalAssets - totalLiabilities - capital;
+            const fixedAssetsGross = (fixedAssetsCostAggr[0]?.total || 0);
+            const assetDisposals = (assetSalesAggr[0]?.total || 0);
+            const fixedAssetsNet = fixedAssetsGross - assetDisposals;
 
-        // Share Value
-        const shareholders = await require('../models/User').countDocuments({ role: 'board_member' });
-        const bookValuePerShare = shareholders > 0 ? (totalAssets - totalLiabilities) / shareholders : 0;
+            const totalAssets = cashBalance + fixedAssetsNet;
 
-        res.json({
-            asOfDate,
-            assets: {
-                cash: cashBalance,
-                fixedAssets: fixedAssetsValue,
-                receivables: 0,
-                total: totalAssets
-            },
-            liabilities: {
-                payables: totalLiabilities, // Salaries
-                total: totalLiabilities
-            },
-            equity: {
-                capital,
-                retainedEarnings, // Calculated plug
-                total: capital + retainedEarnings
-            },
-            shareValue: bookValuePerShare
-        });
+            // -------------------------------------------------------------------------
+            // 3. LIABILITIES
+            // -------------------------------------------------------------------------
+
+            // Loans Outstanding
+            const loansAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        category: 'Loans Received'
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+            const loansOutstanding = loansAggr[0]?.total || 0;
+
+            // Refundable Deposits
+            const depositsAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        category: 'Refundable Deposits & Advances'
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+            const deposits = depositsAggr[0]?.total || 0;
+
+            const totalLiabilities = loansOutstanding + deposits;
+
+            // -------------------------------------------------------------------------
+            // 4. EQUITY / CAPITAL
+            // -------------------------------------------------------------------------
+
+            // Capital Introduced (Investments)
+            const capitalIntroCategoryAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        category: 'Capital Introduced'
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+
+            // Capital Logic Update:
+            // We only use 'OtherIncome' (Category: Capital Introduced) for all new data.
+            // The legacy 'Capital' model data is ignored to prevent double counting as per user report.
+            // Withdrawals should be handled via a specific negative category in OtherIncome if needed in future.
+
+            const capitalIntroduced = (capitalIntroCategoryAggr[0]?.total || 0);
+
+            // Capital Reserves (Grants, Insurance, etc.)
+            // New logic: These increase Cash but are not Revenue or Liabilities. Mapped to Equity.
+            const capitalReservesAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        $or: [
+                            { category: 'Insurance Claims' },
+                            { category: 'Other Non-Operating Receipts' },
+                            { subcategory: { $in: ['Capital Donations (Restricted)', 'Capital Grants'] } }
+                        ]
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+            const capitalReserves = capitalReservesAggr[0]?.total || 0;
+
+            // Accumulated Surplus (P&L logic)
+            const revenueIncomeAggr = await OtherIncome.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        category: {
+                            $nin: [
+                                'Asset Sale Proceeds', 'Capital Introduced', 'Loans Received',
+                                'Other Non-Operating Receipts', 'Refundable Deposits & Advances', 'Insurance Claims'
+                            ]
+                        },
+                        subcategory: { $nin: ['Capital Donations (Restricted)', 'Capital Grants'] }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+
+            const revenueExpenseAggr = await Expense.aggregate([
+                {
+                    $match: {
+                        date: { $lte: end },
+                        subcategory: { $nin: ['Building Construction', 'Furniture', 'Classroom Setup'] }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+
+            const surplus = (revenueIncomeAggr[0]?.total || 0) - (revenueExpenseAggr[0]?.total || 0);
+
+            const totalEquity = capitalIntroduced + capitalReserves + surplus;
+
+            return res.json({
+                date: end,
+                basis: 'cash',
+                assets: {
+                    cash: cashBalance,
+                    fixedAssets: fixedAssetsNet,
+                    fixedAssetsGross: fixedAssetsGross, // For UI tooltip?
+                    assetDisposals: assetDisposals,
+                    total: totalAssets
+                },
+                liabilities: {
+                    loans: loansOutstanding,
+                    deposits: deposits,
+                    total: totalLiabilities
+                },
+                equity: {
+                    capitalIntroduced: capitalIntroduced,
+                    capitalReserves: capitalReserves, // New field
+                    surplus: surplus,
+                    total: totalEquity
+                },
+                verification: {
+                    assetsTotal: totalAssets,
+                    liabilitiesEquityTotal: totalLiabilities + totalEquity,
+                    difference: totalAssets - (totalLiabilities + totalEquity) // Should be 0
+                }
+            });
+
+        } else {
+            // Placeholder for Accrual (not requested yet)
+            return res.status(501).json({ message: 'Accrual Balance Sheet not implemented yet' });
+        }
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 

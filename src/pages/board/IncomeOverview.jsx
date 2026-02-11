@@ -36,8 +36,10 @@ export default function IncomeOverview() {
 
     // Form State
     const [formData, setFormData] = useState({
+        type: 'income',
         amount: '',
         category: '',
+        subcategory: '',
         description: '',
         date: new Date().toISOString().split('T')[0],
         receiptNo: ''
@@ -56,7 +58,11 @@ export default function IncomeOverview() {
 
             // Set default category if available
             if (categoriesRes.data.length > 0 && !formData.category) {
-                setFormData(prev => ({ ...prev, category: categoriesRes.data[0].name }));
+                // Determine default based on default type 'income'
+                const defaultCat = categoriesRes.data.find(c => c.type === 'income');
+                if (defaultCat) {
+                    setFormData(prev => ({ ...prev, category: defaultCat.name }));
+                }
             }
 
             // Fetch Personal Income List
@@ -105,8 +111,10 @@ export default function IncomeOverview() {
             setShowForm(false);
             setEditId(null);
             setFormData({
+                type: 'income',
                 amount: '',
                 category: categories.length > 0 ? categories[0].name : '',
+                subcategory: '',
                 description: '',
                 date: new Date().toISOString().split('T')[0],
                 receiptNo: ''
@@ -118,9 +126,13 @@ export default function IncomeOverview() {
     };
 
     const handleEdit = (item) => {
+        // Infer type from category
+        const catObj = categories.find(c => c.name === item.category);
         setFormData({
+            type: catObj ? catObj.type : 'income',
             amount: item.amount,
             category: item.category,
+            subcategory: item.subcategory || '',
             description: item.description,
             date: new Date(item.date).toISOString().split('T')[0],
             receiptNo: item.receiptNo || ''
@@ -229,14 +241,63 @@ export default function IncomeOverview() {
                         <button onClick={() => { setShowForm(false); setEditId(null); }} className="text-slate-400 hover:text-slate-600">Close</button>
                     </div>
                     <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-6">
+                        {/* Type Selection */}
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Income Category</label>
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Transaction Type</label>
+                            <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
+                                {['income', 'capital'].map((t) => (
+                                    <button
+                                        key={t}
+                                        type="button"
+                                        onClick={() => {
+                                            // Reset category/subcategory when type changes
+                                            const firstCat = categories.find(c => c.type === t);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                type: t,
+                                                category: firstCat ? firstCat.name : '',
+                                                subcategory: ''
+                                            }));
+                                        }}
+                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${formData.type === t
+                                                ? 'bg-white text-indigo-600 shadow-sm border border-slate-100'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                            }`}
+                                    >
+                                        {t === 'income' ? 'Income' : 'Capital Inflow'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Category</label>
                             <select
                                 value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                onChange={e => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
                                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
-                                {categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                                {categories
+                                    .filter(cat => cat.type === formData.type)
+                                    .map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)
+                                }
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Subcategory</label>
+                            <select
+                                value={formData.subcategory}
+                                onChange={e => setFormData({ ...formData, subcategory: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="">Select Subcategory</option>
+                                {(() => {
+                                    const catObj = categories.find(c => c.name === formData.category);
+                                    return catObj && catObj.subcategories ? catObj.subcategories.map(sub => (
+                                        <option key={sub} value={sub}>{sub}</option>
+                                    )) : null;
+                                })()}
                             </select>
                         </div>
                         <div className="space-y-2">
@@ -350,9 +411,16 @@ export default function IncomeOverview() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                                {item.category}
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 self-start">
+                                                    {item.category}
+                                                </span>
+                                                {item.subcategory && (
+                                                    <span className="text-[10px] text-slate-400 mt-1 pl-1">
+                                                        {item.subcategory}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             <p className="text-sm text-slate-600 font-normal line-clamp-1" title={item.description}>{item.description || '-'}</p>

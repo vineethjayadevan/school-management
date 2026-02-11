@@ -166,11 +166,12 @@ const getOtherIncome = async (req, res) => {
 // @route   POST /api/finance/income
 // @access  Private
 const addOtherIncome = async (req, res) => {
-    const { category, amount, description, date, receiptNo } = req.body;
+    const { category, subcategory, amount, description, date, receiptNo } = req.body;
 
     try {
         const income = new OtherIncome({
             category,
+            subcategory,
             amount,
             description,
             date,
@@ -219,9 +220,9 @@ const getIncomeCategories = async (req, res) => {
 // @route   POST /api/finance/categories
 // @access  Private (Admin/Board)
 const addIncomeCategory = async (req, res) => {
-    const { name, description } = req.body;
+    const { name, subcategories, type, description } = req.body;
     try {
-        const category = await IncomeCategory.create({ name, description });
+        const category = await IncomeCategory.create({ name, subcategories, type, description });
         res.status(201).json(category);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -293,7 +294,7 @@ const updateExpense = async (req, res) => {
 // @route   PUT /api/finance/income/:id
 // @access  Private
 const updateOtherIncome = async (req, res) => {
-    const { category, amount, description, date, receiptNo } = req.body;
+    const { category, subcategory, amount, description, date, receiptNo } = req.body;
 
     try {
         const income = await OtherIncome.findById(req.params.id);
@@ -306,6 +307,7 @@ const updateOtherIncome = async (req, res) => {
             }
 
             income.category = category || income.category;
+            income.subcategory = subcategory || income.subcategory;
             income.amount = amount || income.amount;
             income.description = description || income.description;
             income.date = date || income.date;
@@ -359,6 +361,7 @@ const getTransactions = async (req, res) => {
         // If 'subcategory' is present, Income should return nothing (as it has no subcategories).
         // Therefore, we only run Income query if NO subcategory is specified.
 
+        // Fetch Expenses
         if (!type || type === 'all' || type === 'expense') {
             const expenseQuery = { ...query };
             if (subcategory) {
@@ -367,16 +370,42 @@ const getTransactions = async (req, res) => {
             expenses = await Expense.find(expenseQuery).populate('addedBy', 'name');
         }
 
-        if ((!type || type === 'all' || type === 'income') && !subcategory) {
-            // Income query uses base query (with category) but no subcategory
-            income = await OtherIncome.find(query).populate('addedBy', 'name');
+        // Fetch Income / Capital
+        if (!type || type === 'all' || type === 'income' || type === 'capital') {
+            const incomeQuery = { ...query };
+            if (subcategory) {
+                incomeQuery.subcategory = subcategory;
+            }
+
+            let potentialIncome = await OtherIncome.find(incomeQuery).populate('addedBy', 'name');
+
+            if (potentialIncome.length > 0) {
+                const allCats = await IncomeCategory.find({});
+                const catTypeMap = {};
+                allCats.forEach(c => catTypeMap[c.name] = c.type);
+
+                // Assign types
+                let typedIncome = potentialIncome.map(i => {
+                    const t = catTypeMap[i.category] || 'income'; // default to income
+                    return { ...i.toObject(), type: t };
+                });
+
+                // Filter if specific type requested
+                if (type === 'income') {
+                    typedIncome = typedIncome.filter(i => i.type === 'income');
+                } else if (type === 'capital') {
+                    typedIncome = typedIncome.filter(i => i.type === 'capital');
+                }
+
+                income = typedIncome;
+            }
         }
 
-        // Add 'type' field and merge
+        // Merge and Sort
         const expensesWithType = expenses.map(e => ({ ...e.toObject(), type: 'expense' }));
-        const incomeWithType = income.map(i => ({ ...i.toObject(), type: 'income' }));
+        // Income already has type assigned above
 
-        const combined = [...expensesWithType, ...incomeWithType].sort((a, b) => {
+        const combined = [...expensesWithType, ...income].sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             if (dateA.getTime() !== dateB.getTime()) {
