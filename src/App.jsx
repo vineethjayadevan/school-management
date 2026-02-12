@@ -16,6 +16,7 @@ import AssetRegister from './pages/board/accounting/AssetRegister';
 import Adjustments from './pages/board/accounting/Adjustments';
 import CashBasedAccounting from './pages/board/CashBasedAccounting';
 import AccrualBasedAccounting from './pages/board/AccrualBasedAccounting';
+import ManageCategories from './pages/board/ManageCategories';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -188,6 +189,7 @@ function App() {
                     <Route path="dashboard" element={<Navigate to="/board/cash-based" replace />} />
                     <Route path="cash-based" element={<CashBasedAccounting />} />
                     <Route path="accrual-based" element={<AccrualBasedAccounting />} />
+                    <Route path="categories" element={<ManageCategories />} />
 
                     {/* Keep legacy routes accessible if needed, or redirect them? 
                         For now, let's keep them as valid sub-routes or just remove if we want to force the new view.

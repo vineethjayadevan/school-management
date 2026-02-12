@@ -15,7 +15,8 @@ const {
     updateExpense,
     updateOtherIncome,
     getTransactions,
-    getShareholdersData
+    getShareholdersData,
+    addSubcategory
 } = require('../controllers/financeController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -58,5 +59,8 @@ router.route('/categories')
 router.route('/expense-categories')
     .get(protect, allowedRoles, getExpenseCategories)
     .post(protect, allowedRoles, addExpenseCategory);
+
+router.route('/categories/:type/:id/subcategories')
+    .post(protect, allowedRoles, addSubcategory);
 
 module.exports = router;

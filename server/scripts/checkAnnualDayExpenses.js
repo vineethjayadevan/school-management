@@ -1,0 +1,34 @@
+const mongoose = require('mongoose');
+const Expense = require('../models/Expense');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const checkAnnualDayExpenses = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('Connected to MongoDB');
+
+        const expenses = await Expense.find({
+            category: 'Events & Activities',
+            subcategory: 'Annual Day'
+        }).limit(20);
+
+        console.log(`Found ${expenses.length} expenses.`);
+        expenses.forEach(e => {
+            console.log({
+                id: e._id,
+                title: e.title,
+                description: e.description,
+                amount: e.amount,
+                date: e.date,
+            });
+        });
+
+        await mongoose.disconnect();
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
+};
+
+checkAnnualDayExpenses();

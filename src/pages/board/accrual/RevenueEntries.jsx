@@ -273,13 +273,14 @@ export default function RevenueEntries() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Added By</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {entries.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                                                 <FileText className="text-slate-400" />
@@ -312,6 +313,12 @@ export default function RevenueEntries() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-600 max-w-xs truncate">
                                             {entry.description || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                            <div className="flex items-center gap-1.5">
+                                                <User size={14} className="text-slate-400" />
+                                                {entry.addedBy?.name || 'Unknown'}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-emerald-600">
                                             + {parseFloat(entry.amount).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}

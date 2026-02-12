@@ -127,7 +127,7 @@ const getRevenueEntries = async (req, res) => {
             query.customer = { $regex: customer, $options: 'i' };
         }
 
-        const entries = await AccrualRevenue.find(query).sort({ date: -1 });
+        const entries = await AccrualRevenue.find(query).sort({ date: -1 }).populate('addedBy', 'name');
         res.json(entries);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -151,7 +151,7 @@ const getExpenseEntries = async (req, res) => {
             query.vendor = { $regex: vendor, $options: 'i' };
         }
 
-        const entries = await AccrualExpense.find(query).sort({ date: -1 });
+        const entries = await AccrualExpense.find(query).sort({ date: -1 }).populate('addedBy', 'name');
         res.json(entries);
     } catch (error) {
         res.status(500).json({ message: error.message });

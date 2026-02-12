@@ -90,8 +90,8 @@ export default function Payables() {
                                 key={status}
                                 onClick={() => setFilters(prev => ({ ...prev, status }))}
                                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filters.status === status
-                                        ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                     }`}
                             >
                                 {status}
@@ -145,7 +145,7 @@ export default function Payables() {
                                             {item.dueDate ? (
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar size={14} className="text-slate-400" />
-                                                    {new Date(item.dueDate).toLocaleDateString()}
+                                                    {new Date(item.dueDate).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                                 </div>
                                             ) : (
                                                 <span className="text-slate-400">-</span>

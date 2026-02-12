@@ -6,7 +6,8 @@ import {
     ArrowDownLeft,
     ArrowUpRight,
     CheckCircle2,
-    Calculator
+    Calculator,
+    LayoutDashboard
 } from 'lucide-react';
 import AccrualAccountingView from './accounting/AccrualAccountingView';
 import RevenueEntries from './accrual/RevenueEntries';
@@ -14,11 +15,13 @@ import ExpenseEntries from './accrual/ExpenseEntries';
 import Receivables from './accrual/Receivables';
 import Payables from './accrual/Payables';
 import Settlements from './accrual/Settlements';
+import BoardDashboard from './BoardDashboard';
 
 export default function AccrualBasedAccounting() {
-    const [activeTab, setActiveTab] = useState('revenue');
+    const [activeTab, setActiveTab] = useState('ledger');
 
     const tabs = [
+        { id: 'ledger', label: 'Cash Ledger', icon: LayoutDashboard },
         { id: 'revenue', label: 'Revenue Entries', icon: TrendingUp },
         { id: 'expense', label: 'Expense Entries', icon: TrendingDown },
         { id: 'receivables', label: 'Receivables', icon: ArrowDownLeft },
@@ -67,6 +70,7 @@ export default function AccrualBasedAccounting() {
 
             {/* Content Area */}
             <div className="min-h-[500px]">
+                {activeTab === 'ledger' && <BoardDashboard />}
                 {activeTab === 'revenue' && <RevenueEntries />}
                 {activeTab === 'expense' && <ExpenseEntries />}
                 {activeTab === 'receivables' && <Receivables />}

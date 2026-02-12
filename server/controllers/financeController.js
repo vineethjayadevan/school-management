@@ -209,7 +209,12 @@ const deleteOtherIncome = async (req, res) => {
 // @access  Private
 const getIncomeCategories = async (req, res) => {
     try {
-        const categories = await IncomeCategory.find({ isActive: true });
+        const { type } = req.query;
+        const query = { isActive: true };
+        if (type) {
+            query.type = type;
+        }
+        const categories = await IncomeCategory.find(query);
         res.json(categories);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -502,6 +507,40 @@ const getShareholdersData = async (req, res) => {
     }
 };
 
+// @desc    Add Subcategory to Category
+// @route   POST /api/finance/categories/:type/:id/subcategories
+// @access  Private (Board Member)
+const addSubcategory = async (req, res) => {
+    const { type, id } = req.params; // type: 'income' or 'expense'
+    const { subcategory } = req.body;
+
+    try {
+        let category;
+        if (type === 'income') {
+            category = await IncomeCategory.findById(id);
+        } else if (type === 'expense') {
+            category = await ExpenseCategory.findById(id);
+        } else {
+            return res.status(400).json({ message: 'Invalid category type' });
+        }
+
+        if (!category) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
+
+        if (category.subcategories.includes(subcategory)) {
+            return res.status(400).json({ message: 'Subcategory already exists' });
+        }
+
+        category.subcategories.push(subcategory);
+        await category.save();
+
+        res.json(category);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getFinancialSummary,
     getExpenses,
@@ -517,5 +556,6 @@ module.exports = {
     updateExpense,
     updateOtherIncome,
     getTransactions,
-    getShareholdersData
+    getShareholdersData,
+    addSubcategory
 };

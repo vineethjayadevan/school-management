@@ -47,7 +47,27 @@ const getUsers = async (req, res) => {
     }
 };
 
+// @desc    Get all users (ID and Name only) for dropdowns
+// @route   GET /api/users/list
+// @access  Private (Admin, Board)
+const getUsersList = async (req, res) => {
+    try {
+        // Only return users who can record settlements (Staff/Admins)
+        // Exclude 'student' and 'teacher' (unless teachers handle money, usually office staff/admins do)
+        const allowedRoles = ['board_member'];
+
+        const users = await User.find({
+            role: { $in: allowedRoles }
+        }).select('_id name role');
+
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getUsers,
+    getUsersList
 };

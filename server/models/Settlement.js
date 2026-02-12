@@ -17,7 +17,15 @@ const settlementSchema = mongoose.Schema({
     description: { type: String },
 
     // Audit
-    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    // Documentation
+    documentType: { type: String, enum: ['Receipt', 'Voucher'] }, // Relevant for Payments (Out)
+    documentNumber: { type: String }, // Receipt Number or Voucher Number
+
+    // Classification (Mainly for Capital Injection or Direct Settlements)
+    category: { type: String },
+    subcategory: { type: String }
 }, {
     timestamps: true
 });

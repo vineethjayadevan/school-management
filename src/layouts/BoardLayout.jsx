@@ -9,7 +9,8 @@ import {
     X,
     Wallet,
     Key,
-    Users
+    Users,
+    ListTree
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -26,8 +27,9 @@ export default function BoardLayout() {
     };
 
     const navItems = [
-        { path: '/board/cash-based', icon: Wallet, label: 'Cash Based Accounting' },
         { path: '/board/accrual-based', icon: Users, label: 'Accrual Based Accounting' },
+        // { path: '/board/cash-based', icon: Wallet, label: 'Cash Based Accounting' },
+        { path: '/board/categories', icon: ListTree, label: 'Manage Categories' },
     ];
 
     return (

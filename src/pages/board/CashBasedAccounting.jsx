@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import {
-    LayoutDashboard,
     PieChart,
     TrendingUp,
     Calculator
 } from 'lucide-react';
-import BoardDashboard from './BoardDashboard';
 import ExpenseManager from './ExpenseManager';
 import IncomeOverview from './IncomeOverview';
 import CashAccountingView from './accounting/CashAccountingView';
 
 export default function CashBasedAccounting() {
-    const [activeTab, setActiveTab] = useState('ledger');
+    const [activeTab, setActiveTab] = useState('expenses');
 
     const tabs = [
-        { id: 'ledger', label: 'Cash Ledger', icon: LayoutDashboard },
         { id: 'expenses', label: 'Expenses', icon: PieChart },
         { id: 'income', label: 'Income & Funding', icon: TrendingUp },
         { id: 'accounting', label: 'Accounting', icon: Calculator },
@@ -50,7 +47,6 @@ export default function CashBasedAccounting() {
 
             {/* Content Area */}
             <div className="min-h-[500px]">
-                {activeTab === 'ledger' && <BoardDashboard />}
                 {activeTab === 'expenses' && <ExpenseManager />}
                 {activeTab === 'income' && <IncomeOverview />}
                 {activeTab === 'accounting' && <CashAccountingView />}
