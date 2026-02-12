@@ -37,41 +37,43 @@ export default function ProfitAndLoss({ basis = 'accrual' }) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-2">
-                    <Calendar size={18} className="text-slate-400" />
-                    <input
-                        type="date"
-                        value={dateRange.startDate}
-                        onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400">-</span>
-                    <input
-                        type="date"
-                        value={dateRange.endDate}
-                        onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <button
-                        onClick={fetchData}
-                        className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                    {basis === 'cash' && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <Calendar size={18} className="text-slate-400 hidden md:block" />
+                        <input
+                            type="date"
+                            value={dateRange.startDate}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+                        />
+                        <span className="text-slate-400">-</span>
+                        <input
+                            type="date"
+                            value={dateRange.endDate}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
                         <button
-                            onClick={() => setShowInfo(true)}
-                            className="p-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors ml-2"
-                            title="Format Information"
+                            onClick={fetchData}
+                            className="flex-1 md:flex-none p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex justify-center items-center"
                         >
-                            <Info size={16} />
+                            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                            <span className="md:hidden ml-2">Update</span>
                         </button>
-                    )}
+                        {basis === 'cash' && (
+                            <button
+                                onClick={() => setShowInfo(true)}
+                                className="p-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+                                title="Format Information"
+                            >
+                                <Info size={16} />
+                            </button>
+                        )}
+                    </div>
                 </div>
-                {/* <button className="flex items-center gap-2 text-indigo-600 font-medium text-sm hover:underline">
-                    <Download size={16} /> Export PDF
-                </button> */}
             </div>
 
             {loading ? (

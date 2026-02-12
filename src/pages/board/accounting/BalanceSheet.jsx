@@ -40,33 +40,38 @@ export default function BalanceSheet({ basis = 'accrual' }) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-slate-500">As of:</span>
-                    <input
-                        type="date"
-                        value={asOfDate}
-                        onChange={(e) => setAsOfDate(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <button
-                        onClick={fetchData}
-                        className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                    {basis === 'cash' && (
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 gap-4">
+                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <span className="text-sm font-medium text-slate-500 whitespace-nowrap">As of:</span>
+                        <input
+                            type="date"
+                            value={asOfDate}
+                            onChange={(e) => setAsOfDate(e.target.value)}
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full md:w-auto">
                         <button
-                            onClick={() => setShowInfo(true)}
-                            className="p-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors ml-2"
-                            title="Format Information"
+                            onClick={fetchData}
+                            className="flex-1 md:flex-none p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex justify-center items-center"
                         >
-                            <Info size={16} />
+                            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                            <span className="md:hidden ml-2">Update</span>
                         </button>
-                    )}
+                        {basis === 'cash' && (
+                            <button
+                                onClick={() => setShowInfo(true)}
+                                className="p-2 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors ml-2"
+                                title="Format Information"
+                            >
+                                <Info size={16} />
+                            </button>
+                        )}
+                    </div>
                 </div>
                 {basis === 'cash' && (
-                    <div className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200">
+                    <div className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200 self-start md:self-center">
                         Cash Basis
                     </div>
                 )}

@@ -12,7 +12,10 @@ import AccountingDashboard from './pages/board/accounting/AccountingDashboard';
 import ProfitAndLoss from './pages/board/accounting/ProfitAndLoss';
 import BalanceSheet from './pages/board/accounting/BalanceSheet';
 import AssetRegister from './pages/board/accounting/AssetRegister';
+
 import Adjustments from './pages/board/accounting/Adjustments';
+import CashBasedAccounting from './pages/board/CashBasedAccounting';
+import AccrualBasedAccounting from './pages/board/AccrualBasedAccounting';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -181,7 +184,14 @@ function App() {
                         <BoardLayout />
                     </RequireAuth>
                 }>
-                    <Route path="dashboard" element={<BoardDashboard />} />
+                    <Route path="dashboard" element={<Navigate to="/board/cash-based" replace />} />
+                    <Route path="cash-based" element={<CashBasedAccounting />} />
+                    <Route path="accrual-based" element={<AccrualBasedAccounting />} />
+
+                    {/* Keep legacy routes accessible if needed, or redirect them? 
+                        For now, let's keep them as valid sub-routes or just remove if we want to force the new view.
+                        The new view uses components directly so we don't strictly need these routes unless directly accessed.
+                     */}
                     <Route path="expenses" element={<ExpenseManager />} />
                     <Route path="income" element={<IncomeOverview />} />
                     <Route path="cashflow" element={<Cashflow />} />
@@ -214,7 +224,7 @@ function RedirectHandler() {
     }
     if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
     if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
-    if (user.role === 'board_member') return <Navigate to="/board/dashboard" replace />;
+    if (user.role === 'board_member') return <Navigate to="/board/cash-based" replace />;
 
     return <Navigate to="/login" replace />;
 }

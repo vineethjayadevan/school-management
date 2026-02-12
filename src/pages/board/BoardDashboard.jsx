@@ -10,8 +10,9 @@ import {
     Download,
     X,
     Calendar,
-    FileSpreadsheet, // Add this
-    Search
+    FileSpreadsheet,
+    Search,
+    ChevronDown
 } from 'lucide-react';
 import api from '../../services/api'; // Keep existing imports
 import { useAuth } from '../../context/AuthContext';
@@ -358,7 +359,9 @@ export default function BoardDashboard() {
     };
 
     // Search & Highlight Logic
+    // Search & Highlight Logic
     const [searchQuery, setSearchQuery] = useState('');
+    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
     const filteredTransactions = transactions.filter(t => {
         if (!searchQuery) return true;
@@ -509,8 +512,50 @@ export default function BoardDashboard() {
                     onClick={clearFilters}
                     className="ml-auto text-xs font-medium text-slate-500 hover:text-red-500 flex items-center gap-1"
                 >
-                    <X size={14} /> Clear
                 </button>
+
+                {/* Download Dropdown */}
+                <div className="relative ml-auto">
+                    <button
+                        onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-medium"
+                    >
+                        <Download size={16} />
+                        <span className="hidden md:inline">Download Report</span>
+                        <ChevronDown size={14} />
+                    </button>
+
+                    {showDownloadMenu && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setShowDownloadMenu(false)}
+                            ></div>
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-20 py-1">
+                                <button
+                                    onClick={() => {
+                                        downloadExcel();
+                                        setShowDownloadMenu(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3 text-slate-600 hover:text-indigo-600 transition-colors"
+                                >
+                                    <FileSpreadsheet size={16} className="text-emerald-500" />
+                                    <span className="font-medium text-sm">Download Excel</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        downloadPDF();
+                                        setShowDownloadMenu(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3 text-slate-600 hover:text-indigo-600 transition-colors"
+                                >
+                                    <Download size={16} className="text-red-500" />
+                                    <span className="font-medium text-sm">Download PDF</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Table Wrapper */}
@@ -605,74 +650,16 @@ export default function BoardDashboard() {
         </div>
     );
 
-    const renderComingSoon = (title) => (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="text-indigo-500" size={32} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">{title}</h2>
-            <p className="text-slate-500">This feature is currently under development.</p>
-        </div>
-    );
+
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Financial Ledger</h1>
-                    <p className="text-slate-500">Welcome, {user?.name}. Manage and track school finances.</p>
-                </div>
-                {activeTab === 'cash' && (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={downloadExcel}
-                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                        >
-                            <FileSpreadsheet size={18} />
-                            <span>Download Excel</span>
-                        </button>
-                        <button
-                            onClick={downloadPDF}
-                            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                        >
-                            <Download size={18} />
-                            <span>Download Report</span>
-                        </button>
-                    </div>
-                )}
+                <div className="flex-1"></div> {/* Spacer if needed or just empty */}
             </div>
 
-            {/* Tabs */}
-            <div className="border-b border-slate-200">
-                <nav className="-mb-px flex space-x-8 overflow-x-auto">
-                    {['Cash Ledger', 'Revenue Ledger', 'Expense Ledger', 'Receivable/Payable Ledger'].map((tab) => {
-                        const key = tab.toLowerCase().replace(/[\s/]+/g, '_').replace('_ledger', '');
-
-                        return (
-                            <button
-                                key={key}
-                                onClick={() => setActiveTab(key)}
-                                className={`
-                                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                                ${activeTab === key
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
-                            `}
-                            >
-                                {tab}
-                            </button>
-                        )
-                    })}
-                </nav>
-            </div>
-
-            {/* Tab Content */}
-            <div className="mt-6">
-                {activeTab === 'cash' && renderCashLedger()}
-                {activeTab === 'revenue' && renderComingSoon('Revenue Ledger')}
-                {activeTab === 'expense' && renderComingSoon('Expense Ledger')}
-                {activeTab === 'receivable_payable' && renderComingSoon('Receivable/Payable Ledger')}
-            </div>
+            {/* Ledger Content */}
+            {renderCashLedger()}
         </div>
     );
 }

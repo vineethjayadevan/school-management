@@ -26,11 +26,8 @@ export default function BoardLayout() {
     };
 
     const navItems = [
-        { path: '/board/dashboard', icon: LayoutDashboard, label: 'Ledger' },
-        { path: '/board/expenses', icon: PieChart, label: 'Expenses' },
-        { path: '/board/income', icon: TrendingUp, label: 'Income & Funding' },
-        // { path: '/board/cashflow', icon: Users, label: 'Cashflow' },
-        { path: '/board/accounting', icon: PieChart, label: 'Accounting' },
+        { path: '/board/cash-based', icon: Wallet, label: 'Cash Based Accounting' },
+        { path: '/board/accrual-based', icon: Users, label: 'Accrual Based Accounting' },
     ];
 
     return (
