@@ -184,6 +184,7 @@ function App() {
                         <BoardLayout />
                     </RequireAuth>
                 }>
+                    <Route index element={<Navigate to="/board/cash-based" replace />} />
                     <Route path="dashboard" element={<Navigate to="/board/cash-based" replace />} />
                     <Route path="cash-based" element={<CashBasedAccounting />} />
                     <Route path="accrual-based" element={<AccrualBasedAccounting />} />

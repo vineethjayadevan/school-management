@@ -1,52 +1,52 @@
 import React, { useState } from 'react';
 import { PieChart, Scale } from 'lucide-react';
-import CashProfitAndLoss from './reports/CashProfitAndLoss';
-import CashBalanceSheet from './reports/CashBalanceSheet';
+import AccrualProfitAndLoss from '../accrual/reports/AccrualProfitAndLoss';
+import AccrualBalanceSheet from '../accrual/reports/AccrualBalanceSheet';
 
-export default function CashAccountingView() {
-    const [cashSubTab, setCashSubTab] = useState('pnl');
+export default function AccrualAccountingView() {
+    const [subTab, setSubTab] = useState('pnl');
 
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Sub-navigation for Cash Basis */}
+            {/* Sub-navigation for Accrual Basis */}
             <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex flex-wrap gap-1">
                 <button
-                    onClick={() => setCashSubTab('pnl')}
-                    className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${cashSubTab === 'pnl'
+                    onClick={() => setSubTab('pnl')}
+                    className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${subTab === 'pnl'
                         ? 'bg-indigo-50 text-indigo-700 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                         }`}
                 >
                     <PieChart size={16} />
-                    <span className="whitespace-nowrap">Cash Profit & Loss</span>
+                    <span className="whitespace-nowrap">Profit & Loss (Accrual)</span>
                 </button>
                 <button
-                    onClick={() => setCashSubTab('balance-sheet')}
-                    className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${cashSubTab === 'balance-sheet'
+                    onClick={() => setSubTab('balance-sheet')}
+                    className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${subTab === 'balance-sheet'
                         ? 'bg-indigo-50 text-indigo-700 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                         }`}
                 >
                     <Scale size={16} />
-                    <span className="whitespace-nowrap">Cash Balance Sheet</span>
+                    <span className="whitespace-nowrap">Balance Sheet (Accrual)</span>
                 </button>
             </div>
 
             <div className="bg-white min-h-[500px] rounded-2xl shadow-sm border border-slate-200 p-6">
-                {cashSubTab === 'pnl' && (
+                {subTab === 'pnl' && (
                     <>
                         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <PieChart className="text-indigo-600" /> Cash Profit & Loss
+                            <PieChart className="text-indigo-600" /> Profit & Loss Statement (Accrual Basis)
                         </h2>
-                        <CashProfitAndLoss />
+                        <AccrualProfitAndLoss />
                     </>
                 )}
-                {cashSubTab === 'balance-sheet' && (
+                {subTab === 'balance-sheet' && (
                     <>
                         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <Scale className="text-indigo-600" /> Cash Balance Sheet
+                            <Scale className="text-indigo-600" /> Balance Sheet
                         </h2>
-                        <CashBalanceSheet />
+                        <AccrualBalanceSheet />
                     </>
                 )}
             </div>

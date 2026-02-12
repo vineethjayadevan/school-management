@@ -1,13 +1,30 @@
 import React, { useState } from 'react';
-import { AlertCircle, LayoutList, TrendingUp, TrendingDown, Users } from 'lucide-react';
+import {
+    AlertCircle,
+    TrendingUp,
+    TrendingDown,
+    ArrowDownLeft,
+    ArrowUpRight,
+    CheckCircle2,
+    Calculator
+} from 'lucide-react';
+import AccrualAccountingView from './accounting/AccrualAccountingView';
+import RevenueEntries from './accrual/RevenueEntries';
+import ExpenseEntries from './accrual/ExpenseEntries';
+import Receivables from './accrual/Receivables';
+import Payables from './accrual/Payables';
+import Settlements from './accrual/Settlements';
 
 export default function AccrualBasedAccounting() {
     const [activeTab, setActiveTab] = useState('revenue');
 
     const tabs = [
-        { id: 'revenue', label: 'Revenue Ledger', icon: TrendingUp },
-        { id: 'expense', label: 'Expense Ledger', icon: TrendingDown },
-        { id: 'receivable_payable', label: 'Receivable/Payable Ledger', icon: Users },
+        { id: 'revenue', label: 'Revenue Entries', icon: TrendingUp },
+        { id: 'expense', label: 'Expense Entries', icon: TrendingDown },
+        { id: 'receivables', label: 'Receivables', icon: ArrowDownLeft },
+        { id: 'payables', label: 'Payables', icon: ArrowUpRight },
+        { id: 'settlements', label: 'Settlements', icon: CheckCircle2 },
+        { id: 'accounting', label: 'Accounting', icon: Calculator },
     ];
 
     const renderComingSoon = (title) => (
@@ -16,7 +33,7 @@ export default function AccrualBasedAccounting() {
                 <AlertCircle className="text-indigo-500" size={32} />
             </div>
             <h2 className="text-xl font-bold text-slate-800 mb-2">{title}</h2>
-            <p className="text-slate-500">The Accrual-based {title.toLowerCase()} is currently under development.</p>
+            <p className="text-slate-500">The Accrual-based {title.toLowerCase()} module is currently under development.</p>
         </div>
     );
 
@@ -26,7 +43,7 @@ export default function AccrualBasedAccounting() {
 
             {/* Tabs */}
             <div className="border-b border-slate-200">
-                <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                <nav className="-mb-px flex space-x-8 overflow-x-auto pb-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         return (
@@ -49,10 +66,13 @@ export default function AccrualBasedAccounting() {
             </div>
 
             {/* Content Area */}
-            <div className="min-h-[500px] mt-6">
-                {activeTab === 'revenue' && renderComingSoon('Revenue Ledger')}
-                {activeTab === 'expense' && renderComingSoon('Expense Ledger')}
-                {activeTab === 'receivable_payable' && renderComingSoon('Receivable/Payable Ledger')}
+            <div className="min-h-[500px]">
+                {activeTab === 'revenue' && <RevenueEntries />}
+                {activeTab === 'expense' && <ExpenseEntries />}
+                {activeTab === 'receivables' && <Receivables />}
+                {activeTab === 'payables' && <Payables />}
+                {activeTab === 'settlements' && <Settlements />}
+                {activeTab === 'accounting' && <AccrualAccountingView />}
             </div>
         </div>
     );
