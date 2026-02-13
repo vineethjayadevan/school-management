@@ -1,82 +1,92 @@
 import React, { useState } from 'react';
 import {
-    AlertCircle,
+    LayoutDashboard,
     TrendingUp,
-    TrendingDown,
     ArrowDownLeft,
-    ArrowUpRight,
     CheckCircle2,
     Calculator,
-    LayoutDashboard
+    Tags,
+    Briefcase
 } from 'lucide-react';
 import AccrualAccountingView from './accounting/AccrualAccountingView';
-import RevenueEntries from './accrual/RevenueEntries';
-import ExpenseEntries from './accrual/ExpenseEntries';
-import Receivables from './accrual/Receivables';
-import Payables from './accrual/Payables';
 import Settlements from './accrual/Settlements';
 import BoardDashboard from './BoardDashboard';
+import ManageCategories from './ManageCategories';
+import RevenueExpenseManager from './accrual/RevenueExpenseManager';
+import ReceivablesPayablesManager from './accrual/ReceivablesPayablesManager';
 
 export default function AccrualBasedAccounting() {
     const [activeTab, setActiveTab] = useState('ledger');
 
-    const tabs = [
+    const menuItems = [
         { id: 'ledger', label: 'Cash Ledger', icon: LayoutDashboard },
-        { id: 'revenue', label: 'Revenue Entries', icon: TrendingUp },
-        { id: 'expense', label: 'Expense Entries', icon: TrendingDown },
-        { id: 'receivables', label: 'Receivables', icon: ArrowDownLeft },
-        { id: 'payables', label: 'Payables', icon: ArrowUpRight },
+        { id: 'revenue_expense', label: 'Revenue & Expenses', icon: TrendingUp },
+        { id: 'receivables_payables', label: 'Receivables & Payables', icon: ArrowDownLeft },
         { id: 'settlements', label: 'Settlements', icon: CheckCircle2 },
         { id: 'accounting', label: 'Accounting', icon: Calculator },
+        { id: 'categories', label: 'Manage Categories', icon: Tags },
     ];
 
-    const renderComingSoon = (title) => (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center animate-in fade-in duration-300">
-            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="text-indigo-500" size={32} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">{title}</h2>
-            <p className="text-slate-500">The Accrual-based {title.toLowerCase()} module is currently under development.</p>
-        </div>
-    );
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'ledger':
+                return <BoardDashboard />;
+            case 'revenue_expense':
+                return <RevenueExpenseManager />;
+            case 'receivables_payables':
+                return <ReceivablesPayablesManager />;
+            case 'settlements':
+                return <Settlements />;
+            case 'accounting':
+                return <AccrualAccountingView />;
+            case 'categories':
+                return <ManageCategories />;
+            default:
+                return <BoardDashboard />;
+        }
+    };
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-slate-900">Accrual Based Accounting</h1>
+        <div className="flex flex-col lg:flex-row min-h-screen gap-6">
+            {/* Sidebar Navigation */}
+            <div className="w-full lg:w-64 flex-shrink-0">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sticky top-6">
+                    <div className="mb-6 px-2">
+                        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <Briefcase className="text-indigo-600" size={24} />
+                            Finance & Acc.
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-1">Accrual Based Management</p>
+                    </div>
 
-            {/* Tabs */}
-            <div className="border-b border-slate-200">
-                <nav className="-mb-px flex space-x-8 overflow-x-auto pb-1">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`
-                                    group inline-flex items-center px-1 py-4 border-b-2 font-medium text-sm gap-2 whitespace-nowrap transition-colors
-                                    ${activeTab === tab.id
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
-                                `}
-                            >
-                                <Icon size={18} className={activeTab === tab.id ? 'text-indigo-500' : 'text-slate-400 group-hover:text-slate-500'} />
-                                {tab.label}
-                            </button>
-                        );
-                    })}
-                </nav>
+                    <nav className="space-y-1">
+                        {menuItems.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = activeTab === item.id;
+
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`
+                                        w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all
+                                        ${isActive
+                                            ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                                    `}
+                                >
+                                    <Icon size={18} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
             </div>
 
-            {/* Content Area */}
-            <div className="min-h-[500px]">
-                {activeTab === 'ledger' && <BoardDashboard />}
-                {activeTab === 'revenue' && <RevenueEntries />}
-                {activeTab === 'expense' && <ExpenseEntries />}
-                {activeTab === 'receivables' && <Receivables />}
-                {activeTab === 'payables' && <Payables />}
-                {activeTab === 'settlements' && <Settlements />}
-                {activeTab === 'accounting' && <AccrualAccountingView />}
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+                {renderContent()}
             </div>
         </div>
     );

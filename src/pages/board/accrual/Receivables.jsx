@@ -19,7 +19,7 @@ export default function Receivables() {
 
     // Filters
     const [filters, setFilters] = useState({
-        status: 'Unpaid', // Default to showing what is owed
+        status: 'All', // Default to showing all
         customer: ''
     });
 
@@ -93,8 +93,8 @@ export default function Receivables() {
                                 key={status}
                                 onClick={() => setFilters(prev => ({ ...prev, status }))}
                                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filters.status === status
-                                        ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                     }`}
                             >
                                 {status}

@@ -42,7 +42,13 @@ const getFinancialSummary = async (req, res) => {
 // @access  Private
 const getExpenses = async (req, res) => {
     try {
-        const { userId, category, subcategory, startDate, endDate } = req.query;
+        // Prevent 304 Not Modified
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+
+        const { userId, category, subcategory, startDate, endDate, search, vendor } = req.query;
 
         let query = {};
 
@@ -72,6 +78,17 @@ const getExpenses = async (req, res) => {
             }
         }
 
+        // Search (Vendor or Description) - Check 'search' or 'vendor' param
+        const searchTerm = search || vendor;
+        if (searchTerm) {
+            const searchRegex = new RegExp(searchTerm, 'i');
+            query.$or = [
+                { vendor: searchRegex },
+                { description: searchRegex },
+                { title: searchRegex }
+            ];
+        }
+
         const expenses = await Expense.find(query).sort({ date: -1, createdAt: -1 }).populate('addedBy', 'name');
         res.json(expenses);
     } catch (error) {
@@ -83,11 +100,12 @@ const getExpenses = async (req, res) => {
 // @route   POST /api/finance/expenses
 // @access  Private
 const addExpense = async (req, res) => {
-    const { title, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
+    const { title, vendor, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
 
     try {
         const expense = new Expense({
             title: title || `${category} - ${subcategory}`,
+            vendor: vendor || 'Unknown', // Fallback for legacy or missing
             amount,
             category,
             subcategory,
@@ -263,7 +281,7 @@ const addExpenseCategory = async (req, res) => {
 // @route   PUT /api/finance/expenses/:id
 // @access  Private
 const updateExpense = async (req, res) => {
-    const { title, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
+    const { title, vendor, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
 
     try {
         const expense = await Expense.findById(req.params.id);
@@ -276,6 +294,7 @@ const updateExpense = async (req, res) => {
             }
 
             expense.title = title || expense.title;
+            expense.vendor = vendor || expense.vendor;
             expense.amount = amount || expense.amount;
             expense.category = category || expense.category;
             expense.subcategory = subcategory || expense.subcategory;

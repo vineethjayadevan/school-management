@@ -10,7 +10,11 @@ import {
     Wallet,
     Key,
     Users,
-    ListTree
+    ListTree,
+    ArrowDownLeft,
+    CheckCircle2,
+    Calculator,
+    Tags
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -27,9 +31,12 @@ export default function BoardLayout() {
     };
 
     const navItems = [
-        { path: '/board/accrual-based', icon: Users, label: 'Accrual Based Accounting' },
-        // { path: '/board/cash-based', icon: Wallet, label: 'Cash Based Accounting' },
-        { path: '/board/categories', icon: ListTree, label: 'Manage Categories' },
+        { path: '/board/ledger', icon: LayoutDashboard, label: 'Cash Ledger' },
+        { path: '/board/revenue-expense', icon: TrendingUp, label: 'Revenue & Expenses' },
+        { path: '/board/receivables-payables', icon: ArrowDownLeft, label: 'Receivables & Payables' },
+        { path: '/board/settlements', icon: CheckCircle2, label: 'Settlements' },
+        { path: '/board/accounting', icon: Calculator, label: 'Accounting' },
+        { path: '/board/categories', icon: Tags, label: 'Manage Categories' },
     ];
 
     return (

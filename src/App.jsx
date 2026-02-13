@@ -17,6 +17,10 @@ import Adjustments from './pages/board/accounting/Adjustments';
 import CashBasedAccounting from './pages/board/CashBasedAccounting';
 import AccrualBasedAccounting from './pages/board/AccrualBasedAccounting';
 import ManageCategories from './pages/board/ManageCategories';
+import RevenueExpenseManager from './pages/board/accrual/RevenueExpenseManager';
+import ReceivablesPayablesManager from './pages/board/accrual/ReceivablesPayablesManager';
+import Settlements from './pages/board/accrual/Settlements';
+import AccrualAccountingView from './pages/board/accounting/AccrualAccountingView';
 
 import Dashboard from './pages/Dashboard';
 import StudentList from './pages/students/StudentList';
@@ -59,7 +63,7 @@ function RequireAuth({ children, allowedRoles }) {
         // Redirect based on role if they try to access unauthorized area
         if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
         if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
-        if (user.role === 'board_member') return <Navigate to="/board/dashboard" replace />;
+        if (user.role === 'board_member') return <Navigate to="/board/accrual-based" replace />;
         if (['superuser', 'admin', 'office_staff'].includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
         return <Navigate to="/login" replace />;
     }
@@ -185,25 +189,24 @@ function App() {
                         <BoardLayout />
                     </RequireAuth>
                 }>
-                    <Route index element={<Navigate to="/board/cash-based" replace />} />
-                    <Route path="dashboard" element={<Navigate to="/board/cash-based" replace />} />
-                    <Route path="cash-based" element={<CashBasedAccounting />} />
-                    <Route path="accrual-based" element={<AccrualBasedAccounting />} />
+                    <Route index element={<Navigate to="/board/ledger" replace />} />
+
+                    {/* New Sidebar Navigation Routes */}
+                    <Route path="ledger" element={<BoardDashboard />} />
+                    <Route path="revenue-expense" element={<RevenueExpenseManager />} />
+                    <Route path="receivables-payables" element={<ReceivablesPayablesManager />} />
+                    <Route path="settlements" element={<Settlements />} />
+                    <Route path="accounting" element={<AccrualAccountingView />} />
                     <Route path="categories" element={<ManageCategories />} />
 
-                    {/* Keep legacy routes accessible if needed, or redirect them? 
-                        For now, let's keep them as valid sub-routes or just remove if we want to force the new view.
-                        The new view uses components directly so we don't strictly need these routes unless directly accessed.
-                     */}
-                    <Route path="expenses" element={<ExpenseManager />} />
-                    <Route path="income" element={<IncomeOverview />} />
-                    <Route path="cashflow" element={<Cashflow />} />
-                    <Route path="accounting" element={<AccountingDashboard />}>
-                        <Route path="pnl" element={<ProfitAndLoss />} />
-                        <Route path="balance-sheet" element={<BalanceSheet />} />
-                        <Route path="assets" element={<AssetRegister />} />
-                        <Route path="adjustments" element={<Adjustments />} />
-                    </Route>
+                    {/* Keep legacy nested routes if necessary for internal navigation, 
+                        though mostly replaced by above. 
+                        Adjustments and detailed views can still be accessed via /board/accounting/ ... 
+                    */}
+                    <Route path="accounting/pnl" element={<ProfitAndLoss />} />
+                    <Route path="accounting/balance-sheet" element={<BalanceSheet />} />
+                    <Route path="accounting/assets" element={<AssetRegister />} />
+                    <Route path="accounting/adjustments" element={<Adjustments />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -227,7 +230,7 @@ function RedirectHandler() {
     }
     if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
     if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
-    if (user.role === 'board_member') return <Navigate to="/board/cash-based" replace />;
+    if (user.role === 'board_member') return <Navigate to="/board/ledger" replace />;
 
     return <Navigate to="/login" replace />;
 }

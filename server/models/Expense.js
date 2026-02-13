@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const expenseSchema = mongoose.Schema({
     title: { type: String }, // Optional, can be derived from category/subcategory
+    vendor: { type: String }, // Vendor or Payee Name
     category: { type: String, required: true },
     subcategory: { type: String, required: true },
     amount: { type: Number, required: true },

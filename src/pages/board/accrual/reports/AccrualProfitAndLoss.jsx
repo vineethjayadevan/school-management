@@ -4,7 +4,8 @@ import {
     Calendar,
     ArrowUpCircle,
     ArrowDownCircle,
-    PieChart
+    PieChart,
+    RotateCcw
 } from 'lucide-react';
 import api from '../../../../services/api';
 
@@ -43,6 +44,13 @@ export default function AccrualProfitAndLoss() {
         <div className="space-y-6">
             {/* Filters */}
             <div className="flex items-center justify-end gap-2">
+                <button
+                    onClick={fetchReport}
+                    className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    title="Refresh Data"
+                >
+                    <RotateCcw size={20} />
+                </button>
                 <input
                     type="date"
                     value={dateRange.startDate}

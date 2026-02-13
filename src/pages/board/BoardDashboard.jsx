@@ -397,131 +397,36 @@ export default function BoardDashboard() {
 
 
 
+    // Calculate Totals for Summary Cards
+    const totalIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalExpense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalCapital = transactions
+        .filter(t => t.type === 'capital')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
 
     const renderCashLedger = () => (
-        <div className="space-y-8">
-
-
-            {/* Filter Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center flex-wrap">
-                <div className="flex items-center gap-2">
-                    <Filter size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium text-slate-700">Filters:</span>
+        <div className="space-y-6">
+            {/* Header & Actions */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800">Cash Ledger</h1>
+                    <p className="text-sm text-slate-500">Track and manage financial transactions</p>
                 </div>
 
-                {/* Search Input */}
+                {/* Download Button moved to Header */}
                 <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search description..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-full md:w-64"
-                    />
-                </div>
-
-                {/* Type Toggle */}
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                    {['all', 'income', 'expense', 'capital'].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => handleFilterChange('type', type)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${filters.type === type
-                                ? 'bg-white text-indigo-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                        >
-                            {type}
-                        </button>
-                    ))}
-                </div>
-
-                {/* User Dropdown */}
-                <select
-                    value={filters.userId}
-                    onChange={(e) => handleFilterChange('userId', e.target.value)}
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-40"
-                >
-                    <option value="">All Board Members</option>
-                    {boardMembers.map(member => (
-                        <option key={member._id} value={member._id}>{member.name}</option>
-                    ))}
-                </select>
-
-                {/* Category Dropdown - Dynamic */}
-                {filters.type !== 'all' && (
-                    <select
-                        value={filters.category}
-                        onChange={(e) => handleFilterChange('category', e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-40"
-                    >
-                        <option value="">All Categories</option>
-                        {filters.type === 'expense' && expenseCategories.map(cat => (
-                            <option key={cat._id} value={cat.name}>{cat.name}</option>
-                        ))}
-                        {(filters.type === 'income' || filters.type === 'capital') && allIncomeCategories
-                            .filter(cat => cat.type === filters.type)
-                            .map(cat => (
-                                <option key={cat._id} value={cat.name}>{cat.name}</option>
-                            ))
-                        }
-                    </select>
-                )}
-
-                {/* Subcategory Dropdown - Now for ALL types */}
-                {filters.type !== 'all' && availableSubcategories.length > 0 && (
-                    <select
-                        value={filters.subcategory}
-                        onChange={(e) => handleFilterChange('subcategory', e.target.value)}
-                        disabled={!filters.category}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-40 disabled:opacity-50"
-                    >
-                        <option value="">All Subcategories</option>
-                        {availableSubcategories.map(sub => (
-                            <option key={sub} value={sub}>{sub}</option>
-                        ))}
-                    </select>
-                )}
-
-                {/* Date Range */}
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="date"
-                            value={filters.startDate}
-                            onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                            className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                    </div>
-                    <span className="text-slate-400">-</span>
-                    <div className="relative">
-                        <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="date"
-                            value={filters.endDate}
-                            onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                            className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                    </div>
-                </div>
-
-                {/* Clear Filters */}
-                <button
-                    onClick={clearFilters}
-                    className="ml-auto text-xs font-medium text-slate-500 hover:text-red-500 flex items-center gap-1"
-                >
-                </button>
-
-                {/* Download Dropdown */}
-                <div className="relative ml-auto">
                     <button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                         className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-medium"
                     >
                         <Download size={16} />
-                        <span className="hidden md:inline">Download Report</span>
+                        <span className="hidden md:inline">Download Reports</span>
                         <ChevronDown size={14} />
                     </button>
 
@@ -558,21 +463,173 @@ export default function BoardDashboard() {
                 </div>
             </div>
 
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    <div className="relative z-10">
+                        <p className="text-sm font-medium text-blue-600 mb-1">Total Capital</p>
+                        <h3 className="text-2xl font-bold text-slate-800">₹{totalCapital.toLocaleString()}</h3>
+                    </div>
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 relative z-10">
+                        <TrendingUp size={20} />
+                    </div>
+                    <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-2 translate-y-2">
+                        <DollarSign size={80} className="text-blue-600" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    <div className="relative z-10">
+                        <p className="text-sm font-medium text-emerald-600 mb-1">Total Income</p>
+                        <h3 className="text-2xl font-bold text-slate-800">₹{totalIncome.toLocaleString()}</h3>
+                    </div>
+                    <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 relative z-10">
+                        <TrendingUp size={20} />
+                    </div>
+                    <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-2 translate-y-2">
+                        <TrendingUp size={80} className="text-emerald-600" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-rose-100 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    <div className="relative z-10">
+                        <p className="text-sm font-medium text-rose-600 mb-1">Total Expenses</p>
+                        <h3 className="text-2xl font-bold text-slate-800">₹{totalExpense.toLocaleString()}</h3>
+                    </div>
+                    <div className="w-10 h-10 bg-rose-50 rounded-lg flex items-center justify-center text-rose-600 relative z-10">
+                        <TrendingDown size={20} />
+                    </div>
+                    <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-2 translate-y-2">
+                        <TrendingDown size={80} className="text-rose-600" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters - Compact */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+
+                    {/* Search & Date Group */}
+                    <div className="flex flex-1 items-center gap-2 min-w-0">
+                        <div className="relative flex-1 min-w-[150px]">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    value={filters.startDate}
+                                    onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                                    className="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-32 md:w-auto"
+                                />
+                            </div>
+                            <span className="text-slate-400">-</span>
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    value={filters.endDate}
+                                    onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                                    className="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-32 md:w-auto"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-8 w-px bg-slate-200 hidden lg:block"></div>
+
+                    {/* Dropdowns Group */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <select
+                            value={filters.type}
+                            onChange={(e) => handleFilterChange('type', e.target.value)}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 capitalize"
+                        >
+                            <option value="all">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                            <option value="capital">Capital</option>
+                        </select>
+
+                        <select
+                            value={filters.userId}
+                            onChange={(e) => handleFilterChange('userId', e.target.value)}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[150px]"
+                        >
+                            <option value="">All Users</option>
+                            {boardMembers.map(member => (
+                                <option key={member._id} value={member._id}>{member.name}</option>
+                            ))}
+                        </select>
+
+                        {(filters.type !== 'all' || filters.category) && (
+                            <select
+                                value={filters.category}
+                                onChange={(e) => handleFilterChange('category', e.target.value)}
+                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[160px]"
+                            >
+                                <option value="">Category</option>
+                                {filters.type === 'expense' && expenseCategories.map(cat => (
+                                    <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                ))}
+                                {(filters.type === 'income' || filters.type === 'capital') && allIncomeCategories
+                                    .filter(cat => cat.type === filters.type)
+                                    .map(cat => (
+                                        <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                    ))
+                                }
+                                {/* Show all if type is 'all' (though logic usually filters) - kept simple */}
+                            </select>
+                        )}
+
+                        {filters.category && availableSubcategories.length > 0 && (
+                            <select
+                                value={filters.subcategory}
+                                onChange={(e) => handleFilterChange('subcategory', e.target.value)}
+                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[160px]"
+                            >
+                                <option value="">Subcategory</option>
+                                {availableSubcategories.map(sub => (
+                                    <option key={sub} value={sub}>{sub}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        <button
+                            onClick={clearFilters}
+                            title="Clear Filters"
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                            <Filter size={16} className={Object.values(filters).some(v => v !== 'all' && v !== '') ? "text-indigo-500" : ""} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {/* Table Wrapper */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <CreditCard size={20} className="text-indigo-500" />
-                        Recent Transactions
+                        Transactions
                     </h3>
-                    <span className="text-xs text-slate-400">
-                        Showing {filteredTransactions.length} records
+                    <span className="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
+                        {filteredTransactions.length} records found
                     </span>
                 </div>
 
                 {filteredTransactions.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
-                        <p>No transactions found for the selected filters.</p>
+                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
+                            <Search size={24} />
+                        </div>
+                        <p>No transactions found matching your criteria.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -650,16 +707,7 @@ export default function BoardDashboard() {
         </div>
     );
 
-
-
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex-1"></div> {/* Spacer if needed or just empty */}
-            </div>
-
-            {/* Ledger Content */}
-            {renderCashLedger()}
-        </div>
+        renderCashLedger()
     );
 }

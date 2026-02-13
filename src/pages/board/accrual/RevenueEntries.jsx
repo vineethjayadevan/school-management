@@ -30,21 +30,29 @@ export default function RevenueEntries() {
     });
 
     const [categories, setCategories] = useState([]);
+    const [users, setUsers] = useState([]);
 
     // Filters
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
-        customer: ''
+        search: '', // Combined customer/description search
+        category: '',
+        subcategory: '',
+        addedBy: ''
     });
 
     useEffect(() => {
         fetchEntries();
         fetchCategories();
+        fetchUsers();
     }, []);
 
     useEffect(() => {
-        fetchEntries();
+        const timer = setTimeout(() => {
+            fetchEntries();
+        }, 300);
+        return () => clearTimeout(timer);
     }, [filters]);
 
     const fetchCategories = async () => {
@@ -56,20 +64,32 @@ export default function RevenueEntries() {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const res = await api.get('/users/list');
+            setUsers(res.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    };
+
     const fetchEntries = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (filters.startDate) params.append('startDate', filters.startDate);
             if (filters.endDate) params.append('endDate', filters.endDate);
-            if (filters.customer) params.append('customer', filters.customer);
+            if (filters.search) params.append('search', filters.search);
+            if (filters.category) params.append('category', filters.category);
+            if (filters.subcategory) params.append('subcategory', filters.subcategory);
+            if (filters.addedBy) params.append('userId', filters.addedBy);
 
             const res = await api.get(`/accrual/revenue?${params.toString()}`);
             setEntries(res.data);
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching revenue entries:', error);
             addToast('Failed to load revenue entries', 'error');
-        } finally {
             setLoading(false);
         }
     };
@@ -103,44 +123,94 @@ export default function RevenueEntries() {
         ? categories.find(c => c.name === formData.category)?.subcategories || []
         : [];
 
+    const filterSubcategories = filters.category
+        ? categories.find(c => c.name === filters.category)?.subcategories || []
+        : [];
+
+    const totalAmount = entries.reduce((sum, entry) => sum + (parseFloat(entry.amount) || 0), 0);
+
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Header Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex-1">
-                    <Search className="text-slate-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Search by customer..."
-                        value={filters.customer}
-                        onChange={(e) => setFilters(prev => ({ ...prev, customer: e.target.value }))}
-                        className="bg-transparent border-none focus:outline-none text-sm w-full"
-                    />
-                </div>
+            {/* Header Actions & Filters */}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                    <div className="flex-1 w-full md:w-auto grid grid-cols-1 md:grid-cols-4 gap-3">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search customer, desc..."
+                                value={filters.search}
+                                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
 
-                <div className="flex items-center gap-2">
-                    <input
-                        type="date"
-                        value={filters.startDate}
-                        onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400">-</span>
-                    <input
-                        type="date"
-                        value={filters.endDate}
-                        onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                </div>
+                        {/* Category Filter */}
+                        <select
+                            value={filters.category}
+                            onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value, subcategory: '' }))}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">All Categories</option>
+                            {categories.map(c => (
+                                <option key={c._id} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
 
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm font-medium whitespace-nowrap"
-                >
-                    <Plus size={18} />
-                    Recognize Revenue
-                </button>
+                        {/* Subcategory Filter */}
+                        <select
+                            value={filters.subcategory}
+                            onChange={(e) => setFilters(prev => ({ ...prev, subcategory: e.target.value }))}
+                            disabled={!filters.category}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
+                        >
+                            <option value="">All Subcategories</option>
+                            {filterSubcategories.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
+                        </select>
+
+                        {/* Added By Filter */}
+                        <select
+                            value={filters.addedBy}
+                            onChange={(e) => setFilters(prev => ({ ...prev, addedBy: e.target.value }))}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">Added By (All)</option>
+                            {users.map(u => (
+                                <option key={u._id} value={u._id}>{u.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1.5 shadow-sm">
+                            <Calendar size={16} className="text-slate-400" />
+                            <input
+                                type="date"
+                                value={filters.startDate}
+                                onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                                className="bg-transparent border-none text-xs focus:outline-none w-24"
+                            />
+                            <span className="text-slate-300">-</span>
+                            <input
+                                type="date"
+                                value={filters.endDate}
+                                onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                                className="bg-transparent border-none text-xs focus:outline-none w-24"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm font-medium whitespace-nowrap ml-auto md:ml-0"
+                        >
+                            <Plus size={18} />
+                            Recognize Revenue
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Form Modal/Panel */}
@@ -264,7 +334,7 @@ export default function RevenueEntries() {
             )}
 
             {/* List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-slate-50 border-b border-slate-200">
@@ -293,12 +363,12 @@ export default function RevenueEntries() {
                                 entries.map((entry) => (
                                     <tr key={entry._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                            {new Date(entry.date).toLocaleDateString()}
+                                            {new Date(entry.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-xs">
-                                                    {entry.customer.charAt(0)}
+                                                    {(entry.customer || '?').charAt(0)}
                                                 </div>
                                                 <span className="text-sm font-medium text-slate-900">{entry.customer}</span>
                                             </div>
@@ -328,6 +398,14 @@ export default function RevenueEntries() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Footer Total */}
+                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end items-center gap-4">
+                    <span className="text-sm font-medium text-slate-600 uppercase tracking-wider">Total Revenue:</span>
+                    <span className="text-xl font-bold text-emerald-600">
+                        {totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                    </span>
                 </div>
             </div>
         </div>

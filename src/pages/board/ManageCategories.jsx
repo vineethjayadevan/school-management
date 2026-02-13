@@ -8,7 +8,8 @@ import {
     Plus,
     X,
     Filter,
-    Search
+    Search,
+    Wallet
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -19,17 +20,25 @@ export default function ManageCategories() {
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // State for managing expanded categories
-    const [expandedCategories, setExpandedCategories] = useState({});
+    // State for UI
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     // State for new subcategory input
-    const [addingSubcatTo, setAddingSubcatTo] = useState(null); // ID of category being added to
     const [newSubcategory, setNewSubcategory] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         fetchCategories();
     }, []);
+
+    // Select first category when loaded if none selected
+    useEffect(() => {
+        if (!selectedCategory && !loading && (incomeCategories.length > 0 || expenseCategories.length > 0)) {
+            // Prefer income first
+            if (incomeCategories.length > 0) setSelectedCategory(incomeCategories[0]);
+            else if (expenseCategories.length > 0) setSelectedCategory(expenseCategories[0]);
+        }
+    }, [loading, incomeCategories, expenseCategories]);
 
     const fetchCategories = async () => {
         try {
@@ -50,40 +59,27 @@ export default function ManageCategories() {
         }
     };
 
-    const toggleCategory = (id) => {
-        setExpandedCategories(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
-    };
-
     const handleAddSubcategory = async (type, categoryId) => {
         if (!newSubcategory.trim()) return;
 
         try {
             setSubmitting(true);
-            // type needed for API: 'income' or 'expense'
-            // For income categories, the type in DB might be 'capital', but API expects 'income' for the route suffix if it maps to IncomeCategory model.
-            // Wait, my controller logic is:
-            // if (type === 'income') -> IncomeCategory
-            // if (type === 'expense') -> ExpenseCategory
-            // So for Capital categories (which are in IncomeCategory model), we must send 'income' as type to the API.
-
             const apiType = type === 'expense' ? 'expense' : 'income';
 
             const res = await api.post(`/finance/categories/${apiType}/${categoryId}/subcategories`, {
                 subcategory: newSubcategory.trim()
             });
 
-            // Update local state
+            // Update local state and keep selection updated
             if (type === 'expense') {
                 setExpenseCategories(prev => prev.map(c => c._id === categoryId ? res.data : c));
+                setSelectedCategory(res.data);
             } else {
                 setIncomeCategories(prev => prev.map(c => c._id === categoryId ? res.data : c));
+                setSelectedCategory(res.data);
             }
 
             setNewSubcategory('');
-            setAddingSubcatTo(null);
         } catch (err) {
             console.error('Error adding subcategory:', err);
             alert(err.response?.data?.message || 'Failed to add subcategory');
@@ -92,7 +88,7 @@ export default function ManageCategories() {
         }
     };
 
-    // Group categories by visual type
+    // Group categories
     const getGroupedCategories = () => {
         const income = incomeCategories.filter(c => c.type === 'income' || !c.type);
         const capital = incomeCategories.filter(c => c.type === 'capital');
@@ -103,184 +99,193 @@ export default function ManageCategories() {
 
     const grouped = getGroupedCategories();
 
-    const filteredGroup = (group) => {
-        if (!searchQuery) return group;
-        return group.filter(c =>
-            c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.subcategories.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-    };
+    // Flatten for search
+    const allCategories = [
+        ...grouped.income.map(c => ({ ...c, uiType: 'income' })),
+        ...grouped.capital.map(c => ({ ...c, uiType: 'capital' })),
+        ...grouped.expenses.map(c => ({ ...c, uiType: 'expense' }))
+    ];
 
-    const renderCategoryCard = (category, type) => {
-        const isExpanded = expandedCategories[category._id];
-        const isAdding = addingSubcatTo === category._id;
+    const filteredCategories = allCategories.filter(c =>
+        !searchQuery ||
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.subcategories.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
-        return (
-            <div key={category._id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-4">
-                <div
-                    onClick={() => toggleCategory(category._id)}
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${type === 'expense' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                            {type === 'expense' ? <PieChart size={20} /> : <TrendingUp size={20} />}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-slate-800">{category.name}</h3>
-                            <p className="text-xs text-slate-500">{category.subcategories.length} subcategories</p>
-                        </div>
-                    </div>
-                    {isExpanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                </div>
-
-                {isExpanded && (
-                    <div className="bg-slate-50 p-4 border-t border-slate-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                            {category.subcategories.map((sub, idx) => (
-                                <div key={idx} className="bg-white px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 flex items-center justify-between">
-                                    <span>{sub}</span>
-                                    {/* No delete button as per requirement */}
-                                </div>
-                            ))}
-                            {category.subcategories.length === 0 && (
-                                <div className="col-span-full text-center py-2 text-slate-400 text-sm italic">
-                                    No subcategories defined
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Add Subcategory */}
-                        {isAdding ? (
-                            <div className="flex items-center gap-2 mt-4 animate-in fade-in slide-in-from-top-2">
-                                <input
-                                    type="text"
-                                    value={newSubcategory}
-                                    onChange={(e) => setNewSubcategory(e.target.value)}
-                                    placeholder="Enter subcategory name..."
-                                    className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleAddSubcategory(type, category._id);
-                                        if (e.key === 'Escape') {
-                                            setAddingSubcatTo(null);
-                                            setNewSubcategory('');
-                                        }
-                                    }}
-                                />
-                                <button
-                                    onClick={() => handleAddSubcategory(type, category._id)}
-                                    disabled={submitting}
-                                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                    {submitting ? 'Adding...' : 'Add'}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setAddingSubcatTo(null);
-                                        setNewSubcategory('');
-                                    }}
-                                    className="p-2 text-slate-500 hover:bg-slate-200 rounded-lg"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    setAddingSubcatTo(category._id);
-                                    setNewSubcategory('');
-                                }}
-                                className="mt-2 flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                            >
-                                <Plus size={16} />
-                                Add Subcategory
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
-        );
+    const getTypeColor = (type) => {
+        if (type === 'expense') return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: PieChart };
+        if (type === 'capital') return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', icon: Wallet };
+        return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: TrendingUp };
     };
 
     if (loading) {
         return (
-            <div className="min-h-[400px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="min-h-[600px] flex flex-col items-center justify-center text-slate-400">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
+                <p>Loading categories...</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Manage Categories</h1>
-                    <p className="text-slate-500">View and add subcategories for financial tracking</p>
-                </div>
+        <div className="h-[calc(100vh-100px)] max-h-[900px] flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Header Area */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4 bg-slate-50/50">
+                <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <Filter className="text-indigo-600" size={20} />
+                    Manage Categories
+                </h1>
 
-                {/* Search */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <div className="relative w-full max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
                         placeholder="Search categories..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-64"
+                        className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                 </div>
             </div>
 
-            {error && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-100">
-                    {error}
-                </div>
-            )}
+            <div className="flex flex-1 overflow-hidden">
+                {/* Left Sidebar: Category List */}
+                <div className="w-80 border-r border-slate-200 overflow-y-auto bg-slate-50/30">
+                    <div className="p-3 space-y-6">
+                        {/* Group Render Helper */}
+                        {['income', 'capital', 'expense'].map(groupType => {
+                            const groupLabel = groupType === 'expense' ? 'Expenses' : (groupType === 'capital' ? 'Capital & Assets' : 'Income Source');
+                            const items = filteredCategories.filter(c => c.uiType === groupType);
+                            const style = getTypeColor(groupType);
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Income & Capital Column */}
-                <div className="space-y-8">
-                    {/* Income Section */}
-                    <div>
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-green-500 rounded-full"></span>
-                            Income Categories
-                        </h2>
-                        <div className="space-y-4">
-                            {filteredGroup(grouped.income).map(c => renderCategoryCard(c, 'income'))}
-                            {filteredGroup(grouped.income).length === 0 && (
-                                <p className="text-slate-500 text-sm italic">No income categories found.</p>
-                            )}
-                        </div>
-                    </div>
+                            if (items.length === 0) return null;
 
-                    {/* Capital Section */}
-                    <div>
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
-                            Capital Categories
-                        </h2>
-                        <div className="space-y-4">
-                            {filteredGroup(grouped.capital).map(c => renderCategoryCard(c, 'capital'))}
-                            {filteredGroup(grouped.capital).length === 0 && (
-                                <p className="text-slate-500 text-sm italic">No capital categories found.</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                            return (
+                                <div key={groupType}>
+                                    <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 px-3 ${style.text} opacity-80`}>
+                                        {groupLabel}
+                                    </h3>
+                                    <div className="space-y-1">
+                                        {items.map(category => (
+                                            <button
+                                                key={category._id}
+                                                onClick={() => setSelectedCategory(category)}
+                                                className={`
+                                                    w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all
+                                                    ${selectedCategory?._id === category._id
+                                                        ? 'bg-white shadow-sm border border-slate-200 ring-1 ring-indigo-500/10'
+                                                        : 'hover:bg-slate-100/80 border border-transparent'}
+                                                `}
+                                            >
+                                                <div className={`w-8 h-8 rounded-lg ${style.bg} ${style.text} flex items-center justify-center shrink-0`}>
+                                                    <style.icon size={16} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className={`text-sm font-medium truncate ${selectedCategory?._id === category._id ? 'text-slate-900' : 'text-slate-600'}`}>
+                                                        {category.name}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400">{category.subcategories.length} items</p>
+                                                </div>
+                                                {selectedCategory?._id === category._id && (
+                                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
 
-                {/* Expenses Column */}
-                <div>
-                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-2 h-6 bg-red-500 rounded-full"></span>
-                        Expense Categories
-                    </h2>
-                    <div className="space-y-4">
-                        {filteredGroup(grouped.expenses).map(c => renderCategoryCard(c, 'expense'))}
-                        {filteredGroup(grouped.expenses).length === 0 && (
-                            <p className="text-slate-500 text-sm italic">No expense categories found.</p>
+                        {filteredCategories.length === 0 && (
+                            <div className="text-center py-10 text-slate-400 text-sm">
+                                No categories found.
+                            </div>
                         )}
                     </div>
+                </div>
+
+                {/* Right Panel: Details */}
+                <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+                    {selectedCategory ? (
+                        <div className="max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-200">
+                            {/* Detail Header */}
+                            <div className="flex items-start justify-between mb-8 pb-6 border-b border-slate-100">
+                                <div className="flex items-center gap-5">
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${getTypeColor(selectedCategory.uiType).bg} ${getTypeColor(selectedCategory.uiType).text}`}>
+                                        {React.createElement(getTypeColor(selectedCategory.uiType).icon, { size: 32 })}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getTypeColor(selectedCategory.uiType).bg} ${getTypeColor(selectedCategory.uiType).text}`}>
+                                                {selectedCategory.uiType === 'expense' ? 'Expense Category' : (selectedCategory.uiType === 'capital' ? 'Capital Account' : 'Income Source')}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-3xl font-bold text-slate-900">{selectedCategory.name}</h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Subcategories List */}
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold text-slate-800">Subcategories</h3>
+                                    <span className="text-sm text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                                        {selectedCategory.subcategories.length} Total
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {selectedCategory.subcategories.map((sub, idx) => (
+                                        <div key={idx} className="group flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl hover:border-indigo-200 hover:shadow-sm transition-all">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-slate-300 group-hover:bg-indigo-500 transition-colors"></div>
+                                                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">{sub}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {selectedCategory.subcategories.length === 0 && (
+                                        <div className="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+                                            <p className="text-slate-400 mb-1">No subcategories yet</p>
+                                            <p className="text-xs text-slate-400">Add one below to get started</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Add New Trigger */}
+                                <div className="pt-6 mt-6 border-t border-slate-100">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Add New Subcategory</label>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="text"
+                                            value={newSubcategory}
+                                            onChange={(e) => setNewSubcategory(e.target.value)}
+                                            placeholder={`e.g. ${selectedCategory.uiType === 'expense' ? 'Electricity Bill' : 'Tuition Fees'}`}
+                                            className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAddSubcategory(selectedCategory.uiType, selectedCategory._id)}
+                                        />
+                                        <button
+                                            onClick={() => handleAddSubcategory(selectedCategory.uiType, selectedCategory._id)}
+                                            disabled={submitting || !newSubcategory.trim()}
+                                            className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                                        >
+                                            {submitting ? (
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            ) : (
+                                                <Plus size={20} />
+                                            )}
+                                            Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 opacity-60">
+                            <Filter size={64} className="mb-4 text-slate-200" />
+                            <h3 className="text-lg font-medium text-slate-600">Select a Category</h3>
+                            <p className="max-w-xs mx-auto mt-1">Choose a category from the sidebar to view details and manage subcategories.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

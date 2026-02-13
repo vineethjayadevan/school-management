@@ -115,7 +115,13 @@ const createExpense = async (req, res) => {
 // @access  Private
 const getRevenueEntries = async (req, res) => {
     try {
-        const { startDate, endDate, customer } = req.query;
+        // Prevent 304 Not Modified
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+
+        const { startDate, endDate, customer, category, subcategory, search, userId } = req.query;
         let query = {};
 
         if (startDate || endDate) {
@@ -123,7 +129,18 @@ const getRevenueEntries = async (req, res) => {
             if (startDate) query.date.$gte = new Date(startDate);
             if (endDate) query.date.$lte = new Date(endDate);
         }
-        if (customer) {
+
+        if (category) query.category = category;
+        if (subcategory) query.subcategory = subcategory;
+        if (userId) query.addedBy = userId;
+
+        if (search) {
+            query.$or = [
+                { customer: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } }
+            ];
+        } else if (customer) {
             query.customer = { $regex: customer, $options: 'i' };
         }
 
@@ -139,7 +156,13 @@ const getRevenueEntries = async (req, res) => {
 // @access  Private
 const getExpenseEntries = async (req, res) => {
     try {
-        const { startDate, endDate, vendor } = req.query;
+        // Prevent 304 Not Modified
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+
+        const { startDate, endDate, vendor, category, subcategory, search, userId } = req.query;
         let query = {};
 
         if (startDate || endDate) {
@@ -147,7 +170,18 @@ const getExpenseEntries = async (req, res) => {
             if (startDate) query.date.$gte = new Date(startDate);
             if (endDate) query.date.$lte = new Date(endDate);
         }
-        if (vendor) {
+
+        if (category) query.category = category;
+        if (subcategory) query.subcategory = subcategory;
+        if (userId) query.addedBy = userId;
+
+        if (search) {
+            query.$or = [
+                { vendor: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } }
+            ];
+        } else if (vendor) {
             query.vendor = { $regex: vendor, $options: 'i' };
         }
 
@@ -245,101 +279,165 @@ const getAccrualProfitAndLoss = async (req, res) => {
 // @desc    Get Accrual Balance Sheet
 // @route   GET /api/accrual/balance-sheet
 // @access  Private
+// @desc    Get Accrual Balance Sheet
+// @route   GET /api/accrual/balance-sheet
+// @access  Private
 const getAccrualBalanceSheet = async (req, res) => {
     try {
-        // ASSETS
-        // 1. Cash / Bank Balance
-        // We calculate this similarly to the "Net Worth" logic in financeController
-        // Cash = Total Receipts (OtherIncome) - Total Payments (Expense)
-        // Note: Since Settlements mirror to these, they are included.
-        // We need to import Expense and OtherIncome models here.
-        const Expense = require('../models/Expense');
-        const OtherIncome = require('../models/OtherIncome');
+        const { endDate } = req.query;
+        let dateQuery = {};
+        if (endDate) {
+            dateQuery.date = { $lte: new Date(endDate) };
+        }
 
-        const otherIncomeAgg = await OtherIncome.aggregate([
+        // --- 1. ASSETS ---
+
+        // A. Cash / Bank Balance (Liquid Assets) - FROM SETTLEMENTS
+        // Cash = (Receipts + Capital Injections + Loan Movements) - Payments
+        // Assumption: Loan Movement is positive (Money In). Check if negative handling is needed.
+        const Settlement = require('../models/Settlement');
+
+        const cashInAgg = await Settlement.aggregate([
+            {
+                $match: {
+                    ...dateQuery,
+                    type: { $in: ['Receipt', 'Capital Injection', 'Loan Movement'] }
+                }
+            },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalReceipts = otherIncomeAgg.length > 0 ? otherIncomeAgg[0].total : 0;
+        const cashIn = cashInAgg.length > 0 ? cashInAgg[0].total : 0;
 
-        const expenseAgg = await Expense.aggregate([
+        const cashOutAgg = await Settlement.aggregate([
+            {
+                $match: {
+                    ...dateQuery,
+                    type: 'Payment'
+                }
+            },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalPayments = expenseAgg.length > 0 ? expenseAgg[0].total : 0;
+        const cashOut = cashOutAgg.length > 0 ? cashOutAgg[0].total : 0;
 
-        const cashBalance = totalReceipts - totalPayments;
+        const cashBalance = cashIn - cashOut;
 
-        // 2. Accounts Receivable (Unpaid Invoices)
+        // B. Accounts Receivable (Unpaid Invoices)
         // Sum of 'balance' field in Receivables
         const arAgg = await Receivable.aggregate([
+            // We ideally should snapshot this as of endDate, but 'balance' is current.
+            // For true historical BS, we'd need a transaction ledger for AR. 
+            // For now, assuming "As of Now" or ignoring date filter for balance if strict history not supported.
+            // However, to be consistent with request, we'll just take current outstanding.
             { $match: { balance: { $gt: 0 } } },
             { $group: { _id: null, total: { $sum: '$balance' } } }
         ]);
         const accountsReceivable = arAgg.length > 0 ? arAgg[0].total : 0;
 
-        // LIABILITIES
-        // 1. Accounts Payable (Unpaid Bills)
-        // Sum of 'balance' field in Payables
+        // C. Fixed Assets (Long-term Assets)
+        // From AccrualExpense where category is Asset-type
+        const ASSET_CATEGORIES = [
+            'Building', 'Furniture', 'Equipment', 'Computers', 'Vehicles',
+            'Infrastructure', 'Land', 'Fixed Assets', 'Assets'
+        ];
+
+        const fixedAssetsAgg = await AccrualExpense.aggregate([
+            {
+                $match: {
+                    ...dateQuery,
+                    category: { $in: ASSET_CATEGORIES }
+                }
+            },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const fixedAssets = fixedAssetsAgg.length > 0 ? fixedAssetsAgg[0].total : 0;
+
+        const totalAssets = cashBalance + accountsReceivable + fixedAssets;
+
+
+        // --- 2. LIABILITIES ---
+
+        // A. Accounts Payable (Unpaid Bills)
         const apAgg = await Payable.aggregate([
             { $match: { balance: { $gt: 0 } } },
             { $group: { _id: null, total: { $sum: '$balance' } } }
         ]);
         const accountsPayable = apAgg.length > 0 ? apAgg[0].total : 0;
 
-        // EQUITY
-        // 1. Capital (Investments)
-        // Filter OtherIncome for 'Investment by board members'
-        const capitalAgg = await OtherIncome.aggregate([
-            { $match: { category: 'Investment by board members' } },
+        // B. Loans (External Debt)
+        // From Settlement where type = 'Loan Movement'
+        const loansAgg = await Settlement.aggregate([
+            {
+                $match: {
+                    ...dateQuery,
+                    type: 'Loan Movement'
+                }
+            },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalLoans = loansAgg.length > 0 ? loansAgg[0].total : 0;
+
+        const totalLiabilities = accountsPayable + totalLoans;
+
+
+        // --- 3. EQUITY ---
+
+        // A. Capital (Introduction)
+        // From Settlement where type = 'Capital Injection'
+        const capitalAgg = await Settlement.aggregate([
+            {
+                $match: {
+                    ...dateQuery,
+                    type: 'Capital Injection'
+                }
+            },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
         const totalCapital = capitalAgg.length > 0 ? capitalAgg[0].total : 0;
 
-        // 2. Retained Earnings (Net Profit Life-to-Date)
-        // Revenue (Accrual) - Expense (Accrual)
-        const totalAccrualRevenueAgg = await AccrualRevenue.aggregate([
+        // B. Retained Earnings
+        // Lifetime Revenue - Lifetime Expense (Accrual)
+        const totalRevenueAgg = await AccrualRevenue.aggregate([
+            { $match: dateQuery },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalAccrualRevenue = totalAccrualRevenueAgg.length > 0 ? totalAccrualRevenueAgg[0].total : 0;
+        const totalRevenue = totalRevenueAgg.length > 0 ? totalRevenueAgg[0].total : 0;
 
-        const totalAccrualExpenseAgg = await AccrualExpense.aggregate([
+        const totalExpenseAgg = await AccrualExpense.aggregate([
+            { $match: dateQuery },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalAccrualExpense = totalAccrualExpenseAgg.length > 0 ? totalAccrualExpenseAgg[0].total : 0;
+        const totalExpense = totalExpenseAgg.length > 0 ? totalExpenseAgg[0].total : 0;
 
-        const retainedEarnings = totalAccrualRevenue - totalAccrualExpense;
+        const retainedEarnings = totalRevenue - totalExpense;
 
-        // Note: In a perfect double-entry system, Assets = Liabilities + Equity.
-        // Due to the hybrid nature (Cash from Legacy, AR/AP from Accrual), there might be an "Opening Balance Equity" or "Adjustment" needed to balance.
-        // For now, we calculate them independently and check if they balance.
+        const totalEquity = totalCapital + retainedEarnings;
 
-        // Let's refine Retained Earnings to balance the sheet?
-        // Assets = Cash + AR
-        // Liabilities = AP
-        // Equity = Assets - Liabilities = (Cash + AR) - AP
-        // Break down Equity into Capital + Retained Earnings.
-        // So Retained Earnings = (Cash + AR) - AP - Capital.
-
-        // This 'Plug' approach ensures the Balance Sheet balances, which is often preferred in simple systems over showing a discrepancy.
-        const totalAssets = cashBalance + accountsReceivable;
-        const totalLiabilities = accountsPayable;
-        const totalEquity = totalAssets - totalLiabilities;
-        const calculatedRetainedEarnings = totalEquity - totalCapital;
+        // Validation Check
+        // Assets = Liabilities + Equity
+        const validationParams = {
+            assets: totalAssets,
+            liabilitiesAndEquity: totalLiabilities + totalEquity,
+            difference: totalAssets - (totalLiabilities + totalEquity)
+        };
 
         res.json({
             assets: {
                 cash: cashBalance,
                 accountsReceivable: accountsReceivable,
+                fixedAssets: fixedAssets,
                 total: totalAssets
             },
             liabilities: {
                 accountsPayable: accountsPayable,
+                loans: totalLoans,
                 total: totalLiabilities
             },
             equity: {
                 capital: totalCapital,
-                retainedEarnings: calculatedRetainedEarnings, // Using the plug method to ensure balance
+                retainedEarnings: retainedEarnings,
                 total: totalEquity
-            }
+            },
+            validation: validationParams
         });
 
     } catch (error) {

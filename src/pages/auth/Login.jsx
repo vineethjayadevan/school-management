@@ -43,7 +43,7 @@ export default function Login() {
                 if (['superuser', 'admin'].includes(user.role)) navigate('/admin/dashboard');
                 else if (user.role === 'office_staff') navigate('/admin/enquiries');
                 else if (user.role === 'teacher') navigate('/teacher/dashboard');
-                else if (user.role === 'board_member') navigate('/board/dashboard');
+                else if (user.role === 'board_member') navigate('/board/ledger');
                 else if (user.role === 'student') navigate('/student/dashboard');
                 else navigate('/');
             }

@@ -17,7 +17,7 @@ export default function Payables() {
 
     // Filters
     const [filters, setFilters] = useState({
-        status: 'Unpaid',
+        status: 'All',
         vendor: ''
     });
 
