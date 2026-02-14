@@ -14,6 +14,21 @@ const studentSchema = mongoose.Schema({
     // Parents Info
     guardian: { type: String, required: true }, // Main contact person (mapped to Father or Mother name)
 
+    // Guardian Details (If not living with parents)
+    isGuardian: { type: Boolean, default: false },
+    guardianName: { type: String },
+    guardianRelation: { type: String },
+    guardianOccupation: { type: String },
+    guardianPhone: { type: String },
+    guardianAddress: { type: String },
+
+    // Emergency Contact
+    emergencyContact: {
+        name: { type: String },
+        phone: { type: String },
+        relation: { type: String }
+    },
+
     // Father's Details
     fatherName: { type: String },
     fatherOccupation: { type: String },
@@ -40,7 +55,27 @@ const studentSchema = mongoose.Schema({
     primaryPhone: { type: String, required: true }, // Kept for backward compatibility/searching, mapped from fatherMobile
     email: { type: String },
 
-    address: { type: String },
+    address: { type: String }, // Legacy field, kept for backward compatibility
+
+    // New Address Structure
+    residentialAddress: {
+        houseNo: { type: String },
+        street: { type: String },
+        locality: { type: String },
+        city: { type: String },
+        state: { type: String },
+        pinCode: { type: String },
+        country: { type: String, default: 'India' }
+    },
+    permanentAddress: {
+        houseNo: { type: String },
+        street: { type: String },
+        locality: { type: String },
+        city: { type: String },
+        state: { type: String },
+        pinCode: { type: String },
+        country: { type: String, default: 'India' }
+    },
 
     // New Admission Fields
     applicationNo: { type: String, required: true },

@@ -81,20 +81,101 @@ export default function AdmissionForm() {
         }
     }, [location.state, setValue]);
 
+    // Auto-fill Permanent Address from Residential Address
+    const sameAsResidential = watch('sameAsResidential');
+    const [resHouseNo, resStreet, resLocality, resCity, resState, resPinCode, resCountry] = watch(['resHouseNo', 'resStreet', 'resLocality', 'resCity', 'resState', 'resPinCode', 'resCountry']);
+
+    useEffect(() => {
+        if (sameAsResidential) {
+            setValue('permHouseNo', resHouseNo);
+            setValue('permStreet', resStreet);
+            setValue('permLocality', resLocality);
+            setValue('permCity', resCity);
+            setValue('permState', resState);
+            setValue('permPinCode', resPinCode);
+            setValue('permCountry', resCountry || 'India');
+        }
+    }, [sameAsResidential, resHouseNo, resStreet, resLocality, resCity, resState, resPinCode, resCountry, setValue]);
+
+    // Auto-fill Emergency Contact
+    useEffect(() => {
+        const fatherName = watch('fatherName');
+        const fatherMobile = watch('fatherMobile');
+
+        // Only auto-fill if the user hasn't started typing (or just always default it? User said "default it to Fathers contact")
+        // Implementation: If emergency fields are empty, keep them in sync.
+        // Let's take a simpler approach: When Father's details change, update Emergency if it matches the OLD father details or is empty.
+        // Actually, "default it" usually means populate it.
+
+        const currentEmergencyName = watch('emergencyName');
+        const currentEmergencyPhone = watch('emergencyPhone');
+
+        // Simple heuristic: If emergency name is empty or same as (previous) father name, update it.
+        // For now, let's just set it if it's empty.
+        // Better: Let's use a "same as father" state or just do it once? 
+        // User request: "default it to Fathers contact".
+
+        if (fatherName && (!currentEmergencyName || currentEmergencyName === fatherName)) {
+            setValue('emergencyName', fatherName);
+            setValue('emergencyRelation', 'Father');
+        }
+        if (fatherMobile && (!currentEmergencyPhone || currentEmergencyPhone === fatherMobile)) {
+            setValue('emergencyPhone', fatherMobile);
+        }
+
+    }, [watch('fatherName'), watch('fatherMobile'), setValue]);
+
     const onSubmit = async (data) => {
         setIsSubmitting(true);
         try {
             // Construct full name from parts
             const fullName = `${data.firstName} ${data.middleName ? data.middleName + ' ' : ''}${data.lastName}`;
 
+            // Determine Main Guardian Name (Father/Mother or Specific Guardian)
+            let mainGuardian = data.fatherName || data.motherName;
+            if (data.isGuardian && data.guardianName) {
+                mainGuardian = data.guardianName;
+            }
+
+            // Construct Address Objects
+            const residentialAddress = {
+                houseNo: data.resHouseNo,
+                street: data.resStreet,
+                locality: data.resLocality,
+                city: data.resCity,
+                state: data.resState,
+                pinCode: data.resPinCode,
+                country: data.resCountry || 'India'
+            };
+
+            const permanentAddress = data.sameAsResidential ? residentialAddress : {
+                houseNo: data.permHouseNo,
+                street: data.permStreet,
+                locality: data.permLocality,
+                city: data.permCity,
+                state: data.permState,
+                pinCode: data.permPinCode,
+                country: data.permCountry || 'India'
+            };
+
+            const emergencyContact = {
+                name: data.emergencyName,
+                phone: data.emergencyPhone,
+                relation: data.emergencyRelation
+            };
+
             const newStudent = {
                 ...data,
                 name: fullName, // Backend expects 'name'
-                guardian: data.fatherName || data.motherName, // Automatic mapping to Father or Mother name
+                guardian: mainGuardian, // Main contact person
                 className: data.class, // Map 'class' from form to 'className' in DB
-                primaryPhone: data.fatherMobile, // Map mandatory 'fatherMobile' to 'primaryPhone'
+                primaryPhone: data.isGuardian ? data.guardianPhone : data.fatherMobile, // Primary contact
                 email: data.fatherEmail || data.motherEmail, // Map available email
                 // admissionNo: data.admissionNo, // Already in data
+                residentialAddress,
+                permanentAddress,
+                emergencyContact,
+                address: `${residentialAddress.houseNo}, ${residentialAddress.street}, ${residentialAddress.locality}, ${residentialAddress.city}, ${residentialAddress.state} - ${residentialAddress.pinCode}`, // Backwards compatibility
                 status: 'Active',
                 feesStatus: 'Pending',
                 admissionDate: new Date().toISOString().split('T')[0],
@@ -138,7 +219,22 @@ export default function AdmissionForm() {
         if (step === 1) {
             isValid = await trigger(['applicationNo', 'submissionDate', 'admissionNo', 'firstName', 'lastName', 'dob', 'gender', 'class']);
         } else if (step === 2) {
-            isValid = await trigger(['fatherName', 'motherName', 'fatherMobile', 'motherMobile']);
+            // Validate Basic Parent Details
+            const fieldsToValidate = ['fatherName', 'motherName', 'fatherMobile', 'motherMobile'];
+
+            // Validate Residential Address
+            fieldsToValidate.push('resHouseNo', 'resStreet', 'resLocality', 'resCity', 'resState', 'resPinCode');
+
+            // Validate Permanent Address (if not same as residential)
+            if (!watch('sameAsResidential')) {
+                fieldsToValidate.push('permHouseNo', 'permStreet', 'permLocality', 'permCity', 'permState', 'permPinCode');
+            }
+
+            // Validate Guardian Details if toggled
+            if (watch('isGuardian')) {
+                fieldsToValidate.push('guardianName', 'guardianRelation', 'guardianOccupation', 'guardianPhone', 'guardianAddress');
+            }
+            isValid = await trigger(fieldsToValidate);
         } else {
             isValid = true;
         }
@@ -657,18 +753,267 @@ export default function AdmissionForm() {
                             </div>
                         </div>
 
-                        {/* Contact & Address */}
+                        {/* Residential Address */}
                         <div className="space-y-6">
-                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Address</h3>
-                            <div className="grid grid-cols-1 gap-6">
-                                <div className="col-span-1 space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Residential Address</label>
-                                    <textarea
-                                        {...register('address')}
-                                        rows={3}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                        placeholder="Residential Address"
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Residential Address</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">House No/Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resHouseNo', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resHouseNo ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="House No"
                                     />
+                                    {errors.resHouseNo && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Street <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resStreet', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resStreet ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="Street Name"
+                                    />
+                                    {errors.resStreet && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Locality/Village <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resLocality', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resLocality ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="Locality"
+                                    />
+                                    {errors.resLocality && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">City/District <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resCity', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resCity ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="City"
+                                    />
+                                    {errors.resCity && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">State <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resState', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resState ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="State"
+                                    />
+                                    {errors.resState && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">PIN Code <span className="text-red-500">*</span></label>
+                                    <input
+                                        {...register('resPinCode', { required: true })}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resPinCode ? 'border-red-500' : 'border-slate-300'}`}
+                                        placeholder="PIN Code"
+                                    />
+                                    {errors.resPinCode && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Country</label>
+                                    <input
+                                        {...register('resCountry')}
+                                        defaultValue="India"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="Country"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Permanent Address */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between border-b pb-2">
+                                <h3 className="text-lg font-semibold text-slate-900">Permanent Address</h3>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="sameAsResidential"
+                                        {...register('sameAsResidential')}
+                                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor="sameAsResidential" className="text-sm font-medium text-slate-700 font-normal cursor-pointer">
+                                        Same as Residential Address
+                                    </label>
+                                </div>
+                            </div>
+
+                            {!watch('sameAsResidential') && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">House No/Name <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permHouseNo', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permHouseNo ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="House No"
+                                        />
+                                        {errors.permHouseNo && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Street <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permStreet', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permStreet ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="Street Name"
+                                        />
+                                        {errors.permStreet && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Locality/Village <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permLocality', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permLocality ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="Locality"
+                                        />
+                                        {errors.permLocality && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">City/District <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permCity', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permCity ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="City"
+                                        />
+                                        {errors.permCity && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">State <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permState', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permState ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="State"
+                                        />
+                                        {errors.permState && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">PIN Code <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('permPinCode', { required: !watch('sameAsResidential') })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.permPinCode ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="PIN Code"
+                                        />
+                                        {errors.permPinCode && <p className="text-xs text-red-500 mt-1">Required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Country</label>
+                                        <input
+                                            {...register('permCountry')}
+                                            defaultValue="India"
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            placeholder="Country"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Guardian Details (Toggle) */}
+                        <div className="space-y-6 pt-4 border-t border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="isGuardian"
+                                    {...register('isGuardian')}
+                                    className="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                                />
+                                <label htmlFor="isGuardian" className="text-base font-medium text-slate-800 cursor-pointer">
+                                    Student is NOT living with parents (Add Guardian Details)
+                                </label>
+                            </div>
+
+                            {watch('isGuardian') && (
+                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6 animate-in fade-in slide-in-from-top-4">
+                                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
+                                        Guardian Details <span className="text-xs font-normal text-slate-500">(All fields mandatory)</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Guardian Name <span className="text-red-500">*</span></label>
+                                            <input
+                                                {...register('guardianName', { required: watch('isGuardian') })}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.guardianName ? 'border-red-500' : 'border-slate-300'}`}
+                                                placeholder="Guardian Full Name"
+                                            />
+                                            {errors.guardianName && <p className="text-xs text-red-500 mt-1">Guardian Name is required</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Relationship <span className="text-red-500">*</span></label>
+                                            <input
+                                                {...register('guardianRelation', { required: watch('isGuardian') })}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.guardianRelation ? 'border-red-500' : 'border-slate-300'}`}
+                                                placeholder="e.g. Uncle, Grandparent"
+                                            />
+                                            {errors.guardianRelation && <p className="text-xs text-red-500 mt-1">Relationship is required</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Occupation <span className="text-red-500">*</span></label>
+                                            <input
+                                                {...register('guardianOccupation', { required: watch('isGuardian') })}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.guardianOccupation ? 'border-red-500' : 'border-slate-300'}`}
+                                                placeholder="Guardian Occupation"
+                                            />
+                                            {errors.guardianOccupation && <p className="text-xs text-red-500 mt-1">Occupation is required</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Phone Number <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="tel"
+                                                {...register('guardianPhone', { required: watch('isGuardian') })}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.guardianPhone ? 'border-red-500' : 'border-slate-300'}`}
+                                                placeholder="Guardian Mobile"
+                                            />
+                                            {errors.guardianPhone && <p className="text-xs text-red-500 mt-1">Phone is required</p>}
+                                        </div>
+                                        <div className="col-span-1 md:col-span-2 space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Guardian Address <span className="text-red-500">*</span></label>
+                                            <textarea
+                                                {...register('guardianAddress', { required: watch('isGuardian') })}
+                                                rows={2}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.guardianAddress ? 'border-red-500' : 'border-slate-300'}`}
+                                                placeholder="Full Address"
+                                            />
+                                            {errors.guardianAddress && <p className="text-xs text-red-500 mt-1">Address is required</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Emergency Contact */}
+                            <div className="bg-orange-50 p-6 rounded-xl border border-orange-200 shadow-sm animate-in fade-in slide-in-from-top-4">
+                                <h3 className="text-lg font-semibold text-orange-800 border-b border-orange-200 pb-2 mb-4 flex items-center gap-2">
+                                    Emergency Contact <span className="text-xs font-normal text-orange-600">(Auto-filled from Father's details)</span>
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Contact Person Name <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('emergencyName', { required: true })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.emergencyName ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="Name"
+                                        />
+                                        {errors.emergencyName && <p className="text-xs text-red-500 mt-1">Name is required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Phone Number <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="tel"
+                                            {...register('emergencyPhone', { required: true })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.emergencyPhone ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="Mobile Number"
+                                        />
+                                        {errors.emergencyPhone && <p className="text-xs text-red-500 mt-1">Phone is required</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Relationship <span className="text-red-500">*</span></label>
+                                        <input
+                                            {...register('emergencyRelation', { required: true })}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.emergencyRelation ? 'border-red-500' : 'border-slate-300'}`}
+                                            placeholder="Relation (e.g. Father)"
+                                        />
+                                        {errors.emergencyRelation && <p className="text-xs text-red-500 mt-1">Relationship is required</p>}
+                                    </div>
                                 </div>
                             </div>
                         </div>

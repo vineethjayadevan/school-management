@@ -23,7 +23,7 @@ export default function StudentList() {
 
     // UI/Filter State
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedClass, setSelectedClass] = useState('All');
+    const [selectedClass, setSelectedClass] = useState('Mont 1');
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
         status: 'All', // All, Paid, Overdue, Pending
@@ -79,9 +79,9 @@ export default function StudentList() {
         // Normalize them all to "Grade X" format
         const normalizedClasses = dynamicClasses.map(c => formatClassLabel(c));
 
-        // Force include Mont 1 and Mont 2
+        // Force include Mont 1 and Mont 2 even if no students
         const allClasses = [...new Set(['Mont 1', 'Mont 2', ...normalizedClasses])];
-        return ['All', ...allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b))];
+        return allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b));
     }, [allStudents]);
 
     // Derived State: Filtered Students
@@ -97,7 +97,7 @@ export default function StudentList() {
             // 2. Class Tab
             // Compare normalized values
             const studentClassNormalized = formatClassLabel(student.className || student.class);
-            const matchesClass = selectedClass === 'All' || studentClassNormalized === selectedClass;
+            const matchesClass = studentClassNormalized === selectedClass;
 
             // 3. Advanced Filters
             const matchesStatus = filters.status === 'All' || student.feesStatus === filters.status;
