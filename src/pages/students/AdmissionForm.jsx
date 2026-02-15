@@ -4,11 +4,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, X, ChevronRight, ChevronLeft, Upload } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import api from '../../services/api';
+import StudentSearch from '../../components/students/StudentSearch';
 
 export default function AdmissionForm() {
     const navigate = useNavigate();
     const location = useLocation();
     const [step, setStep] = useState(1);
+    const [siblings, setSiblings] = useState([]);
 
     // Prevent unregistering fields when they are hidden (vital for multi-step forms)
     const { register, handleSubmit, setValue, watch, trigger, formState: { errors } } = useForm({
@@ -21,6 +23,8 @@ export default function AdmissionForm() {
     const hasLearningDisability = watch('hasLearningDisability');
     const hasMedicalCondition = watch('hasMedicalCondition');
     const hasAllergy = watch('hasAllergy');
+    const transportMode = watch('transportMode');
+    const isSibling = watch('isSibling');
 
     // Check for pre-fill data from ReadyForAdmission page
     useEffect(() => {
@@ -164,6 +168,21 @@ export default function AdmissionForm() {
                 relation: data.emergencyRelation
             };
 
+            const transportation = {
+                mode: data.transportMode || 'Walking',
+                routeNumber: data.routeNumber,
+                pickupPoint: data.pickupPoint,
+                dropPoint: data.dropPoint
+            };
+
+            const siblingData = siblings.map(s => ({
+                studentId: s.id,
+                name: s.name,
+                class: s.className,
+                section: s.section,
+                admissionNo: s.admissionNo
+            }));
+
             const newStudent = {
                 ...data,
                 name: fullName, // Backend expects 'name'
@@ -175,6 +194,8 @@ export default function AdmissionForm() {
                 residentialAddress,
                 permanentAddress,
                 emergencyContact,
+                transportation,
+                siblings: siblingData,
                 address: `${residentialAddress.houseNo}, ${residentialAddress.street}, ${residentialAddress.locality}, ${residentialAddress.city}, ${residentialAddress.state} - ${residentialAddress.pinCode}`, // Backwards compatibility
                 status: 'Active',
                 feesStatus: 'Pending',
@@ -571,6 +592,63 @@ export default function AdmissionForm() {
 
                 {step === 2 && (
                     <div className="space-y-8">
+                        {/* Sibling Information */}
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Sibling Information</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isSibling"
+                                        {...register('isSibling')}
+                                        className="w-4 h-4 text-indigo-600 rounded"
+                                    />
+                                    <label htmlFor="isSibling" className="text-sm font-medium text-slate-700">Sibling studying in this school?</label>
+                                </div>
+
+                                {isSibling && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="max-w-md">
+                                            <label className="text-sm font-medium text-slate-700 mb-1 block">Search Sibling</label>
+                                            <StudentSearch
+                                                onSelect={(student) => {
+                                                    if (!siblings.find(s => s.id === student.id)) {
+                                                        setSiblings([...siblings, student]);
+                                                    }
+                                                }}
+                                                excludeIds={siblings.map(s => s.id)}
+                                            />
+                                        </div>
+
+                                        {siblings.length > 0 && (
+                                            <div className="space-y-2">
+                                                <h4 className="text-sm font-medium text-slate-600">Selected Siblings:</h4>
+                                                <div className="grid gap-2">
+                                                    {siblings.map((sibling, idx) => (
+                                                        <div key={idx} className="flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-lg">
+                                                            <div>
+                                                                <p className="font-semibold text-indigo-900">{sibling.name}</p>
+                                                                <p className="text-xs text-indigo-700">
+                                                                    Class: {sibling.className} - {sibling.section} | Adm: {sibling.admissionNo}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSiblings(siblings.filter(s => s.id !== sibling.id))}
+                                                                className="text-indigo-400 hover:text-indigo-600"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Father's Details */}
                         <div className="space-y-6">
                             <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Father's Details</h3>
@@ -980,6 +1058,56 @@ export default function AdmissionForm() {
                                 </div>
                             )}
 
+                            {/* Transportation Details */}
+                            <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 shadow-sm animate-in fade-in slide-in-from-top-4 my-6">
+                                <h3 className="text-lg font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-4">
+                                    Transportation Details
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Mode of Transport</label>
+                                        <select
+                                            {...register('transportMode')}
+                                            defaultValue="Walking"
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        >
+                                            <option value="Walking">Walking / Self</option>
+                                            <option value="Private">Private Transport</option>
+                                            <option value="School Bus">School Bus</option>
+                                        </select>
+                                    </div>
+
+                                    {transportMode === 'School Bus' && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-slate-700">Bus Route Number</label>
+                                                <input
+                                                    {...register('routeNumber')}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    placeholder="Route No"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-slate-700">Pickup Point</label>
+                                                <input
+                                                    {...register('pickupPoint')}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    placeholder="Pickup Point"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-slate-700">Drop Point</label>
+                                                <input
+                                                    {...register('dropPoint')}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    placeholder="Drop Point"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Emergency Contact */}
                             <div className="bg-orange-50 p-6 rounded-xl border border-orange-200 shadow-sm animate-in fade-in slide-in-from-top-4">
                                 <h3 className="text-lg font-semibold text-orange-800 border-b border-orange-200 pb-2 mb-4 flex items-center gap-2">
@@ -1024,7 +1152,18 @@ export default function AdmissionForm() {
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Documents Upload</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {['Birth Certificate', 'Previous Marksheet', 'Transfer Certificate', 'Aadhar Card'].map((doc) => (
+                            {[
+                                'Student Photo',
+                                'Birth Certificate',
+                                'Transfer Certificate',
+                                'Previous Marksheet',
+                                'Report Card (Previous School)',
+                                'Caste Certificate',
+                                'Aadhar Card (Student)',
+                                "Parent's Aadhar Card",
+                                'Medical Certificate',
+                                'Address Proof'
+                            ].map((doc) => (
                                 <div key={doc} className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer">
                                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-full mb-3">
                                         <Upload size={24} />

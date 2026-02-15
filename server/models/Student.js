@@ -22,6 +22,23 @@ const studentSchema = mongoose.Schema({
     guardianPhone: { type: String },
     guardianAddress: { type: String },
 
+    // Sibling Information
+    siblings: [{
+        studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
+        name: { type: String },
+        class: { type: String },
+        section: { type: String },
+        admissionNo: { type: String }
+    }],
+
+    // Transportation Details
+    transportation: {
+        mode: { type: String, enum: ['School Bus', 'Private', 'Walking'], default: 'Walking' },
+        routeNumber: { type: String },
+        pickupPoint: { type: String },
+        dropPoint: { type: String }
+    },
+
     // Emergency Contact
     emergencyContact: {
         name: { type: String },
@@ -94,6 +111,7 @@ const studentSchema = mongoose.Schema({
 
     // Conveyance
     conveyanceSlab: { type: Number, enum: [0, 1, 2, 3, 4, 5], default: 0 }, // 0 = Not Applicable
+    lastConveyancePayment: { type: Date }, // Track last payment date for status
 
     // Health & Special Needs
     hasLearningDisability: { type: Boolean, default: false },

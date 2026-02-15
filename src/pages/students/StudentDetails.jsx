@@ -1,10 +1,13 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus, Trash2, ExternalLink, Upload, File, Download, CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus, Trash2, ExternalLink, Upload, File, Download, CreditCard, ChevronDown, ChevronUp, Printer } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
 import api from '../../services/api';
+import StudentSearch from '../../components/students/StudentSearch';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Accordion from '../../components/ui/Accordion';
 import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee } from '../../utils/feeUtils';
@@ -14,6 +17,8 @@ export default function StudentDetails() {
     const navigate = useNavigate();
     const location = useLocation();
     const { addToast } = useToast();
+
+    // ... (rest of state definitions)
 
     // Determine initial mode from navigation state or default to 'view'
     const [mode, setMode] = useState(location.state?.mode || 'view');
@@ -25,12 +30,14 @@ export default function StudentDetails() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [documentToDelete, setDocumentToDelete] = useState(null);
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
+    const [siblings, setSiblings] = useState([]);
 
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
 
     // Watch conveyance slab for dynamic updates in Edit mode
     const watchConveyance = watch('conveyanceSlab');
+    const transportMode = watch('transportMode');
 
     useEffect(() => {
         if (id) {
@@ -41,6 +48,209 @@ export default function StudentDetails() {
     const toggleSection = (section) => {
         setOpenSection(openSection === section ? null : section);
     };
+
+    const handleDownloadProfile = () => {
+        if (!student) return;
+        const doc = new jsPDF();
+
+        // Brand Colors
+        const primaryColor = [79, 70, 229]; // Indigo 600
+        const secondaryColor = [100, 116, 139]; // Slate 500
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(...primaryColor);
+        doc.text('STEM Global Public School', 14, 20);
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Student Profile Report', 14, 30);
+
+        doc.setFontSize(10);
+        doc.setTextColor(...secondaryColor);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 38);
+
+        let finalY = 45;
+
+        const addField = (label, value) => [label, value || '-'];
+
+        // --- 1. Academic & Administrative ---
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Attribute', 'Details']],
+            body: [
+                addField('Full Name', student.name),
+                addField('Admission No', student.admissionNo),
+                addField('Class & Section', `${student.className || student.class} - ${student.section}`),
+                addField('Roll No', student.rollNo),
+                addField('Application No', student.applicationNo),
+                addField('Date of Admission', student.submissionDate ? new Date(student.submissionDate).toLocaleDateString() : '-'),
+                addField('Fee Status', student.feesStatus)
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+            margin: { top: 10 },
+            showHead: 'firstPage'
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // --- 2. Personal Information ---
+        doc.text('Personal Information', 14, finalY);
+        finalY += 3;
+        autoTable(doc, {
+            startY: finalY,
+            body: [
+                ['Date of Birth', student.dob ? new Date(student.dob).toLocaleDateString() : '-', 'Gender', student.gender],
+                ['Blood Group', student.bloodGroup || '-', 'Nationality', student.nationality || '-'],
+                ['Religion', student.religion || '-', 'Caste', student.caste || '-'],
+                ['Category', student.category || '-', 'Aadhar No', student.aadharNo || '-'],
+                ['Place of Birth', student.placeOfBirth || '-', 'Email', student.email || '-'],
+                ['Primary Phone', student.primaryPhone || student.contact || '-', '', '']
+            ],
+            theme: 'plain',
+            styles: { cellPadding: 1.5, fontSize: 10 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 35 },
+                2: { fontStyle: 'bold', cellWidth: 35 }
+            },
+        });
+        finalY = doc.lastAutoTable.finalY + 5;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, finalY, 196, finalY); // Separator line
+        finalY += 10;
+
+        // --- 3. Academic History ---
+        doc.text('Academic History', 14, finalY);
+        finalY += 3;
+        autoTable(doc, {
+            startY: finalY,
+            body: [
+                ['Previous School', student.previousSchool || '-', 'Previous Class', student.previousClass || '-'],
+                ['Medium of Instr.', student.mediumOfInstruction || '-', '', '']
+            ],
+            theme: 'plain',
+            styles: { cellPadding: 1.5, fontSize: 10 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 35 },
+                2: { fontStyle: 'bold', cellWidth: 35 }
+            },
+        });
+        finalY = doc.lastAutoTable.finalY + 5;
+        doc.line(14, finalY, 196, finalY);
+        finalY += 10;
+
+        // --- 4. Health Information ---
+        doc.text('Health Information', 14, finalY);
+        finalY += 3;
+        autoTable(doc, {
+            startY: finalY,
+            body: [
+                ['Medical Condition', student.hasMedicalCondition ? 'Yes' : 'No', 'Details', student.medicalConditionDetails || '-'],
+                ['Allergies', student.hasAllergy ? 'Yes' : 'No', 'Details', student.allergyDetails || '-'],
+                ['Learning Disability', student.hasLearningDisability ? 'Yes' : 'No', 'Details', student.learningDisabilityDetails || '-']
+            ],
+            theme: 'plain',
+            styles: { cellPadding: 1.5, fontSize: 10 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 35 },
+                2: { fontStyle: 'bold', cellWidth: 35 }
+            },
+        });
+        finalY = doc.lastAutoTable.finalY + 5;
+        doc.line(14, finalY, 196, finalY);
+        finalY += 10;
+
+        // --- 5. Parent & Guardian Details ---
+        doc.text('Parent & Guardian Details', 14, finalY);
+        finalY += 3;
+
+        const parentBody = [
+            ['Father', student.fatherName || '-', student.fatherMobile || '-', student.fatherEmail || '-', student.fatherOccupation || '-'],
+            ['Mother', student.motherName || '-', student.motherMobile || '-', student.motherEmail || '-', student.motherOccupation || '-'],
+            ['Guardian', student.guardianName || '-', student.guardianPhone || '-', '-', student.guardianOccupation || '-']
+        ];
+
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Relation', 'Name', 'Phone', 'Email', 'Occupation']],
+            body: parentBody, // Include all, even if empty
+            theme: 'striped',
+            headStyles: { fillColor: [100, 116, 139] } // Slate 500
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // --- 6. Address ---
+        const resAddr = student.residentialAddress;
+        const resString = resAddr ? `${resAddr.houseNo || ''} ${resAddr.street || ''} ${resAddr.locality || ''} ${resAddr.city || ''} ${resAddr.state || ''} ${resAddr.pinCode || ''}`.trim() : student.address || '-';
+
+        const permAddr = student.permanentAddress;
+        const permString = permAddr ? `${permAddr.houseNo || ''} ${permAddr.street || ''} ${permAddr.locality || ''} ${permAddr.city || ''} ${permAddr.state || ''} ${permAddr.pinCode || ''}`.trim() : '-';
+
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Address Type', 'Details']],
+            body: [
+                ['Residential', resString],
+                ['Permanent', permString]
+            ],
+            theme: 'grid',
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // --- 7. Emergency Contact ---
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Emergency Contact', 'Phone', 'Relation']],
+            body: [
+                [
+                    student.emergencyContact?.name || student.fatherName || '-',
+                    student.emergencyContact?.phone || student.fatherMobile || '-',
+                    student.emergencyContact?.relation || 'Father'
+                ]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [239, 68, 68] } // Red
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // --- 8. Transport ---
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Transport Mode', 'Route No', 'Pickup', 'Drop']],
+            body: [
+                [
+                    student.transportation?.mode || 'Walking',
+                    student.transportation?.routeNumber || '-',
+                    student.transportation?.pickupPoint || '-',
+                    student.transportation?.dropPoint || '-'
+                ]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [249, 115, 22] } // Orange
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // --- 9. Siblings ---
+        if (student.siblings && student.siblings.length > 0) {
+            doc.text('Sibling Information', 14, finalY);
+            finalY += 3;
+            autoTable(doc, {
+                startY: finalY,
+                head: [['Name', 'Class', 'Section', 'Admission No']],
+                body: student.siblings.map(sib => [sib.name || '-', sib.class || '-', sib.section || '-', sib.admissionNo || '-']),
+                theme: 'striped',
+                headStyles: { fillColor: [13, 148, 136] } // Teal
+            });
+            finalY = doc.lastAutoTable.finalY + 10;
+        }
+
+        // Save
+        doc.save(`Profile_${student.name}_${student.admissionNo}.pdf`);
+    };
+
+
 
     const fetchStudent = async () => {
         setLoading(true);
@@ -84,6 +294,7 @@ export default function StudentDetails() {
 
             setStudent(studentWithFees);
             setDocuments(data.documents || []); // Initialize documents state
+            setSiblings(data.siblings || []);
             setPendingUploads({});
 
             // Legacy Address Auto-fill Logic
@@ -174,9 +385,16 @@ export default function StudentDetails() {
                 permCity: data.permanentAddress?.city,
                 permState: data.permanentAddress?.state,
                 permPinCode: data.permanentAddress?.pinCode,
+                permPinCode: data.permanentAddress?.pinCode,
                 permCountry: data.permanentAddress?.country || 'India',
 
-                // If legacy address exists but new fields are empty, keep it? 
+                // Transportation
+                transportMode: data.transportation?.mode || 'Walking',
+                routeNumber: data.transportation?.routeNumber,
+                pickupPoint: data.transportation?.pickupPoint,
+                dropPoint: data.transportation?.dropPoint,
+
+                // If legacy address exists but new fields are empty, keep it?  
                 // We rely on new fields. We can check if new residentialAddress is empty and populate 'resStreet' with old address as fallback
                 // For now, let's keep it clean.
                 address: data.address,
@@ -353,14 +571,33 @@ export default function StudentDetails() {
                 sameAsResidential,
                 // Remove flat emergency fields
                 emergencyName, emergencyPhone, emergencyRelation,
+                // Remove flat transportation fields
+                transportMode, routeNumber, pickupPoint, dropPoint,
                 ...restData
             } = data;
+
+            const transportation = {
+                mode: transportMode || 'Walking',
+                routeNumber,
+                pickupPoint,
+                dropPoint
+            };
+
+            const siblingData = siblings.map(s => ({
+                studentId: s.id || s.studentId, // Handle both raw student and flattened sibling object
+                name: s.name,
+                class: s.className || s.class,
+                section: s.section,
+                admissionNo: s.admissionNo
+            }));
 
             const updatedStudent = await storageService.students.update(id, {
                 ...restData,
                 residentialAddress,
                 permanentAddress,
                 emergencyContact,
+                transportation,
+                siblings: siblingData,
                 documents: finalDocuments,
                 conveyanceSlab: parseInt(data.conveyanceSlab) // Convert to number
             });
@@ -405,6 +642,12 @@ export default function StudentDetails() {
                 <div className="flex items-center gap-3">
                     {mode === 'view' ? (
                         <>
+                            <button
+                                onClick={handleDownloadProfile}
+                                className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                            >
+                                <Download size={16} /> Download Profile
+                            </button>
                             <button
                                 onClick={() => {
                                     setMode('edit');
@@ -703,6 +946,50 @@ export default function StudentDetails() {
                                                 </p>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Transportation Details */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-blue-600 border-b border-blue-100 pb-2 mb-4">Transportation Details</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <p className="text-xs text-slate-500 mb-1">Mode</p>
+                                                <p className="font-medium">{student.transportation?.mode || 'N/A'}</p>
+                                            </div>
+                                            {student.transportation?.mode === 'School Bus' && (
+                                                <>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Route No</p>
+                                                        <p className="font-medium">{student.transportation?.routeNumber || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Pickup Point</p>
+                                                        <p className="font-medium">{student.transportation?.pickupPoint || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Drop Point</p>
+                                                        <p className="font-medium">{student.transportation?.dropPoint || '-'}</p>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Sibling Information */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-teal-600 border-b border-teal-100 pb-2 mb-4">Sibling Information</h4>
+                                        {student.siblings && student.siblings.length > 0 ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {student.siblings.map((sib, idx) => (
+                                                    <div key={idx} className="bg-teal-50 border border-teal-100 rounded-lg p-3">
+                                                        <p className="font-semibold text-teal-900">{sib.name}</p>
+                                                        <p className="text-xs text-teal-700">Class: {sib.class} - {sib.section} • Adm: {sib.admissionNo}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-slate-500 italic">No siblings linked.</p>
+                                        )}
                                     </div>
 
                                     {/* Conveyance removed from here and moved to Fee Overview */}
@@ -1251,6 +1538,143 @@ export default function StudentDetails() {
                                             </div>
                                         </div>
                                     </div>
+                                    {/* Transportation Details (Edit) */}
+                                    <div className="pt-4 border-t border-slate-200 mt-4">
+                                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                            <h4 className="text-xs font-bold text-blue-700 mb-2">Transportation Details</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mode of Transport</label>
+                                                    <select {...register("transportMode")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                        <option value="Walking">Walking / Self</option>
+                                                        <option value="Private">Private Transport</option>
+                                                        <option value="School Bus">School Bus</option>
+                                                    </select>
+                                                </div>
+                                                {transportMode === 'School Bus' && (
+                                                    <>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Route Number</label>
+                                                            <input {...register("routeNumber")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Route No" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Pickup Point</label>
+                                                            <input {...register("pickupPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Pickup Point" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Drop Point</label>
+                                                            <input {...register("dropPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Drop Point" />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sibling Information (Edit) */}
+                                    <div className="pt-4 border-t border-slate-200 mt-4">
+                                        <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
+                                            <h4 className="text-xs font-bold text-teal-700 mb-2">Sibling Information</h4>
+
+                                            <div className="mb-4">
+                                                <label className="block text-xs font-medium text-slate-700 mb-1">Add Sibling</label>
+                                                <StudentSearch
+                                                    onSelect={(student) => {
+                                                        if (!siblings.find(s => (s.id || s.studentId) === student.id)) {
+                                                            setSiblings([...siblings, student]);
+                                                        }
+                                                    }}
+                                                    excludeIds={[id, ...siblings.map(s => s.id || s.studentId)]}
+                                                />
+                                            </div>
+
+                                            {siblings.length > 0 && (
+                                                <div className="space-y-2">
+                                                    <p className="text-xs font-medium text-slate-600">Linked Siblings:</p>
+                                                    <div className="grid gap-2">
+                                                        {siblings.map((sib, idx) => (
+                                                            <div key={idx} className="flex items-center justify-between bg-white border border-teal-100 p-2 rounded">
+                                                                <div>
+                                                                    <p className="font-semibold text-teal-900 text-sm">{sib.name}</p>
+                                                                    <p className="text-xs text-teal-700">Class: {sib.className || sib.class} - {sib.section} | Adm: {sib.admissionNo}</p>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSiblings(siblings.filter((_, i) => i !== idx))}
+                                                                    className="text-red-400 hover:text-red-600"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Accordion>
+
+
+
+                            {/* Documents (Edit Mode) */}
+                            <Accordion
+                                title="Documents"
+                                icon={File}
+                                isOpen={openSection === 'documents'}
+                                onToggle={() => toggleSection('documents')}
+                            >
+                                <div className="space-y-4">
+                                    {[
+                                        'Student Photo',
+                                        'Birth Certificate',
+                                        'Transfer Certificate',
+                                        'Previous Marksheet',
+                                        'Report Card (Previous School)',
+                                        'Caste Certificate',
+                                        'Aadhar Card (Student)',
+                                        "Parent's Aadhar Card",
+                                        'Medical Certificate',
+                                        'Address Proof'
+                                    ].map((docType) => {
+                                        const existingDoc = documents.find(d => d.category === docType);
+                                        return (
+                                            <div key={docType} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-900">{docType}</p>
+                                                    {existingDoc ? (
+                                                        <div className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                                            Uploaded: {existingDoc.name}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-slate-500 mt-1 italic">Not uploaded</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {existingDoc && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteClick(existingDoc)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                            title="Delete Document"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    <label className="cursor-pointer p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors relative">
+                                                        <Upload size={16} />
+                                                        <input
+                                                            type="file"
+                                                            className="hidden" // Hidden input, triggered by label
+                                                            onChange={(e) => handleFileUpload(e, docType)}
+                                                            accept=".pdf,.jpg,.jpeg,.png"
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </Accordion>
 

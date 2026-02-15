@@ -247,19 +247,20 @@ export default function StudentList() {
                                 <th className="px-6 py-4 border-b border-slate-200">Academic Info</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Contact</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Fee Status</th>
+                                <th className="px-6 py-4 border-b border-slate-200">Conveyance</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                                         Loading directory...
                                     </td>
                                 </tr>
                             ) : filteredStudents.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                                         No students found matching your criteria.
                                     </td>
                                 </tr>
@@ -298,6 +299,27 @@ export default function StudentList() {
                                             `}>
                                                 {student.feesStatus || 'Pending'}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {(() => {
+                                                const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                                                if (slab === 0) return <span className="text-slate-400 text-xs">-</span>;
+
+                                                const lastPayment = student.lastConveyancePayment ? new Date(student.lastConveyancePayment) : null;
+                                                const now = new Date();
+                                                const isPaidCurrentMonth = lastPayment &&
+                                                    lastPayment.getMonth() === now.getMonth() &&
+                                                    lastPayment.getFullYear() === now.getFullYear();
+
+                                                return (
+                                                    <div className="flex flex-col">
+                                                        <span className={`text-xs font-semibold ${isPaidCurrentMonth ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                            {isPaidCurrentMonth ? 'Paid' : 'Pending'}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400">Slab {slab}</span>
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">

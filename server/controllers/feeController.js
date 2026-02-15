@@ -73,9 +73,15 @@ const addFee = async (req, res) => {
             student.feesStatus = 'Pending';
         }
 
-        // Sanitize fields that might cause validation errors if they are empty strings but have enums
+        // Sanitize fields
         if (student.previousClass === '') {
             student.previousClass = undefined;
+        }
+
+        // Update Conveyance Payment Date if applicable
+        // Check if feeType string contains "Conveyance" or "Full" (case-insensitive)
+        if (type && (type.toLowerCase().includes('conveyance') || type.toLowerCase().includes('full'))) {
+            student.lastConveyancePayment = date || new Date(); // Use payment date or now
         }
 
         await student.save();

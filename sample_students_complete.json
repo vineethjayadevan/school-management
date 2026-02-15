@@ -1,0 +1,1586 @@
+[
+  {
+    "applicationNo": "APP2024-001",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-001",
+    "firstName": "Aarav",
+    "middleName": "",
+    "lastName": "Menon",
+    "dateOfBirth": "2020-05-14",
+    "gender": "Female",
+    "admissionClass": "Mont 1",
+    "section": "A",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "593564757446",
+    "bloodGroup": "B+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": true,
+      "siblingAdmissionNo": "ADM2024-011"
+    },
+    "father": {
+      "name": "Aarav Father",
+      "mobile": "9009179986",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1037964",
+      "aadharNumber": "647741773373",
+      "email": "aarav.father@example.com"
+    },
+    "mother": {
+      "name": "Aarav Mother",
+      "mobile": "9918502611",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "249229735554",
+      "email": "aarav.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Menon House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "642159",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Aarav Father",
+      "phone": "9922512655",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-002",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-002",
+    "firstName": "Diya",
+    "middleName": "",
+    "lastName": "Nair",
+    "dateOfBirth": "2020-08-22",
+    "gender": "Male",
+    "admissionClass": "Mont 1",
+    "section": "B",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "SC",
+    "aadharNumber": "452126615832",
+    "bloodGroup": "B+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Diya Father",
+      "mobile": "9809844645",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "771458",
+      "aadharNumber": "161413004615",
+      "email": "diya.father@example.com"
+    },
+    "mother": {
+      "name": "Diya Mother",
+      "mobile": "9086602620",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "564167898260",
+      "email": "diya.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Nair House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "609686",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Walking/Self",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Diya Father",
+      "phone": "9611773549",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-003",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-003",
+    "firstName": "Arjun",
+    "middleName": "",
+    "lastName": "Krishnan",
+    "dateOfBirth": "2019-04-03",
+    "gender": "Female",
+    "admissionClass": "Mont 2",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "SC",
+    "aadharNumber": "999687061985",
+    "bloodGroup": "A-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Arjun Father",
+      "mobile": "9502951371",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "746559",
+      "aadharNumber": "636915298436",
+      "email": "arjun.father@example.com"
+    },
+    "mother": {
+      "name": "Arjun Mother",
+      "mobile": "9520344189",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "456287478019",
+      "email": "arjun.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Krishnan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "667103",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Arjun Father",
+      "phone": "9944324118",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-004",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-004",
+    "firstName": "Meera",
+    "middleName": "",
+    "lastName": "Pillai",
+    "dateOfBirth": "2019-09-11",
+    "gender": "Female",
+    "admissionClass": "Mont 2",
+    "section": "B",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "608136781300",
+    "bloodGroup": "B-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": true,
+      "medicalConditionDetails": "Mild Asthma",
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Meera Father",
+      "mobile": "9178718933",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "984861",
+      "aadharNumber": "982359045111",
+      "email": "meera.father@example.com"
+    },
+    "mother": {
+      "name": "Meera Mother",
+      "mobile": "9225936428",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "134225240737",
+      "email": "meera.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Pillai House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "676673",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Meera Father",
+      "phone": "9009305118",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-005",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-005",
+    "firstName": "Karthik",
+    "middleName": "",
+    "lastName": "Varma",
+    "dateOfBirth": "2018-06-25",
+    "gender": "Male",
+    "admissionClass": "Grade 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "SC",
+    "aadharNumber": "721867710693",
+    "bloodGroup": "AB-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Karthik Father",
+      "mobile": "9283232400",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1180863",
+      "aadharNumber": "217334426734",
+      "email": "karthik.father@example.com"
+    },
+    "mother": {
+      "name": "Karthik Mother",
+      "mobile": "9157602131",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "376302390254",
+      "email": "karthik.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Varma House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "676223",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Karthik Father",
+      "phone": "9885026937",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-006",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-006",
+    "firstName": "Ananya",
+    "middleName": "",
+    "lastName": "Das",
+    "dateOfBirth": "2018-11-02",
+    "gender": "Male",
+    "admissionClass": "Grade 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "Others",
+    "aadharNumber": "942376041723",
+    "bloodGroup": "A+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Ananya Father",
+      "mobile": "9064039264",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "983967",
+      "aadharNumber": "112462710401",
+      "email": "ananya.father@example.com"
+    },
+    "mother": {
+      "name": "Ananya Mother",
+      "mobile": "9254882989",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "622631045299",
+      "email": "ananya.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Das House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "637211",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Ananya Father",
+      "phone": "9867248470",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-007",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-007",
+    "firstName": "Rahul",
+    "middleName": "",
+    "lastName": "R",
+    "dateOfBirth": "2017-07-14",
+    "gender": "Male",
+    "admissionClass": "Grade 2",
+    "section": "A",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "SC",
+    "aadharNumber": "863649393227",
+    "bloodGroup": "AB-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": true,
+      "allergyDetails": "Peanut Allergy"
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Rahul Father",
+      "mobile": "9780567488",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "762129",
+      "aadharNumber": "627456879795",
+      "email": "rahul.father@example.com"
+    },
+    "mother": {
+      "name": "Rahul Mother",
+      "mobile": "9347657956",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "988512286774",
+      "email": "rahul.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "R House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "633816",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Rahul Father",
+      "phone": "9165720574",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-008",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-008",
+    "firstName": "Sreelakshmi",
+    "middleName": "",
+    "lastName": "Mohan",
+    "dateOfBirth": "2017-10-30",
+    "gender": "Female",
+    "admissionClass": "Grade 2",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "382894895654",
+    "bloodGroup": "AB-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Sreelakshmi Father",
+      "mobile": "9964770663",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "953729",
+      "aadharNumber": "173043128592",
+      "email": "sreelakshmi.father@example.com"
+    },
+    "mother": {
+      "name": "Sreelakshmi Mother",
+      "mobile": "9523450928",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "383065033794",
+      "email": "sreelakshmi.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Mohan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "623338",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Sreelakshmi Father",
+      "phone": "9009317966",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-009",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-009",
+    "firstName": "Adithya",
+    "middleName": "",
+    "lastName": "Balakrishnan",
+    "dateOfBirth": "2016-03-18",
+    "gender": "Male",
+    "admissionClass": "Grade 3",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "ST",
+    "aadharNumber": "226434580691",
+    "bloodGroup": "AB+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Adithya Father",
+      "mobile": "9786341281",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1110461",
+      "aadharNumber": "848633219786",
+      "email": "adithya.father@example.com"
+    },
+    "mother": {
+      "name": "Adithya Mother",
+      "mobile": "9916781412",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "992424983390",
+      "email": "adithya.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Balakrishnan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "638716",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Walking/Self",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Adithya Father",
+      "phone": "9175814295",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-010",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-010",
+    "firstName": "Niveditha",
+    "middleName": "",
+    "lastName": "S",
+    "dateOfBirth": "2016-12-09",
+    "gender": "Male",
+    "admissionClass": "Grade 3",
+    "section": "B",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "877537248976",
+    "bloodGroup": "AB-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Niveditha Father",
+      "mobile": "9203200679",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1189520",
+      "aadharNumber": "133542890820",
+      "email": "niveditha.father@example.com"
+    },
+    "mother": {
+      "name": "Niveditha Mother",
+      "mobile": "9611371554",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "798745205296",
+      "email": "niveditha.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "S House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "605384",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Niveditha Father",
+      "phone": "9856876368",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-011",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-011",
+    "firstName": "Vivaan",
+    "middleName": "",
+    "lastName": "Menon",
+    "dateOfBirth": "2020-09-10",
+    "gender": "Male",
+    "admissionClass": "Mont 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "ST",
+    "aadharNumber": "363377898037",
+    "bloodGroup": "B+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": true,
+      "siblingAdmissionNo": "ADM2024-001"
+    },
+    "father": {
+      "name": "Vivaan Father",
+      "mobile": "9424602081",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "593601",
+      "aadharNumber": "791238960404",
+      "email": "vivaan.father@example.com"
+    },
+    "mother": {
+      "name": "Vivaan Mother",
+      "mobile": "9013182010",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "882367057293",
+      "email": "vivaan.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Menon House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "672396",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Vivaan Father",
+      "phone": "9802774734",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-012",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-012",
+    "firstName": "Aadhya",
+    "middleName": "",
+    "lastName": "Nair",
+    "dateOfBirth": "2020-11-21",
+    "gender": "Female",
+    "admissionClass": "Mont 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "010757778922",
+    "bloodGroup": "B+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Aadhya Father",
+      "mobile": "9876561659",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "452508",
+      "aadharNumber": "792194095882",
+      "email": "aadhya.father@example.com"
+    },
+    "mother": {
+      "name": "Aadhya Mother",
+      "mobile": "9427655214",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "646832450747",
+      "email": "aadhya.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Nair House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "617136",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Aadhya Father",
+      "phone": "9776042361",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-013",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-013",
+    "firstName": "Rithvik",
+    "middleName": "",
+    "lastName": "Pillai",
+    "dateOfBirth": "2019-06-15",
+    "gender": "Female",
+    "admissionClass": "Mont 2",
+    "section": "A",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "ST",
+    "aadharNumber": "624334789081",
+    "bloodGroup": "O+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Rithvik Father",
+      "mobile": "9545667367",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1013621",
+      "aadharNumber": "549216081301",
+      "email": "rithvik.father@example.com"
+    },
+    "mother": {
+      "name": "Rithvik Mother",
+      "mobile": "9423224016",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "651958615313",
+      "email": "rithvik.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Pillai House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "617536",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Walking/Self",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Rithvik Father",
+      "phone": "9764782452",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-014",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-014",
+    "firstName": "Ishani",
+    "middleName": "",
+    "lastName": "Das",
+    "dateOfBirth": "2019-08-30",
+    "gender": "Male",
+    "admissionClass": "Mont 2",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "OBC",
+    "aadharNumber": "235919921980",
+    "bloodGroup": "O+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Ishani Father",
+      "mobile": "9659438723",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "884952",
+      "aadharNumber": "846324708577",
+      "email": "ishani.father@example.com"
+    },
+    "mother": {
+      "name": "Ishani Mother",
+      "mobile": "9781424912",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "244174248381",
+      "email": "ishani.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Das House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "696402",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Ishani Father",
+      "phone": "9508435885",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-015",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-015",
+    "firstName": "Dev",
+    "middleName": "",
+    "lastName": "Varma",
+    "dateOfBirth": "2018-04-12",
+    "gender": "Female",
+    "admissionClass": "Grade 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "ST",
+    "aadharNumber": "692920525159",
+    "bloodGroup": "AB+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Dev Father",
+      "mobile": "9755784014",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "427392",
+      "aadharNumber": "170845875090",
+      "email": "dev.father@example.com"
+    },
+    "mother": {
+      "name": "Dev Mother",
+      "mobile": "9656295675",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "721278955840",
+      "email": "dev.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Varma House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "629440",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Dev Father",
+      "phone": "9464554305",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-016",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-016",
+    "firstName": "Myra",
+    "middleName": "",
+    "lastName": "Krishnan",
+    "dateOfBirth": "2018-09-09",
+    "gender": "Male",
+    "admissionClass": "Grade 1",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "736148991924",
+    "bloodGroup": "A-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Myra Father",
+      "mobile": "9871112594",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1124821",
+      "aadharNumber": "679489617269",
+      "email": "myra.father@example.com"
+    },
+    "mother": {
+      "name": "Myra Mother",
+      "mobile": "9732191045",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "031304488670",
+      "email": "myra.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Krishnan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "663784",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Myra Father",
+      "phone": "9273848601",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-017",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-017",
+    "firstName": "Aryan",
+    "middleName": "",
+    "lastName": "R",
+    "dateOfBirth": "2017-05-22",
+    "gender": "Male",
+    "admissionClass": "Grade 2",
+    "section": "A",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "Others",
+    "aadharNumber": "677993706052",
+    "bloodGroup": "B-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Aryan Father",
+      "mobile": "9211055303",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "839910",
+      "aadharNumber": "426752448418",
+      "email": "aryan.father@example.com"
+    },
+    "mother": {
+      "name": "Aryan Mother",
+      "mobile": "9308797921",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "525806993879",
+      "email": "aryan.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "R House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "625808",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Aryan Father",
+      "phone": "9128661069",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-018",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-018",
+    "firstName": "Diyaa",
+    "middleName": "",
+    "lastName": "Mohan",
+    "dateOfBirth": "2017-12-03",
+    "gender": "Female",
+    "admissionClass": "Grade 2",
+    "section": "A",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "General",
+    "aadharNumber": "072965538009",
+    "bloodGroup": "O+",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Diyaa Father",
+      "mobile": "9504079621",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "828081",
+      "aadharNumber": "054142421383",
+      "email": "diyaa.father@example.com"
+    },
+    "mother": {
+      "name": "Diyaa Mother",
+      "mobile": "9638079963",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "551628722476",
+      "email": "diyaa.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Mohan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "693932",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Private Transport",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Diyaa Father",
+      "phone": "9571909603",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-019",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-019",
+    "firstName": "Rohan",
+    "middleName": "",
+    "lastName": "Balakrishnan",
+    "dateOfBirth": "2016-02-11",
+    "gender": "Female",
+    "admissionClass": "Grade 3",
+    "section": "B",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "Others",
+    "aadharNumber": "719137399540",
+    "bloodGroup": "AB-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Rohan Father",
+      "mobile": "9209991602",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "409863",
+      "aadharNumber": "981661625593",
+      "email": "rohan.father@example.com"
+    },
+    "mother": {
+      "name": "Rohan Mother",
+      "mobile": "9816732544",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "428420696260",
+      "email": "rohan.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "Balakrishnan House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "658210",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "Walking/Self",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Rohan Father",
+      "phone": "9871769164",
+      "relationship": "Father"
+    }
+  },
+  {
+    "applicationNo": "APP2024-020",
+    "dateOfSubmission": "2024-04-01",
+    "admissionNo": "ADM2024-020",
+    "firstName": "Kiara",
+    "middleName": "",
+    "lastName": "S",
+    "dateOfBirth": "2016-10-28",
+    "gender": "Male",
+    "admissionClass": "Grade 3",
+    "section": "C",
+    "placeOfBirth": "Kerala",
+    "nationality": "Indian",
+    "religion": "Hindu",
+    "casteCommunity": "Nair",
+    "category": "SC",
+    "aadharNumber": "375864514590",
+    "bloodGroup": "A-",
+    "previousEducation": {
+      "previousSchool": "ABC Public School",
+      "previousClass": "Previous Class",
+      "mediumOfInstruction": "English"
+    },
+    "healthDetails": {
+      "learningDisability": false,
+      "medicalCondition": false,
+      "allergies": false
+    },
+    "siblingInfo": {
+      "hasSibling": false
+    },
+    "father": {
+      "name": "Kiara Father",
+      "mobile": "9368252290",
+      "occupation": "Business",
+      "designation": "Owner",
+      "companyName": "Private Firm",
+      "officeAddress": "Kerala",
+      "qualification": "Graduate",
+      "annualIncome": "1116978",
+      "aadharNumber": "481716338733",
+      "email": "kiara.father@example.com"
+    },
+    "mother": {
+      "name": "Kiara Mother",
+      "mobile": "9467081879",
+      "occupation": "Homemaker",
+      "designation": "",
+      "companyName": "",
+      "officeAddress": "",
+      "qualification": "Graduate",
+      "annualIncome": "0",
+      "aadharNumber": "041019645786",
+      "email": "kiara.mother@example.com"
+    },
+    "residentialAddress": {
+      "houseName": "S House",
+      "street": "Main Road",
+      "locality": "Town Area",
+      "city": "Kerala",
+      "state": "Kerala",
+      "pinCode": "683332",
+      "country": "India"
+    },
+    "permanentAddress": {
+      "sameAsResidential": true
+    },
+    "transportation": {
+      "mode": "School Bus",
+      "busRouteNumber": "R1",
+      "pickupPoint": "Main Stop",
+      "dropPoint": "Main Stop"
+    },
+    "emergencyContact": {
+      "name": "Kiara Father",
+      "phone": "9139188281",
+      "relationship": "Father"
+    }
+  }
+]

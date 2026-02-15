@@ -402,14 +402,36 @@ export default function FeeDashboard() {
 
                     {/* Pending Fees Display */}
                     {selectedStudent && (
-                        <div className="flex justify-between text-amber-400">
-                            <span>Total Pending To Date</span>
+                        <div className="space-y-2 mt-4 pt-4 border-t border-slate-700">
                             {(() => {
                                 const details = getStudentFeeDetails(selectedStudent);
-                                const totalDue = details.reduce((sum, d) => sum + d.due, 0);
-                                const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
-                                const totalPending = totalDue - totalPaid;
-                                return <span className="font-bold">₹{totalPending.toLocaleString()}</span>;
+
+                                // Separate Academic (Tuition + Materials) and Conveyance
+                                const academicDetails = details.filter(d => d.type !== 'Conveyance');
+                                const conveyanceDetail = details.find(d => d.type === 'Conveyance');
+
+                                const academicPending = academicDetails.reduce((sum, d) => sum + (d.due - d.paid), 0);
+                                const conveyancePending = conveyanceDetail ? (conveyanceDetail.due - conveyanceDetail.paid) : 0;
+                                const totalPending = academicPending + conveyancePending;
+
+                                return (
+                                    <>
+                                        <div className="flex justify-between text-slate-400 text-sm">
+                                            <span>Academic Pending</span>
+                                            <span>₹{academicPending.toLocaleString()}</span>
+                                        </div>
+                                        {conveyanceDetail && (
+                                            <div className="flex justify-between text-slate-400 text-sm">
+                                                <span>Conveyance Pending</span>
+                                                <span>₹{conveyancePending.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-amber-400 font-bold text-lg mt-2">
+                                            <span>Total Pending</span>
+                                            <span>₹{totalPending.toLocaleString()}</span>
+                                        </div>
+                                    </>
+                                );
                             })()}
                         </div>
                     )}
