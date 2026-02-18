@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Save, X, ChevronRight, ChevronLeft, Upload } from 'lucide-react';
+import { Save, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import AdmissionPreview from '../../components/students/AdmissionPreview';
 import { storageService } from '../../services/storage';
 import api from '../../services/api';
 import StudentSearch from '../../components/students/StudentSearch';
@@ -270,6 +271,10 @@ export default function AdmissionForm() {
         setStep(s => s - 1);
     };
 
+    const handleEdit = (stepNumber) => {
+        setStep(stepNumber);
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
@@ -299,7 +304,7 @@ export default function AdmissionForm() {
                 <div className={`w-12 h-0.5 mx-4 ${step >= 3 ? 'bg-indigo-600' : 'bg-slate-300'}`}></div>
                 <div className={`flex items-center ${step >= 3 ? 'text-indigo-600' : 'text-slate-400'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold ${step >= 3 ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300'}`}>3</div>
-                    <span className="ml-2 font-medium">Documents</span>
+                    <span className="ml-2 font-medium">Preview</span>
                 </div>
             </div>
 
@@ -1149,31 +1154,10 @@ export default function AdmissionForm() {
                 )}
 
                 {step === 3 && (
-                    <div className="space-y-6">
-                        <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Documents Upload</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {[
-                                'Student Photo',
-                                'Birth Certificate',
-                                'Transfer Certificate',
-                                'Previous Marksheet',
-                                'Report Card (Previous School)',
-                                'Caste Certificate',
-                                'Aadhar Card (Student)',
-                                "Parent's Aadhar Card",
-                                'Medical Certificate',
-                                'Address Proof'
-                            ].map((doc) => (
-                                <div key={doc} className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer">
-                                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-full mb-3">
-                                        <Upload size={24} />
-                                    </div>
-                                    <p className="font-medium text-slate-900">{doc}</p>
-                                    <p className="text-sm text-slate-500 mt-1">Click to upload or drag & drop</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <AdmissionPreview
+                        formData={watch()}
+                        onEdit={handleEdit}
+                    />
                 )}
 
                 {/* Footer Actions */}
