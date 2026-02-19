@@ -1,5 +1,7 @@
 const Fee = require('../models/Fee');
 const Student = require('../models/Student');
+const { generateFeeReceipt } = require('../utils/pdfGenerator');
+const { sendFeeReceiptEmail } = require('../utils/emailService');
 
 // @desc    Get all fees
 // @route   GET /api/fees
@@ -73,8 +75,16 @@ const addFee = async (req, res) => {
             student.feesStatus = 'Pending';
         }
 
-        // Sanitize fields
-        if (student.previousClass === '') {
+        // Sanitize fields and fix validation issues
+        const validPreviousClass = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
+
+        if (student.previousClass && !validPreviousClass.includes(student.previousClass)) {
+            // Only log if it's not simply an empty string which we expect to clear
+            if (student.previousClass !== '') {
+                console.warn(`Invalid previousClass '${student.previousClass}' found for student ${student.admissionNo}. Clearing it to allow save.`);
+            }
+            student.previousClass = undefined;
+        } else if (student.previousClass === '') {
             student.previousClass = undefined;
         }
 
@@ -85,6 +95,44 @@ const addFee = async (req, res) => {
         }
 
         await student.save();
+
+        // --- Send Email Notification (Async) ---
+        // We do this asynchronously and don't block the response
+        (async () => {
+            try {
+                // 1. Generate PDF Receipt
+                console.log(`Generating receipt PDF for Fee ID: ${fee._id}`);
+                const pdfBuffer = await generateFeeReceipt(fee, student);
+
+                // 2. Determine Recipient Email
+                // Requirement: Send ONLY to Father's email. If not present, do not send.
+                const recipientEmail = student.fatherEmail;
+
+                if (recipientEmail) {
+                    console.log(`Sending fee receipt email to Father: ${recipientEmail}`);
+
+                    // 3. Send Email
+                    const emailResult = await sendFeeReceiptEmail({
+                        toEmail: recipientEmail,
+                        studentName: student.name,
+                        feeAmount: fee.amount,
+                        receiptNo: fee.receiptNo,
+                        paymentDate: fee.paymentDate,
+                        pdfBuffer: pdfBuffer
+                    });
+
+                    if (emailResult.success) {
+                        console.log('Fee receipt email sent successfully.');
+                    } else {
+                        console.error('Failed to send fee receipt email:', emailResult.error);
+                    }
+                } else {
+                    console.log(`No Father's Email found for student ${student.admissionNo}. Fee receipt email skipped.`);
+                }
+            } catch (notifyError) {
+                console.error('Error in fee receipt notification process:', notifyError);
+            }
+        })();
 
         res.status(201).json(fee);
     } catch (error) {
