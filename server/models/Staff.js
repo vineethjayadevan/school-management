@@ -14,9 +14,9 @@ const staffSchema = mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Teacher', 'Non-Teaching', 'Vehicle In-Charge'],
         default: 'Teacher'
     },
+    subcategory: { type: String },
     paymentMode: {
         type: String,
         enum: ['Cash', 'Bank Transfer', 'UPI', 'Cheque'],
@@ -31,7 +31,7 @@ const staffSchema = mongoose.Schema({
     avatar: { type: String },
 
     // For teachers
-    subjects: [{ type: String }],
+    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
 }, {
     timestamps: true,
 });

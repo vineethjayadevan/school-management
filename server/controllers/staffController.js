@@ -10,12 +10,14 @@ const getStaff = async (req, res) => {
                 $or: [
                     { name: { $regex: req.query.search, $options: 'i' } },
                     { role: { $regex: req.query.search, $options: 'i' } },
-                    { subjects: { $regex: req.query.search, $options: 'i' } },
+                    // { subjects: { $regex: req.query.search, $options: 'i' } }, // Can't regex ObjectId easily
                 ],
             }
             : {};
 
-        const staff = await Staff.find({ ...keyword }).sort({ createdAt: -1 });
+        const staff = await Staff.find({ ...keyword })
+            .populate('subjects', 'name code') // Populate subject details
+            .sort({ createdAt: -1 });
         res.json(staff);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -36,21 +38,19 @@ const addStaff = async (req, res) => {
 
         const startId = 'EMP' + Date.now().toString().slice(-4);
 
-        // Explicitly mapping fields if needed, or assuming body matches schema
-        // Frontend sends: name, role, contact, email, subject, qualification
-        // Backend expects: employeeId, name, role, qualification, email, phone, joiningDate, subjects specific array
-
-        // We can handle some defaults here if not provided
         const newStaff = await Staff.create({
             employeeId: req.body.employeeId || startId,
             name: req.body.name,
             role: req.body.role,
             email: req.body.email,
-            phone: req.body.phone || req.body.contact, // Handle both
+            phone: req.body.phone || req.body.contact,
             qualification: req.body.qualification,
             joiningDate: req.body.joiningDate || new Date(),
+            // Ensure subjects is array of IDs
             subjects: req.body.subjects ? (Array.isArray(req.body.subjects) ? req.body.subjects : [req.body.subjects]) : [],
             salary: req.body.salary || 0,
+            category: req.body.category,
+            subcategory: req.body.subcategory
         });
 
         res.status(201).json(newStaff);
@@ -78,6 +78,7 @@ const updateStaff = async (req, res) => {
         staff.qualification = req.body.qualification || staff.qualification;
         staff.joiningDate = req.body.joiningDate || staff.joiningDate;
         staff.category = req.body.category || staff.category;
+        staff.subcategory = req.body.subcategory !== undefined ? req.body.subcategory : staff.subcategory;
         staff.salary = req.body.salary !== undefined ? req.body.salary : staff.salary;
         staff.paymentMode = req.body.paymentMode || staff.paymentMode;
         staff.status = req.body.status || staff.status;

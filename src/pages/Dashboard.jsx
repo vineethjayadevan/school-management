@@ -1,181 +1,240 @@
 import { useState, useEffect } from 'react';
-import { Users, Banknote, GraduationCap, ArrowUpRight, ArrowDownRight, MoreVertical } from 'lucide-react';
+import {
+    Users,
+    Banknote,
+    GraduationCap,
+    ArrowUpRight,
+    Activity,
+    Clock,
+    AlertCircle,
+    Calendar,
+    Briefcase
+} from 'lucide-react';
 import { useToast } from '../components/ui/Toast';
-import { storageService } from '../services/storage';
+import api from '../services/api';
+import DashboardChart from '../components/dashboard/DashboardChart';
+import { useNavigate } from 'react-router-dom';
 
-const StatCard = ({ title, value, change, changeType, icon: Icon, color, onAction }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between">
-            <div>
-                <p className="text-sm font-medium text-slate-500">{title}</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1">{value}</h3>
+const StatCard = ({ title, value, subtext, icon: Icon, color, badgeText }) => (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
+                <Icon size={24} className={color.replace('bg-', 'text-')} />
             </div>
-            <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-lg ${color}`}>
-                    <Icon size={24} className="text-white" />
-                </div>
-                <button onClick={onAction} className="text-slate-400 hover:text-slate-600">
-                    <MoreVertical size={20} />
-                </button>
-            </div>
+            {badgeText && (
+                <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-full">
+                    {badgeText}
+                </span>
+            )}
         </div>
-        <div className="mt-4 flex items-center gap-2">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${changeType === 'increase' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                {changeType === 'increase' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                {change}
-            </span>
-            <span className="text-xs text-slate-400">vs last month</span>
+        <div>
+            <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+            <p className="text-sm font-medium text-slate-500 mt-1">{title}</p>
+            {subtext && <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">{subtext}</p>}
         </div>
     </div>
 );
 
-import { useNavigate } from 'react-router-dom';
+const ActivityItem = ({ title, count, icon: Icon, color, onClick }) => (
+    <div
+        onClick={onClick}
+        className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+    >
+        <div className="flex items-center gap-4">
+            <div className={`p-2 rounded-lg ${color} bg-opacity-10 text-${color.replace('bg-', '')}-600`}>
+                <Icon size={20} className={color.replace('bg-', 'text-')} />
+            </div>
+            <span className="font-medium text-slate-700">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-900">{count}</span>
+            <span className="text-xs text-slate-400">Pending</span>
+        </div>
+    </div>
+);
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const { addToast } = useToast();
-    const [stats, setStats] = useState({
-        students: 0,
-        staff: 0,
-        revenue: 0,
-        recentFees: []
-    });
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const data = await storageService.dashboard.getStats();
-                setStats({
-                    students: data.students,
-                    staff: data.staff,
-                    revenue: data.revenue,
-                    recentFees: data.recentFees,
-                    recentStudents: data.recentStudents || []
-                });
+                const res = await api.get('/dashboard');
+                setStats(res.data);
             } catch (error) {
                 console.error("Failed to load dashboard stats", error);
+                addToast("Failed to load dashboard data", "error");
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchStats();
     }, []);
 
-    const showNotice = () => {
-        addToast("Detailed report coming soon!", "info");
-    };
+    if (loading) {
+        return <div className="flex items-center justify-center h-full text-slate-500">Loading Dashboard...</div>;
+    }
+
+    if (!stats) return null;
+
+    const { counts, financials, recentStudents, recentFees, chartData } = stats;
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-                <p className="text-slate-500">Welcome back, here's what's happening today.</p>
+        <div className="space-y-6 max-w-[1600px] mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+                    <p className="text-slate-500">Overview of your school's performance today.</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-medium text-slate-900">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Top Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 <StatCard
                     title="Total Students"
-                    value={stats.students.toString()}
-                    change="12%"
-                    changeType="increase"
+                    value={counts.students}
                     icon={Users}
                     color="bg-indigo-500"
-                    onAction={showNotice}
-                />
-                <StatCard
-                    title="Total Revenue"
-                    value={`₹${stats.revenue.toLocaleString()}`}
-                    change="8%"
-                    changeType="increase"
-                    icon={Banknote}
-                    color="bg-emerald-500"
-                    onAction={showNotice}
+                    subtext={`${counts.admissionsToday} new today`}
+                    badgeText="Total"
                 />
                 <StatCard
                     title="Total Staff"
-                    value={stats.staff.toString()}
-                    change="2%"
-                    changeType="decrease"
-                    icon={GraduationCap}
+                    value={counts.staff}
+                    icon={Briefcase}
                     color="bg-violet-500"
-                    onAction={showNotice}
+                    subtext="Active count"
+                    badgeText="Total"
+                />
+                <StatCard
+                    title="Fee Collected"
+                    value={`₹${financials.feesCollectedThisMonth.toLocaleString()}`}
+                    icon={Banknote}
+                    color="bg-emerald-500"
+                    subtext="This Month"
+                    badgeText="This Month"
+                />
+                <StatCard
+                    title="Salary Paid"
+                    value={`₹${financials.salaryPaidThisMonth.toLocaleString()}`}
+                    icon={GraduationCap}
+                    color="bg-amber-500"
+                    subtext={`₹${financials.salaryPendingThisMonth.toLocaleString()} Pending`}
+                    badgeText="This Month"
                 />
             </div>
 
-            {/* Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Admissions */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-fit min-h-64">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-slate-900">Recent Admissions</h3>
-                        <button onClick={() => navigate('/admin/students')} className="text-indigo-600 text-sm hover:underline">View All</button>
+            {/* Middle Section: Chart & Today's Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Financial Chart */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-bold text-slate-900">Financial Overview</h3>
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">Last 6 Months</span>
                     </div>
-                    {stats.recentStudents && stats.recentStudents.length > 0 ? (
-                        <div className="space-y-4">
-                            {stats.recentStudents.map((student) => (
-                                <div key={student._id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-indigo-100 p-2 rounded-full text-indigo-600">
-                                            <Users size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-900">{student.name}</p>
-                                            <p className="text-xs text-slate-500">
-                                                {student.admissionNo ? `#${student.admissionNo}` : 'New'} • {student.className || 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs text-slate-400">{new Date(student.createdAt).toLocaleDateString()}</span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg flex flex-col items-center justify-center">
-                            <p className="text-slate-400 mb-3">No recent admissions</p>
-                            <button
-                                onClick={() => navigate('/admin/admissions/new')}
-                                className="text-sm bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition-colors"
-                            >
-                                Create Admission
-                            </button>
-                        </div>
-                    )}
+                    <div className="h-[300px] w-full">
+                        {/* Chart Component Here */}
+                        <DashboardChart data={chartData} />
+                    </div>
                 </div>
 
-                {/* Recent Fee Collections */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-fit min-h-64">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-slate-900">Recent Fee Collections</h3>
-                        <button
-                            onClick={() => navigate('/admin/fees', { state: { startTab: 'history' } })}
-                            className="text-indigo-600 text-sm hover:underline"
-                        >
-                            View All
-                        </button>
+                {/* Today's Activity */}
+                <div className="space-y-4">
+                    <h3 className="font-bold text-slate-900 px-1">Today's Activity</h3>
+                    <div className="space-y-3">
+                        <ActivityItem
+                            title="Admissions Pending"
+                            count={counts.admissionsToday} // Using recent count as proxy for pending/new
+                            icon={Users}
+                            color="bg-blue-500"
+                            onClick={() => navigate('/admin/students')}
+                        />
+                        <ActivityItem
+                            title="Fees Overdue"
+                            count={counts.feesOverdue}
+                            icon={AlertCircle}
+                            color="bg-red-500"
+                            onClick={() => navigate('/admin/fees')}
+                        />
+                        <ActivityItem
+                            title="Salary Pending"
+                            count={counts.pendingSalaries}
+                            icon={Clock}
+                            color="bg-amber-500"
+                            onClick={() => navigate('/admin/finance/salary')}
+                        />
+                        <ActivityItem
+                            title="New Announcements"
+                            count={0}
+                            icon={Activity}
+                            color="bg-purple-500"
+                            onClick={() => { }}
+                        />
                     </div>
-                    {stats.recentFees && stats.recentFees.length > 0 ? (
-                        <div className="space-y-4">
-                            {stats.recentFees.map((fee) => (
-                                <div key={fee._id} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-emerald-100 p-2 rounded-full text-emerald-600">
-                                            <Banknote size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-900">{fee.student?.name || 'Unknown Student'}</p>
-                                            <p className="text-xs text-slate-500">{new Date(fee.paymentDate).toLocaleDateString()}</p>
-                                        </div>
+                </div>
+            </div>
+
+            {/* Recent Logs Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Admissions */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-slate-900">Recent Admissions</h3>
+                        <button onClick={() => navigate('/admin/students')} className="text-indigo-600 text-sm font-medium hover:underline">View All</button>
+                    </div>
+                    <div className="space-y-4">
+                        {recentStudents.map((student) => (
+                            <div key={student._id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                        {student.name.charAt(0)}
                                     </div>
-                                    <span className="font-bold text-slate-900">+₹{fee.amount}</span>
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">{student.name}</p>
+                                        <p className="text-xs text-slate-500">{student.className} • #{student.admissionNo}</p>
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center text-slate-400 py-10 border-2 border-dashed border-slate-100 rounded-lg">
-                            No recent transactions
-                        </div>
-                    )}
+                                <span className="text-xs text-slate-400">{new Date(student.createdAt).toLocaleDateString()}</span>
+                            </div>
+                        ))}
+                        {recentStudents.length === 0 && <p className="text-slate-400 text-sm italic">No recent admissions</p>}
+                    </div>
+                </div>
+
+                {/* Recent Fees */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-slate-900">Recent Transactions</h3>
+                        <button onClick={() => navigate('/admin/fees')} className="text-indigo-600 text-sm font-medium hover:underline">View All</button>
+                    </div>
+                    <div className="space-y-4">
+                        {recentFees.map((fee) => (
+                            <div key={fee._id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                        <Banknote size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">{fee.student?.name || 'Unknown'}</p>
+                                        <p className="text-xs text-slate-500">Fee Payment</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-900">+₹{fee.amount.toLocaleString()}</p>
+                                    <p className="text-xs text-slate-400">{new Date(fee.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {recentFees.length === 0 && <p className="text-slate-400 text-sm italic">No recent transactions</p>}
+                    </div>
                 </div>
             </div>
         </div>

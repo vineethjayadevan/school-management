@@ -115,8 +115,44 @@ const getSalarySummary = async (req, res) => {
     }
 };
 
+const { generateSalarySlip } = require('../utils/salarySlipGenerator');
+
+// ... (existing imports)
+
+// @desc    Download salary slip PDF
+// @route   GET /api/salaries/:id/download
+// @access  Admin
+const getSalarySlip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const salary = await Salary.findById(id).populate('staff');
+
+        if (!salary) {
+            return res.status(404).json({ message: 'Salary record not found' });
+        }
+
+        if (salary.status !== 'Paid') {
+            return res.status(400).json({ message: 'Salary is not paid yet' });
+        }
+
+        const pdfBuffer = await generateSalarySlip(salary);
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=Salary_Slip_${salary.staff.name}_${salary.month}.pdf`,
+            'Content-Length': pdfBuffer.length
+        });
+
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getSalariesByMonth,
     paySalary,
-    getSalarySummary
+    getSalarySummary,
+    getSalarySlip
 };

@@ -15,7 +15,10 @@ router.get('/classes', async (req, res) => {
     try {
         // Sort by name nicely? Or maybe just return all
         // Native sort might be tricky with "Class 10" vs "Class 2" strings, but basic sort for now
-        const classes = await Class.find({}).sort({ name: 1 });
+        const classes = await Class.find({})
+            .populate('sections.classTeacher', 'name')
+            .populate('sections.nanny', 'name')
+            .sort({ name: 1 });
         res.json(classes);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });

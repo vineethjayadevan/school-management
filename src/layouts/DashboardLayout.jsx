@@ -75,12 +75,12 @@ export default function DashboardLayout() {
             icon: DollarSign,
             allowed: ['superuser', 'admin']
         },
-        // {
-        //     name: 'Academics',
-        //     href: '/admin/academics',
-        //     icon: GraduationCap,
-        //     allowed: ['superuser', 'admin']
-        // },
+        {
+            name: 'Academics',
+            href: '/admin/academics',
+            icon: GraduationCap,
+            allowed: ['superuser', 'admin']
+        },
         // {
         //     name: 'Manage Events',
         //     href: '/admin/events',
