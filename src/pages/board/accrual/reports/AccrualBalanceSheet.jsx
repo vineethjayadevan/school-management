@@ -57,21 +57,24 @@ export default function AccrualBalanceSheet() {
     return (
         <div className="space-y-8">
             {/* Filter */}
-            <div className="flex items-center justify-end gap-2">
-                <span className="text-sm font-medium text-slate-500">As of:</span>
-                <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button
-                    onClick={fetchReport}
-                    className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    title="Update Report"
-                >
-                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                </button>
+            {/* Filter */}
+            <div className="flex flex-col md:flex-row items-center justify-end gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 md:bg-transparent md:p-0 md:border-0">
+                <span className="text-sm font-medium text-slate-500 w-full md:w-auto">As of:</span>
+                <div className="flex w-full md:w-auto items-center gap-2">
+                    <input
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="flex-1 md:flex-none bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-40"
+                    />
+                    <button
+                        onClick={fetchReport}
+                        className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
+                        title="Update Report"
+                    >
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

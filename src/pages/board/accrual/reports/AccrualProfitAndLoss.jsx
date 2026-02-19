@@ -5,7 +5,7 @@ import {
     ArrowUpCircle,
     ArrowDownCircle,
     PieChart,
-    RotateCcw
+    RefreshCw
 } from 'lucide-react';
 import api from '../../../../services/api';
 
@@ -13,13 +13,13 @@ export default function AccrualProfitAndLoss() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState(null);
     const [dateRange, setDateRange] = useState({
-        startDate: '',
-        endDate: ''
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: '2026-04-03'
     });
 
     useEffect(() => {
         fetchReport();
-    }, [dateRange]);
+    }, []);
 
     const fetchReport = async () => {
         setLoading(true);
@@ -43,27 +43,34 @@ export default function AccrualProfitAndLoss() {
     return (
         <div className="space-y-6">
             {/* Filters */}
-            <div className="flex items-center justify-end gap-2">
+            {/* Filters */}
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 md:bg-transparent md:p-0 md:border-0">
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-center">
+                    <span className="text-sm text-slate-500 md:hidden font-medium w-full text-left">From:</span>
+                    <input
+                        type="date"
+                        value={dateRange.startDate}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-36"
+                    />
+                    <span className="text-slate-400 hidden md:inline">-</span>
+                    <span className="text-sm text-slate-500 md:hidden font-medium w-full text-left mt-1">To:</span>
+                    <input
+                        type="date"
+                        value={dateRange.endDate}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-36"
+                    />
+                </div>
                 <button
                     onClick={fetchReport}
-                    className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="Refresh Data"
+                    className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shrink-0 flex items-center justify-center gap-2 mt-2 md:mt-0"
+                    title="Update Report"
                 >
-                    <RotateCcw size={20} />
+                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                    <span className="md:hidden text-sm font-medium">Update Report</span>
                 </button>
-                <input
-                    type="date"
-                    value={dateRange.startDate}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <span className="text-slate-400">-</span>
-                <input
-                    type="date"
-                    value={dateRange.endDate}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
             </div>
 
             {/* Summary Cards */}
@@ -108,21 +115,23 @@ export default function AccrualProfitAndLoss() {
                     <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
                         <h4 className="font-semibold text-slate-800">Revenue by Category</h4>
                     </div>
-                    <table className="w-full">
-                        <tbody className="divide-y divide-slate-100">
-                            {data.revenue.breakdown.map((item, index) => (
-                                <tr key={index} className="hover:bg-slate-50">
-                                    <td className="px-6 py-3 text-sm text-slate-600">{item.category}</td>
-                                    <td className="px-6 py-3 text-sm font-medium text-slate-900 text-right">
-                                        {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                    </td>
-                                </tr>
-                            ))}
-                            {data.revenue.breakdown.length === 0 && (
-                                <tr><td colSpan="2" className="px-6 py-4 text-center text-slate-400 text-sm">No revenue recorded</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <tbody className="divide-y divide-slate-100">
+                                {data.revenue.breakdown.map((item, index) => (
+                                    <tr key={index} className="hover:bg-slate-50">
+                                        <td className="px-6 py-3 text-sm text-slate-600">{item.category}</td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900 text-right">
+                                            {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {data.revenue.breakdown.length === 0 && (
+                                    <tr><td colSpan="2" className="px-6 py-4 text-center text-slate-400 text-sm">No revenue recorded</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Expense Breakdown */}
@@ -130,21 +139,23 @@ export default function AccrualProfitAndLoss() {
                     <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
                         <h4 className="font-semibold text-slate-800">Expenses by Category</h4>
                     </div>
-                    <table className="w-full">
-                        <tbody className="divide-y divide-slate-100">
-                            {data.expenses.breakdown.map((item, index) => (
-                                <tr key={index} className="hover:bg-slate-50">
-                                    <td className="px-6 py-3 text-sm text-slate-600">{item.category}</td>
-                                    <td className="px-6 py-3 text-sm font-medium text-slate-900 text-right">
-                                        {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                    </td>
-                                </tr>
-                            ))}
-                            {data.expenses.breakdown.length === 0 && (
-                                <tr><td colSpan="2" className="px-6 py-4 text-center text-slate-400 text-sm">No expenses recorded</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <tbody className="divide-y divide-slate-100">
+                                {data.expenses.breakdown.map((item, index) => (
+                                    <tr key={index} className="hover:bg-slate-50">
+                                        <td className="px-6 py-3 text-sm text-slate-600">{item.category}</td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900 text-right">
+                                            {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {data.expenses.breakdown.length === 0 && (
+                                    <tr><td colSpan="2" className="px-6 py-4 text-center text-slate-400 text-sm">No expenses recorded</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

@@ -130,7 +130,7 @@ export default function ManageCategories() {
     return (
         <div className="h-[calc(100vh-100px)] max-h-[900px] flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             {/* Header Area */}
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4 bg-slate-50/50">
+            <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-50/50">
                 <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                     <Filter className="text-indigo-600" size={20} />
                     Manage Categories
@@ -150,7 +150,7 @@ export default function ManageCategories() {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Left Sidebar: Category List */}
-                <div className="w-80 border-r border-slate-200 overflow-y-auto bg-slate-50/30">
+                <div className={`w-full md:w-80 border-r border-slate-200 overflow-y-auto bg-slate-50/30 ${selectedCategory ? 'hidden md:block' : 'block'}`}>
                     <div className="p-3 space-y-6">
                         {/* Group Render Helper */}
                         {['income', 'capital', 'expense'].map(groupType => {
@@ -187,8 +187,9 @@ export default function ManageCategories() {
                                                     <p className="text-xs text-slate-400">{category.subcategories.length} items</p>
                                                 </div>
                                                 {selectedCategory?._id === category._id && (
-                                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 hidden md:block"></div>
                                                 )}
+                                                <ChevronDown className="md:hidden text-slate-400 ml-auto" size={16} transform="rotate(-90)" />
                                             </button>
                                         ))}
                                     </div>
@@ -205,9 +206,18 @@ export default function ManageCategories() {
                 </div>
 
                 {/* Right Panel: Details */}
-                <div className="flex-1 overflow-y-auto bg-white p-6 md:p-8">
+                <div className={`flex-1 overflow-y-auto bg-white p-4 md:p-8 ${selectedCategory ? 'block' : 'hidden md:block'}`}>
                     {selectedCategory ? (
                         <div className="max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-200">
+                            {/* Mobile Back Button */}
+                            <button
+                                onClick={() => setSelectedCategory(null)}
+                                className="md:hidden flex items-center gap-2 text-slate-500 mb-4 hover:text-slate-800"
+                            >
+                                <ChevronDown size={20} transform="rotate(90)" />
+                                <span className="text-sm font-medium">Back to Categories</span>
+                            </button>
+
                             {/* Detail Header */}
                             <div className="flex items-start justify-between mb-8 pb-6 border-b border-slate-100">
                                 <div className="flex items-center gap-5">
@@ -220,7 +230,7 @@ export default function ManageCategories() {
                                                 {selectedCategory.uiType === 'expense' ? 'Expense Category' : (selectedCategory.uiType === 'capital' ? 'Capital Account' : 'Income Source')}
                                             </span>
                                         </div>
-                                        <h2 className="text-3xl font-bold text-slate-900">{selectedCategory.name}</h2>
+                                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{selectedCategory.name}</h2>
                                     </div>
                                 </div>
                             </div>
@@ -254,7 +264,7 @@ export default function ManageCategories() {
                                 {/* Add New Trigger */}
                                 <div className="pt-6 mt-6 border-t border-slate-100">
                                     <label className="block text-sm font-medium text-slate-700 mb-2">Add New Subcategory</label>
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-col md:flex-row gap-3">
                                         <input
                                             type="text"
                                             value={newSubcategory}
@@ -266,7 +276,7 @@ export default function ManageCategories() {
                                         <button
                                             onClick={() => handleAddSubcategory(selectedCategory.uiType, selectedCategory._id)}
                                             disabled={submitting || !newSubcategory.trim()}
-                                            className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                                            className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all flex justify-center items-center gap-2"
                                         >
                                             {submitting ? (
                                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -280,7 +290,7 @@ export default function ManageCategories() {
                             </div>
                         </div>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 opacity-60">
+                        <div className="h-full hidden md:flex flex-col items-center justify-center text-center text-slate-400 opacity-60">
                             <Filter size={64} className="mb-4 text-slate-200" />
                             <h3 className="text-lg font-medium text-slate-600">Select a Category</h3>
                             <p className="max-w-xs mx-auto mt-1">Choose a category from the sidebar to view details and manage subcategories.</p>
