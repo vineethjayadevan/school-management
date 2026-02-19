@@ -71,9 +71,11 @@ export default function FeeDashboard() {
         // Optimization: Pre-calculate total paid per student
         const paymentsByStudent = transactions.reduce((acc, t) => {
             if (t.status === 'Paid') {
-                const sId = t.studentId || (t.student?._id) || (t.student?.id);
+                // Robust extraction of student ID
+                const sId = t.student?._id || t.student?.id || t.studentId || t.student;
                 if (sId) {
-                    acc[sId] = (acc[sId] || 0) + (t.amount || 0);
+                    const key = String(sId);
+                    acc[key] = (acc[key] || 0) + (t.amount || 0);
                 }
             }
             return acc;
@@ -88,7 +90,7 @@ export default function FeeDashboard() {
             const conveyanceFee = slab > 0 ? (200 + (slab * 100)) : 0;
 
             const studentTotalDue = (structure.tuition || 0) + (structure.materials || 0) + conveyanceFee;
-            const studentPaid = paymentsByStudent[student.id || student._id] || 0;
+            const studentPaid = paymentsByStudent[String(student.id || student._id)] || 0;
             const studentPending = Math.max(0, studentTotalDue - studentPaid);
 
             acc.expected += studentTotalDue;
@@ -471,10 +473,11 @@ export default function FeeDashboard() {
         const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
 
         // Get all payments for this student
-        const payments = transactions.filter(t =>
-            (t.student?._id === student._id || t.student?.id === student.id || t.studentId === student.id) &&
-            t.status === 'Paid'
-        );
+        const payments = transactions.filter(t => {
+            const tStudentId = t.student?._id || t.student?.id || t.studentId || t.student;
+            const sId = student.id || student._id;
+            return String(tStudentId) === String(sId) && t.status === 'Paid';
+        });
 
         // Calculate status per category
         const categories = Object.entries(structure).map(([type, dueAmount]) => ({ type, due: dueAmount }));
@@ -482,69 +485,59 @@ export default function FeeDashboard() {
         // Add Conveyance if applicable
         if (student.conveyanceSlab && parseInt(student.conveyanceSlab) > 0) {
             const slab = parseInt(student.conveyanceSlab);
-            // Assuming 10 months for annual fee calculation if not monthly? 
-            // The requirement says "Monthly Fee". 
-            // If the fee structure (Tuition/Materials) is Annual, then conveyance should probably be annualized for consistency in this view?
-            // "Slab 1 (₹300)" -> Is this monthly? 
-            // In StudentDetails.jsx it says "Monthly Conveyance Fee".
-            // So for "Annual" fee tracking, we might want to multiply by 10 or 12?
-            // For now, let's treat it as a one-time "Conveyance Fee" entry for simplicity or assume the dashboard shows "Total Annual Due".
-            // Let's assume 10 months academic year.
             categories.push({ type: 'conveyance', due: (200 + (slab * 100)) * 10 });
         }
 
-        return categories.map(({ type, due: dueAmount }) => {
+        // Calculate total paid across all categories
+        const totalPaidAll = payments.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+        let allocatedAmount = 0;
+
+        const result = categories.map(({ type, due: dueAmount }) => {
             const paidAmount = payments
                 .filter(t => {
-                    if (t.feeType?.toLowerCase().includes('full')) return true; // Full fee covers everything
+                    if (t.feeType?.toLowerCase().includes('full')) return true;
                     return t.feeType?.toLowerCase().includes(type.toLowerCase());
                 })
                 .reduce((sum, t) => {
-                    // specific logic for full fee: we need to attribute portions of it or just count it?
-                    // simpler approach: if full fee paid, we consider everything paid.
-                    // But for accurate partial tracking, if a "Full Fee" txn exists, we allocate proportional amount?
-                    // For this simple implementation: If "Full Fee" txn exists with >= total due, mark all paid.
-                    // Or simpler: Check if sum of ALL payments >= dueAmount for this category.
-                    // Let's refine: The loop maps through categories. We summon all payments relevant to this category.
-                    // "Full Fee" is relevant to ALL categories.
                     if (t.feeType?.toLowerCase().includes('full')) {
-                        // Distribute full payment? Or simply check if total > due
-                        // If type is tuition (20000) and we found a Full Fee (26500) txn, we can say 20000 covers tuition.
-                        // We need to be careful not to double count if we just sum it up.
-                        // Better approach for display:
-                        // If "Full Fee" transaction exists, override calculation to PAID.
-                        if (type === 'conveyance') {
-                            // Extract conveyance part from full fee?
-                            // Full fee usually implies everything.
-                            return sum + dueAmount;
-                        }
-                        return sum + (type === 'tuition' ? 20000 : 6500); // Hacky but works for this rigid structure
+                        if (type === 'conveyance') return sum + dueAmount;
+                        return sum + (type === 'tuition' ? 20000 : 6500);
                     }
                     return sum + (t.amount || 0);
                 }, 0);
 
-            // Re-calc based on simplified logic:
-            // Just get total paid by student, and check against total due? No, user wants breakdown.
-            // Let's stick to:
-            // Tuition Paid = Sum of 'Tuition Fee' txns + (If Full Fee txn exists ? 20000 : 0)
-            // Materials Paid = Sum of 'Materials Fee' txns + (If Full Fee txn exists ? 6500 : 0)
-
             let effectivePaid = paidAmount;
-
-            // Check for any Full Fee payment
             const hasFullFee = payments.some(t => t.feeType?.toLowerCase().includes('full'));
-            if (hasFullFee) {
-                effectivePaid = dueAmount; // Maximise it to due amount if full fee paid
-            }
+            if (hasFullFee) effectivePaid = dueAmount;
+
+            const finalPaid = effectivePaid > dueAmount ? dueAmount : effectivePaid;
+            allocatedAmount += finalPaid;
 
             return {
                 type: type.charAt(0).toUpperCase() + type.slice(1),
                 due: dueAmount,
-                paid: effectivePaid > dueAmount ? dueAmount : effectivePaid,
-                pending: dueAmount - (effectivePaid > dueAmount ? dueAmount : effectivePaid),
-                status: effectivePaid >= dueAmount ? 'Paid' : effectivePaid > 0 ? 'Partial' : 'Pending'
+                paid: finalPaid,
+                pending: Math.max(0, dueAmount - finalPaid),
+                status: finalPaid >= dueAmount ? 'Paid' : finalPaid > 0 ? 'Partial' : 'Pending'
             };
         });
+
+        // Add 'Other/Excess' if there's payment left over or custom payments
+        if (totalPaidAll > allocatedAmount) {
+            const extra = totalPaidAll - allocatedAmount;
+            if (extra > 0) {
+                result.push({
+                    type: 'Other/Custom',
+                    due: 0,
+                    paid: extra,
+                    pending: 0,
+                    status: 'Paid'
+                });
+            }
+        }
+
+        return result;
     };
 
     const renderFeeDetailsModal = () => {
@@ -613,7 +606,7 @@ export default function FeeDashboard() {
                                             <td className="px-4 py-3 font-medium text-slate-900">{item.type}</td>
                                             <td className="px-4 py-3 text-right text-slate-600">₹{item.due.toLocaleString()}</td>
                                             <td className="px-4 py-3 text-right text-emerald-600 font-medium">₹{item.paid.toLocaleString()}</td>
-                                            <td className="px-4 py-3 text-right text-red-600 font-medium">₹{item.pending.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-right text-red-600 font-medium">₹{Math.max(0, item.pending).toLocaleString()}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
                                                     ${item.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
@@ -652,10 +645,6 @@ export default function FeeDashboard() {
     const filteredAllTransactions = useMemo(() => {
         return transactions.filter(t => {
             const tDate = new Date(t.paymentDate || t.createdAt);
-            // Handle time component by stripping it for comparison if needed, or simple comparison
-            // For robust date comparing, reset time to 00:00:00 for item date if purely comparing dates? 
-            // The existing logic was simple >= / <= string comparison which works if formats match, 
-            // but here we are using Date objects.
 
             const matchesClass = filterClass === 'All' ||
                 (t.student && (t.student.className === filterClass || t.student.class === filterClass));
@@ -774,7 +763,7 @@ export default function FeeDashboard() {
                 student.name,
                 `Rs. ${totalDue.toLocaleString()}`,
                 `Rs. ${totalPaid.toLocaleString()}`,
-                `Rs. ${totalPending.toLocaleString()}`,
+                `Rs. ${Math.max(0, totalPending).toLocaleString()}`,
                 student.feesStatus || 'Pending'
             ];
         });
@@ -796,21 +785,17 @@ export default function FeeDashboard() {
         // Summary Footer
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Total Class Pending: Rs. ${totalClassPending.toLocaleString()}`, 14, finalY);
-        doc.text(`Total Class Collected: Rs. ${totalClassPaid.toLocaleString()}`, 14, finalY + 7);
+        doc.text(`Total Due: Rs. ${totalClassFee.toLocaleString()}`, 14, finalY);
+        doc.text(`Total Paid: Rs. ${totalClassPaid.toLocaleString()}`, 80, finalY);
+        doc.text(`Total Pending: Rs. ${totalClassPending.toLocaleString()}`, 150, finalY);
 
-        doc.save(`Fee_Report_${className}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        doc.save(`FeeReport_${className}.pdf`);
     };
 
     const renderHistoryTab = () => {
         // --- Segregation Logic ---
         const recentTransactions = transactions.slice(0, 5); // Just top 5
 
-        // Using memoized filteredAllTransactions
-
-
-        // Unique classes for Dropdown
         // Unique classes for Dropdown
         const requestedClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
         const dynamicClasses = transactions
@@ -831,9 +816,7 @@ export default function FeeDashboard() {
             return getOrder(a) - getOrder(b);
         });
 
-        // Group by Class (for Overview)
         // Group Students by Class (for Class-wise View)
-        // Instead of transactions, we now group STUDENTS
         const studentsByClass = students.reduce((acc, s) => {
             const cls = s.className || s.class || 'Unknown';
             if (!acc[cls]) acc[cls] = [];
@@ -990,7 +973,7 @@ export default function FeeDashboard() {
 
                                     clsTotalFee += totalDue;
                                     clsCollected += totalPaid;
-                                    clsPending += totalPending;
+                                    clsPending += Math.max(0, totalPending);
                                 });
 
                                 const isExpanded = expandedClass === className;
@@ -1064,7 +1047,7 @@ export default function FeeDashboard() {
                                                                     <td className="px-6 py-3 text-slate-500 font-mono text-xs">{s.admissionNo}</td>
                                                                     <td className="px-6 py-3 text-right text-slate-600">₹{totalDue.toLocaleString()}</td>
                                                                     <td className="px-6 py-3 text-right font-semibold text-emerald-600">₹{totalPaid.toLocaleString()}</td>
-                                                                    <td className="px-6 py-3 text-right font-bold text-red-600">₹{totalPending.toLocaleString()}</td>
+                                                                    <td className="px-6 py-3 text-right font-bold text-red-600">₹{Math.max(0, totalPending).toLocaleString()}</td>
                                                                     <td className="px-6 py-3 text-center">
                                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
                                                                             ${s.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
@@ -1100,7 +1083,6 @@ export default function FeeDashboard() {
                 )}
 
                 {historySubTab === 'all' && (
-                    // ALL TRANSACTIONS VIEW
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
                         {/* Filters */}
                         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-4 items-center">
