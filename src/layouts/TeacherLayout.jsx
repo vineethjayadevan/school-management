@@ -12,15 +12,15 @@ import {
     CheckSquare
 } from 'lucide-react';
 import clsx from 'clsx';
-import { authService } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
 
 export default function TeacherLayout() {
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [user] = useState(() => authService.getCurrentUser());
+    const { user, logout } = useAuth();
 
-    const handleLogout = () => {
-        authService.logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/login');
     };
 

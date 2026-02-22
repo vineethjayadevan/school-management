@@ -40,6 +40,9 @@ import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
 import { useAuth } from './context/AuthContext';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
+import ClassDetails from './pages/teacher/ClassDetails';
+import MyClasses from './pages/teacher/MyClasses';
+import TeacherProfile from './pages/teacher/TeacherProfile';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentFees from './pages/student/StudentFees';
 
@@ -166,7 +169,9 @@ function App() {
                     </RequireAuth>
                 }>
                     <Route path="dashboard" element={<TeacherDashboard />} />
-                    <Route path="classes" element={<div>My Classes Placeholder</div>} />
+                    <Route path="classes" element={<MyClasses />} />
+                    <Route path="classes/:className/:sectionName" element={<ClassDetails />} />
+                    <Route path="profile" element={<TeacherProfile />} />
                     <Route path="assignments" element={<div>Assignments Placeholder</div>} />
                     <Route path="schedule" element={<div>Schedule Placeholder</div>} />
                 </Route>

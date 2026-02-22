@@ -106,6 +106,26 @@ export const storageService = {
         }
     },
     teacher: {
+        getStats: async () => {
+            const { data } = await api.get('/teacher/stats');
+            return data;
+        },
+        getClasses: async () => {
+            const { data } = await api.get('/teacher/classes');
+            return data;
+        },
+        getClassStudents: async (className, sectionName) => {
+            const { data } = await api.get(`/teacher/classes/${className}/${sectionName}/students`);
+            return data;
+        },
+        getSalaryHistory: async () => {
+            const { data } = await api.get('/teacher/salary-history');
+            return data;
+        },
+        getProfile: async () => {
+            const { data } = await api.get('/teacher/profile');
+            return data;
+        },
         getSchedule: async () => {
             const { data } = await api.get('/timetable/teacher');
             return data;
@@ -116,26 +136,6 @@ export const storageService = {
         },
         createAssignment: async (assignment) => {
             const { data } = await api.post('/assignments', assignment);
-            return data;
-        }
-    },
-    student: {
-        getSchedule: async () => {
-            const { data } = await api.get('/timetable/student');
-            return data;
-        },
-        getAssignments: async () => {
-            const { data } = await api.get('/assignments/student');
-            return data;
-        },
-        getFees: async () => {
-            const { data } = await api.get('/fees/student');
-            return data;
-        }
-    },
-    salaries: {
-        getByMonth: async (month) => {
-            const { data } = await api.get(`/salaries?month=${month}`);
             return data;
         },
         pay: async (id, paymentMode, remarks) => {

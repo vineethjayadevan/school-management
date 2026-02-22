@@ -33,8 +33,8 @@ export default function DashboardLayout() {
     // we can return null or letting the UI render safely with optional chaining.
     // RequireAuth in App.jsx handles the redirect security.
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/login');
     };
 
