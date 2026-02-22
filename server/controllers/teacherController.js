@@ -88,26 +88,25 @@ const getClassStudents = async (req, res) => {
     try {
         const { className, sectionName } = req.params;
 
+        // Ensure we are fetching active students using isActive: true
         const students = await Student.find({
             className: className,
             section: sectionName,
-            status: { $ne: 'Transferred' } // Exclude transferred
+            isActive: true
         }).sort({ name: 1 }).lean();
 
         // Calculate Fee Status for each student
-        // This is a simplified check. Ideally, use fee service logic.
-        const studentsWithFeeStatus = await Promise.all(students.map(async (student) => {
-            // Re-using logic from StudentModal fetch roughly or simplified
-            // For dashboard list, we just need "Paid" or "Pending" tag
+        // The student schema has a feesStatus field
+        const studentsWithFeeStatus = students.map((student) => {
             return {
                 _id: student._id,
                 name: student.name,
                 rollNo: student.rollNo,
                 gender: student.gender,
-                primaryPhone: student.primaryPhone || student.contact,
+                primaryPhone: student.primaryPhone || student.contact || 'N/A',
                 feesStatus: student.feesStatus || 'Pending'
             };
-        }));
+        });
 
         res.json(studentsWithFeeStatus);
     } catch (error) {
