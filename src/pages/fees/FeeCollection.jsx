@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
     Search, CreditCard, Banknote, IndianRupee, CheckCircle,
-    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download, Printer
+    History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download, Printer, Settings
 } from 'lucide-react';
+import api from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { storageService } from '../../services/storage';
@@ -11,6 +12,7 @@ import { feeStructure } from '../../services/mockData';
 import { useToast } from '../../components/ui/Toast';
 
 import FeeReceipt from '../../components/fees/FeeReceipt';
+import FeeSettings from '../../components/fees/FeeSettings';
 
 export default function FeeDashboard() {
     const { addToast } = useToast();
@@ -35,6 +37,48 @@ export default function FeeDashboard() {
     const [paymentMode, setPaymentMode] = useState('Cash');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+
+    // Dynamic Categories State
+    const [allCategories, setAllCategories] = useState([]);
+    const [availableCategories, setAvailableCategories] = useState([]);
+
+    // Fetch all active categories on mount
+    useEffect(() => {
+        const fetchAllCategories = async () => {
+            try {
+                const res = await api.get('/fee-categories');
+                setAllCategories(res.data.filter(cat => cat.isActive));
+            } catch (error) {
+                console.error("Failed to fetch all fee categories", error);
+            }
+        };
+        fetchAllCategories();
+    }, []);
+
+    // Filter categories when a specific student is selected for the payment form
+    useEffect(() => {
+        if (selectedStudent && allCategories.length > 0) {
+            const cls = selectedStudent.className || selectedStudent.class;
+
+            const applicableCategories = allCategories.filter(cat => {
+                if (cat.hasSlabs) {
+                    const slabCount = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+                    return slabCount > 0;
+                }
+                const clsAmount = cat.amounts.find(a => a.className === cls);
+                return clsAmount && clsAmount.amount > 0;
+            });
+
+            setAvailableCategories(applicableCategories);
+            if (applicableCategories.length > 0) {
+                setFeeType(applicableCategories[0].name);
+            }
+        } else {
+            setAvailableCategories([]);
+            setFeeType('');
+        }
+    }, [selectedStudent, allCategories]);
 
     // UI State for History
     const [expandedClass, setExpandedClass] = useState(null);
@@ -83,13 +127,23 @@ export default function FeeDashboard() {
 
         return students.reduce((acc, student) => {
             const cls = student.className || student.class;
-            const structure = feeStructure[cls] || { tuition: 0, materials: 0 };
 
-            // Conveyance Logic
-            const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-            const conveyanceFee = slab > 0 ? (200 + (slab * 100)) : 0;
+            // Calculate dynamic total due from allCategories
+            let studentTotalDue = 0;
+            allCategories.forEach(cat => {
+                if (cat.hasSlabs) {
+                    const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                    if (slabCount > 0) {
+                        studentTotalDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                    }
+                } else {
+                    const expectedObj = cat.amounts.find(a => a.className === cls);
+                    if (expectedObj) {
+                        studentTotalDue += expectedObj.amount;
+                    }
+                }
+            });
 
-            const studentTotalDue = (structure.tuition || 0) + (structure.materials || 0) + conveyanceFee;
             const studentPaid = paymentsByStudent[String(student.id || student._id)] || 0;
             const studentPending = Math.max(0, studentTotalDue - studentPaid);
 
@@ -99,7 +153,7 @@ export default function FeeDashboard() {
 
             return acc;
         }, { expected: 0, collected: 0, pending: 0 });
-    }, [students, transactions]);
+    }, [students, transactions, allCategories]);
 
 
     // --- Collection Logic ---
@@ -122,63 +176,40 @@ export default function FeeDashboard() {
 
 
 
-    const [amount, setAmount] = useState(0);
+    const [feeBreakdown, setFeeBreakdown] = useState({});
+    const [transactionId, setTransactionId] = useState('');
 
-    // Fetch student fee details to calculate actual pending amount
-    useEffect(() => {
-        if (selectedStudent) {
-            calculatePendingAmount();
-        }
-    }, [selectedStudent, feeType]);
+    const totalPayingAmount = useMemo(() => {
+        return Object.values(feeBreakdown).reduce((sum, val) => sum + (Number(val) || 0), 0);
+    }, [feeBreakdown]);
 
-    const calculatePendingAmount = async () => {
-        if (!selectedStudent) return;
-
-        const cls = selectedStudent.className || selectedStudent.class;
-        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
-        const totalFee = feeType === 'full'
-            ? (structure.tuition + structure.materials)
-            : (structure[feeType] || 0);
-
-        // We need to know how much they already paid.
-        // For now, let's assume the backend will handle the logic of "how much is remaining" 
-        // if we want to default the input to "Pending Amount".
-        // But since we don't have that handy without a fetch, let's default to the *Standard Amount*
-        // and let the user override it. Validating against "Overpayment" might be needed later.
-
-        // Better: Default to the standard fee amount for that type.
-        if (feeType === 'custom') {
-            setAmount('');
-        } else if (feeType === 'conveyance') {
-            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
-            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
-            setAmount(conveyanceFee);
-        } else if (feeType === 'full') {
-            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
-            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
-            setAmount(totalFee + conveyanceFee);
-        } else {
-            setAmount(totalFee);
-        }
+    const handleBreakdownChange = (categoryName, value) => {
+        setFeeBreakdown(prev => ({
+            ...prev,
+            [categoryName]: value
+        }));
     };
 
     const getDueAmount = () => {
-        // This is now purely for reference of what the "Standard" fee is.
         if (!selectedStudent) return 0;
         const cls = selectedStudent.className || selectedStudent.class;
-        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
 
-        if (feeType === 'full') {
-            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
-            const conveyanceFee = slab > 0 ? 200 + (slab * 100) : 0;
-            return (structure.tuition || 0) + (structure.materials || 0) + conveyanceFee;
-        }
+        let standardDue = 0;
+        availableCategories.forEach(cat => {
+            if (cat.hasSlabs) {
+                const slabCount = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
+                if (slabCount > 0) {
+                    standardDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                }
+            } else {
+                const classAmount = cat.amounts.find(a => a.className === cls);
+                if (classAmount) {
+                    standardDue += classAmount.amount;
+                }
+            }
+        });
 
-        if (feeType === 'conveyance') {
-            const slab = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
-            return slab > 0 ? 200 + (slab * 100) : 0;
-        }
-        return structure[feeType] || 0;
+        return standardDue;
     };
 
     // --- Payment Logic: Preview & Confirm ---
@@ -186,18 +217,25 @@ export default function FeeDashboard() {
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
 
     const handlePreview = () => {
-        if (!selectedStudent || amount <= 0) return;
+        if (!selectedStudent || totalPayingAmount <= 0) return;
+
+        if (paymentMode !== 'Cash' && (!transactionId || transactionId.trim() === '')) {
+            addToast("Transaction ID is required for non-cash payments", "error");
+            return;
+        }
+
+        const breakdownArray = Object.entries(feeBreakdown)
+            .filter(([_, amt]) => Number(amt) > 0)
+            .map(([catName, amt]) => ({ feeType: catName, amount: Number(amt) }));
 
         const transaction = {
             studentId: selectedStudent.id || selectedStudent._id,
-            type: feeType === 'full'
-                ? 'Full Fee (Tuition + Materials + Conveyance)'
-                : feeType === 'conveyance'
-                    ? 'Conveyance Fee'
-                    : `${feeType.charAt(0).toUpperCase() + feeType.slice(1)} Fee`,
-            amount: Number(amount),
+            breakdown: breakdownArray,
+            type: 'Split Payment', // Legacy fallback label
+            amount: totalPayingAmount,
             date: new Date().toISOString(),
             mode: paymentMode,
+            transactionId: transactionId.trim(),
             remarks: 'Collected via Portal',
             // Preliminary Receipt No for Preview
             receiptNo: (() => {
@@ -263,7 +301,8 @@ export default function FeeDashboard() {
         setSearchTerm('');
         setShowReceipt(false);
         setLastTransaction(null);
-        setAmount(0);
+        setFeeBreakdown({});
+        setTransactionId('');
         setIsPaymentConfirmed(false);
     };
 
@@ -338,36 +377,7 @@ export default function FeeDashboard() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Fee Type</label>
-                                <select
-                                    value={feeType}
-                                    onChange={(e) => setFeeType(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                >
-                                    <option value="tuition">Tuition Fee</option>
-                                    <option value="materials">Materials Fee</option>
-                                    {selectedStudent.conveyanceSlab && parseInt(selectedStudent.conveyanceSlab) > 0 && (
-                                        <option value="conveyance">Conveyance Fee</option>
-                                    )}
-                                    <option value="full">Full Fee (Total)</option>
-                                    <option value="custom">Custom / Partial Payment</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Amount to Pay</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                                        className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                    />
-                                </div>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
                                 <select
@@ -379,6 +389,52 @@ export default function FeeDashboard() {
                                     <option value="UPI">UPI / Online</option>
                                     <option value="Cheque">Cheque</option>
                                 </select>
+                            </div>
+
+                            {paymentMode !== 'Cash' && (
+                                <div className="animate-in fade-in slide-in-from-left-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Transaction / Ref ID <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={transactionId}
+                                        onChange={(e) => setTransactionId(e.target.value)}
+                                        placeholder="e.g. UTR Number or Cheque No"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-t border-slate-200 pt-6">
+                            <h4 className="font-semibold text-slate-800 mb-4">Fee Allocation (Split Payment)</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {getStudentFeeDetails(selectedStudent).filter(d => d.pending > 0).map((detail, idx) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="text-sm font-medium text-slate-700">{detail.type}</label>
+                                            <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Due: ₹{detail.pending}</span>
+                                        </div>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₹</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max={detail.pending}
+                                                value={feeBreakdown[detail.type] !== undefined ? feeBreakdown[detail.type] : ''}
+                                                onChange={(e) => handleBreakdownChange(detail.type, e.target.value)}
+                                                placeholder={`0`}
+                                                className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                {getStudentFeeDetails(selectedStudent).filter(d => d.pending > 0).length === 0 && (
+                                    <div className="col-span-full text-center p-4 text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100">
+                                        No pending fees found for this student. They are all caught up!
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -408,31 +464,19 @@ export default function FeeDashboard() {
                             {(() => {
                                 const details = getStudentFeeDetails(selectedStudent);
 
-                                // Separate Academic (Tuition + Materials) and Conveyance
-                                const academicDetails = details.filter(d => d.type !== 'Conveyance');
-                                const conveyanceDetail = details.find(d => d.type === 'Conveyance');
-
-                                const academicPending = academicDetails.reduce((sum, d) => sum + (d.due - d.paid), 0);
-                                const conveyancePending = conveyanceDetail ? (conveyanceDetail.due - conveyanceDetail.paid) : 0;
-                                const totalPending = academicPending + conveyancePending;
-
-                                return (
-                                    <>
-                                        <div className="flex justify-between text-slate-400 text-sm">
-                                            <span>Academic Pending</span>
-                                            <span>₹{academicPending.toLocaleString()}</span>
-                                        </div>
-                                        {conveyanceDetail && (
-                                            <div className="flex justify-between text-slate-400 text-sm">
-                                                <span>Conveyance Pending</span>
-                                                <span>₹{conveyancePending.toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-amber-400 font-bold text-lg mt-2">
-                                            <span>Total Pending</span>
-                                            <span>₹{totalPending.toLocaleString()}</span>
-                                        </div>
-                                    </>
+                                // Dynamic UI for each Category inside Payment Summary
+                                return details.map((d, idx) => (
+                                    <div key={idx} className="flex justify-between text-slate-400 text-sm">
+                                        <span>{d.type} Pending</span>
+                                        <span className={d.pending > 0 ? "text-red-400" : "text-emerald-400"}>
+                                            ₹{Math.max(0, d.pending).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )).concat(
+                                    <div key="total" className="flex justify-between text-amber-400 font-bold text-lg mt-2 pt-2 border-t border-slate-700">
+                                        <span>Total Pending</span>
+                                        <span>₹{details.reduce((sum, d) => sum + Math.max(0, d.pending), 0).toLocaleString()}</span>
+                                    </div>
                                 );
                             })()}
                         </div>
@@ -441,12 +485,12 @@ export default function FeeDashboard() {
                     <div className="h-px bg-slate-700 my-2"></div>
                     <div className="flex justify-between text-xl font-bold">
                         <span>Paying Now</span>
-                        <span>₹{amount || 0}</span>
+                        <span>₹{totalPayingAmount || 0}</span>
                     </div>
                 </div>
 
                 <button
-                    disabled={!selectedStudent || isProcessing || amount <= 0}
+                    disabled={!selectedStudent || isProcessing || totalPayingAmount <= 0}
                     onClick={handlePreview}
                     className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -470,7 +514,33 @@ export default function FeeDashboard() {
         if (!student) return [];
 
         const cls = student.className || student.class;
-        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
+
+        // Filter applicable categories for this specific student from allCategories
+        const applicableCategories = allCategories.filter(cat => {
+            if (cat.hasSlabs) {
+                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                return slabCount > 0;
+            }
+            const clsAmount = cat.amounts.find(a => a.className === cls);
+            return clsAmount && clsAmount.amount > 0;
+        });
+
+        const categories = applicableCategories.map(cat => {
+            let dueAmount = 0;
+            if (cat.hasSlabs) {
+                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                if (slabCount > 0) {
+                    dueAmount = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                }
+            } else {
+                const expectedObj = cat.amounts.find(a => a.className === cls);
+                dueAmount = expectedObj ? expectedObj.amount : 0;
+            }
+            return {
+                type: cat.name,
+                due: dueAmount
+            };
+        });
 
         // Get all payments for this student
         const payments = transactions.filter(t => {
@@ -479,56 +549,37 @@ export default function FeeDashboard() {
             return String(tStudentId) === String(sId) && t.status === 'Paid';
         });
 
-        // Calculate status per category
-        const categories = Object.entries(structure).map(([type, dueAmount]) => ({ type, due: dueAmount }));
-
-        // Add Conveyance if applicable
-        if (student.conveyanceSlab && parseInt(student.conveyanceSlab) > 0) {
-            const slab = parseInt(student.conveyanceSlab);
-            categories.push({ type: 'conveyance', due: (200 + (slab * 100)) * 10 });
-        }
-
-        // Calculate total paid across all categories
         const totalPaidAll = payments.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-
         let allocatedAmount = 0;
 
-        const result = categories.map(({ type, due: dueAmount }) => {
-            const paidAmount = payments
-                .filter(t => {
-                    if (t.feeType?.toLowerCase().includes('full')) return true;
-                    return t.feeType?.toLowerCase().includes(type.toLowerCase());
-                })
-                .reduce((sum, t) => {
-                    if (t.feeType?.toLowerCase().includes('full')) {
-                        if (type === 'conveyance') return sum + dueAmount;
-                        return sum + (type === 'tuition' ? 20000 : 6500);
-                    }
-                    return sum + (t.amount || 0);
-                }, 0);
+        const result = categories.map(({ type, due }) => {
+            const paidAmount = payments.reduce((sum, t) => {
+                if (t.breakdown && t.breakdown.length > 0) {
+                    const bItem = t.breakdown.find(b => b.feeType === type || b.type === type);
+                    return sum + (bItem ? Number(bItem.amount) : 0);
+                } else if (t.feeType === type || t.type === type) {
+                    return sum + (Number(t.amount) || 0);
+                }
+                return sum;
+            }, 0);
 
-            let effectivePaid = paidAmount;
-            const hasFullFee = payments.some(t => t.feeType?.toLowerCase().includes('full'));
-            if (hasFullFee) effectivePaid = dueAmount;
-
-            const finalPaid = effectivePaid > dueAmount ? dueAmount : effectivePaid;
-            allocatedAmount += finalPaid;
+            allocatedAmount += paidAmount;
 
             return {
-                type: type.charAt(0).toUpperCase() + type.slice(1),
-                due: dueAmount,
-                paid: finalPaid,
-                pending: Math.max(0, dueAmount - finalPaid),
-                status: finalPaid >= dueAmount ? 'Paid' : finalPaid > 0 ? 'Partial' : 'Pending'
+                type: type,
+                due: due,
+                paid: paidAmount,
+                pending: Math.max(0, due - paidAmount),
+                status: paidAmount >= due && due > 0 ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Pending'
             };
         });
 
-        // Add 'Other/Excess' if there's payment left over or custom payments
+        // Add 'Other/Excess' if there are payments made to legacy categories
         if (totalPaidAll > allocatedAmount) {
             const extra = totalPaidAll - allocatedAmount;
             if (extra > 0) {
                 result.push({
-                    type: 'Other/Custom',
+                    type: 'Archived/Legacy',
                     due: 0,
                     paid: extra,
                     pending: 0,
@@ -1204,22 +1255,34 @@ export default function FeeDashboard() {
                     <p className="text-slate-500">Collect fees and view transaction history.</p>
                 </div>
 
-                {/* Tabs */}
-                <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1">
+                {/* Tabs & Settings */}
+                <div className="flex items-center gap-2">
+                    <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1">
+                        <button
+                            onClick={() => setActiveTab('collect')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'collect' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            Collect Fee
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('history')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            Transactions
+                        </button>
+                    </div>
+
                     <button
-                        onClick={() => setActiveTab('collect')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'collect' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        onClick={() => setShowSettings(true)}
+                        title="Fee Settings"
+                        className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm ml-2"
                     >
-                        Collect Fee
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        Transactions
+                        <Settings size={20} />
                     </button>
                 </div>
             </div>
+
+            {showSettings && <FeeSettings onClose={() => { setShowSettings(false); if (selectedStudent) fetchCategoriesForStudent(selectedStudent); }} />}
 
             {showReceipt ? renderReceipt() : (
                 activeTab === 'collect' ? renderCollectionTab() : renderHistoryTab()

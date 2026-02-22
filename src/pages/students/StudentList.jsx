@@ -247,7 +247,7 @@ export default function StudentList() {
                                 <th className="px-6 py-4 border-b border-slate-200">Academic Info</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Contact</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Fee Status</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Conveyance</th>
+                                <th className="px-6 py-4 border-b border-slate-200">Conveyance Status of This Month</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
                             </tr>
                         </thead>

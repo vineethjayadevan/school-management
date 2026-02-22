@@ -24,6 +24,7 @@ export default function StudentDetails() {
     const [mode, setMode] = useState(location.state?.mode || 'view');
     const [loading, setLoading] = useState(true);
     const [student, setStudent] = useState(null);
+    const [activeCategories, setActiveCategories] = useState([]); // State for active categories
     const [documents, setDocuments] = useState([]); // State for documents (existing + pending previews)
     const [pendingUploads, setPendingUploads] = useState({}); // Stores File objects: { category: File }
     const [uploading, setUploading] = useState(false); // General loading state during submit
@@ -255,11 +256,24 @@ export default function StudentDetails() {
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            // Parallel fetch: Student Profile AND Fee History
-            const [data, feeHistory] = await Promise.all([
-                storageService.students.getById(id),
-                storageService.fees.getByStudent(id)
+            // Parallel fetch: Student Profile, Fee History, and Active Categories
+            const [data, feeHistory, categoriesRes] = await Promise.all([
+                storageService.students.getById(id).catch(err => {
+                    console.error("Failed to fetch student profile:", err);
+                    return null;
+                }),
+                storageService.fees.getByStudent(id).catch(err => {
+                    console.error("Failed to fetch fee history:", err);
+                    return [];
+                }),
+                api.get('/fee-categories').catch(err => {
+                    console.error("Failed to fetch fee categories:", err);
+                    return { data: [] };
+                })
             ]);
+
+            const fetchedCategories = categoriesRes.data || [];
+            setActiveCategories(fetchedCategories);
 
             if (!data) {
                 console.error("Student not found for ID:", id);
@@ -268,27 +282,88 @@ export default function StudentDetails() {
                 return;
             }
 
-            // Calculate fee stats
-            const tuitionFee = 20000;
-            const materialsFee = 6500;
+            // Calculate dynamic fee stats breakdown
+            const breakdown = [];
             const slab = data.conveyanceSlab ? parseInt(data.conveyanceSlab) : 0;
-            const conveyanceFee = calculateTotalConveyanceFee(slab);
-            const totalFee = tuitionFee + materialsFee + conveyanceFee;
+            let totalFeeComputed = 0;
+            let totalPaidComputed = 0;
 
-            const paid = feeHistory.reduce((sum, f) => sum + (f.amount || 0), 0);
-            const pending = totalFee - paid;
+            const feeDetails = {
+                paid: 0,
+                pending: 0,
+                totalFee: 0,
+                monthlyConveyance: calculateConveyanceFee(slab),
+                breakdown: []
+            };
+
+            // Calculate paid per category from history breakdown
+            const categoryPaid = {};
+            feeHistory.forEach(txn => {
+                let txnAmountLeft = txn.amount || 0;
+                if (txn.breakdown && txn.breakdown.length > 0) {
+                    txn.breakdown.forEach(item => {
+                        // Normalize name for matching
+                        const normalizedName = item.feeType?.trim().toLowerCase();
+                        if (normalizedName) {
+                            categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + item.amount;
+                        }
+                    });
+                } else if (txn.feeType) {
+                    // Fallback for older singular fees
+                    const normalizedName = txn.feeType.trim().toLowerCase();
+                    categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + txnAmountLeft;
+                }
+                totalPaidComputed += (txn.amount || 0);
+            });
+
+            // Calculate precise pending/total per category
+            const currentClassName = data.className || data.class;
+            fetchedCategories.forEach(category => {
+                const normalizedCatName = category.name.trim().toLowerCase();
+                let annualTotal = 0;
+                let monthlyAmount = 0;
+
+                if (category.hasSlabs) {
+                    // Slab-based (e.g. Conveyance): Only include if student has an active slab
+                    if (slab > 0) {
+                        // For slab fees, we use the category's baseAmount as the monthly base
+                        const baseMonthly = category.baseAmount || 0;
+                        monthlyAmount = baseMonthly + (slab * (category.slabMultiplier || 0));
+                        annualTotal = monthlyAmount * (category.months || 10);
+                    }
+                } else {
+                    // Regular fee (e.g. Tuition, Admission):
+                    // Use class-specific amount as the annual total directly
+                    const classSpecific = category.amounts?.find(a => a.className === currentClassName);
+                    annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
+                    monthlyAmount = annualTotal / (category.months || 10); // For display preference
+                }
+
+                if (annualTotal > 0) {
+                    totalFeeComputed += annualTotal;
+                    const paidForCat = categoryPaid[normalizedCatName] || 0;
+                    const pendingForCat = Math.max(0, annualTotal - paidForCat);
+
+                    feeDetails.breakdown.push({
+                        id: category._id,
+                        name: category.name,
+                        type: category.type,
+                        total: annualTotal,
+                        paid: paidForCat,
+                        pending: pendingForCat,
+                        monthly: monthlyAmount,
+                        months: category.months || 10
+                    });
+                }
+            });
+
+            feeDetails.paid = totalPaidComputed;
+            feeDetails.totalFee = totalFeeComputed;
+            feeDetails.pending = Math.max(0, totalFeeComputed - totalPaidComputed);
 
             const studentWithFees = {
                 ...data,
-                feeDetails: {
-                    paid,
-                    pending,
-                    totalFee,
-                    tuitionFee,
-                    materialsFee,
-                    conveyanceFee,
-                    monthlyConveyance: calculateConveyanceFee(slab)
-                },
+                feeDetails: feeDetails,
                 feeHistory: feeHistory || [] // Store history
             };
 
@@ -384,7 +459,6 @@ export default function StudentDetails() {
                 permLocality: data.permanentAddress?.locality,
                 permCity: data.permanentAddress?.city,
                 permState: data.permanentAddress?.state,
-                permPinCode: data.permanentAddress?.pinCode,
                 permPinCode: data.permanentAddress?.pinCode,
                 permCountry: data.permanentAddress?.country || 'India',
 
@@ -615,1285 +689,1200 @@ export default function StudentDetails() {
 
     if (loading && !student) {
         return (
-            <div className="flex items-center justify-center min-h-[500px]">
-                <div className="text-slate-500">Loading student details...</div>
+            <div className="flex flex-col items-center justify-center min-h-[500px] gap-4">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="text-slate-500 font-medium">Loading student details...</div>
             </div>
         );
     }
 
-    if (!student) return null;
+    if (!student) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4">
+                <div className="p-4 bg-rose-50 rounded-full text-rose-600 mb-4">
+                    <User size={48} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Student Not Found</h2>
+                <p className="text-slate-500 mb-6 max-w-md">We couldn't find the student details you're looking for. The student may have been deleted or the link might be broken.</p>
+                <button
+                    onClick={() => navigate('/admin/students')}
+                    className="px-6 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors"
+                >
+                    Back to Student List
+                </button>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-6 w-full mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/admin/students')}
-                        className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{student.name}</h1>
-                        <p className="text-slate-500 font-mono">ADM: {student.admissionNo}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {mode === 'view' ? (
-                        <>
-                            <button
-                                onClick={handleDownloadProfile}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                            >
-                                <Download size={16} /> Download Profile
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setMode('edit');
-                                    setOpenSection('academic'); // Default to first section in edit mode
-                                }}
-                                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium flex items-center gap-2"
-                            >
-                                <Edit size={16} /> Edit Profile
-                            </button>
-                        </>
-                    ) : (
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => {
-                                    setMode('view');
-                                    reset(); // Reset form to original values
-                                    setOpenSection('academic');
-                                }}
-                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                form="edit-student-form"
-                                type="submit"
-                                disabled={uploading}
-                                className={`px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2 ${uploading ? 'opacity-75 cursor-not-allowed' : ''}`}
-                            >
-                                {uploading ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save size={16} /> Save Changes
-                                    </>
-                                )}
-                            </button>
+        <>
+            <div className="space-y-6 w-full mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/admin/students')}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                        >
+                            <ArrowLeft size={24} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900">{student.name}</h1>
+                            <p className="text-slate-500 font-mono">ADM: {student.admissionNo}</p>
                         </div>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {mode === 'view' ? (
+                            <>
+                                <button
+                                    onClick={handleDownloadProfile}
+                                    className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                                >
+                                    <Download size={16} /> Download Profile
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setMode('edit');
+                                        setOpenSection('academic'); // Default to first section in edit mode
+                                    }}
+                                    className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium flex items-center gap-2"
+                                >
+                                    <Edit size={16} /> Edit Profile
+                                </button>
+                            </>
+                        ) : (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setMode('view');
+                                        reset(); // Reset form to original values
+                                        setOpenSection('academic');
+                                    }}
+                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    form="edit-student-form"
+                                    type="submit"
+                                    disabled={uploading}
+                                    className={`px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-sm font-medium flex items-center gap-2 ${uploading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={16} /> Save Changes
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="space-y-6">
+                {/* Main Content */}
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-                {/* Information */}
-                <div className="space-y-4 w-full">
+                    {/* Left Side: Information */}
+                    <div className="flex-1 space-y-4 w-full">
 
-                    {/* Mode: VIEW */}
-                    {mode === 'view' ? (
-                        <div className="space-y-4">
-                            {/* Administrative & Academic Details - ACCORDION */}
-                            <Accordion
-                                title="Administrative & Academic Info"
-                                icon={Book}
-                                isOpen={openSection === 'academic'}
-                                onToggle={() => toggleSection('academic')}
-                            >
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Application No</p>
-                                        <p className="font-semibold text-lg">{student.applicationNo || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Admission No</p>
-                                        <p className="font-semibold text-lg">{student.admissionNo}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Date of Submission</p>
-                                        <p className="font-medium">{student.submissionDate ? new Date(student.submissionDate).toLocaleDateString() : 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Class & Section</p>
-                                        <p className="font-semibold text-lg">{student.className || student.class} - {student.section}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Roll Number</p>
-                                        <p className="font-semibold text-lg">{student.rollNo || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Fee Status</p>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${student.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                                            {student.feesStatus || 'Pending'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Personal Information - ACCORDION */}
-                            <Accordion
-                                title="Personal Information"
-                                icon={User}
-                                isOpen={openSection === 'personal'}
-                                onToggle={() => toggleSection('personal')}
-                            >
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8">
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Full Name</p>
-                                        <p className="font-medium text-lg">{student.name}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Date of Birth</p>
-                                        <p className="font-medium flex items-center gap-2">
-                                            <Calendar size={14} className="text-slate-400" />
-                                            {student.dob ? new Date(student.dob).toLocaleDateString() : 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Gender</p>
-                                        <p className="font-medium">{student.gender || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Blood Group</p>
-                                        <p className="font-medium">{student.bloodGroup || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Place of Birth</p>
-                                        <p className="font-medium">{student.placeOfBirth || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Nationality</p>
-                                        <p className="font-medium">{student.nationality || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Religion</p>
-                                        <p className="font-medium">{student.religion || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Caste</p>
-                                        <p className="font-medium">{student.caste || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Category</p>
-                                        <p className="font-medium">{student.category || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Aadhar Number</p>
-                                        <p className="font-medium">{student.aadharNo || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Parent Details - ACCORDION - Moved Below Personal */}
-                            <Accordion
-                                title="Parents & Guardian Details"
-                                icon={User}
-                                isOpen={openSection === 'guardian'}
-                                onToggle={() => toggleSection('guardian')}
-                            >
-                                <div className="space-y-8">
-                                    {/* Father */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-2 mb-4">Father's Information</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Name</p>
-                                                <p className="font-medium">{student.fatherName || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Mobile</p>
-                                                <p className="font-medium flex items-center gap-2">
-                                                    <Phone size={14} className="text-slate-400" />
-                                                    {student.fatherMobile || 'N/A'}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Email</p>
-                                                <p className="font-medium text-xs break-all">{student.fatherEmail || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Occupation</p>
-                                                <p className="font-medium">{student.fatherOccupation || 'N/A'}</p>
-                                            </div>
-                                            <div className="col-span-1 md:col-span-2">
-                                                <p className="text-xs text-slate-500 mb-1">Office Address</p>
-                                                <p className="font-medium text-sm">{student.fatherOfficeAddress || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Mother */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-pink-600 border-b border-pink-100 pb-2 mb-4">Mother's Information</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Name</p>
-                                                <p className="font-medium">{student.motherName || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Mobile</p>
-                                                <p className="font-medium flex items-center gap-2">
-                                                    <Phone size={14} className="text-slate-400" />
-                                                    {student.motherMobile || 'N/A'}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Email</p>
-                                                <p className="font-medium text-xs break-all">{student.motherEmail || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Occupation</p>
-                                                <p className="font-medium">{student.motherOccupation || 'N/A'}</p>
-                                            </div>
-                                            <div className="col-span-1 md:col-span-2">
-                                                <p className="text-xs text-slate-500 mb-1">Office Address</p>
-                                                <p className="font-medium text-sm">{student.motherOfficeAddress || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Address Details */}
-                                    <div className="col-span-2 md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Mode: VIEW */}
+                        {mode === 'view' ? (
+                            <div className="space-y-4">
+                                {/* Administrative & Academic Details - ACCORDION */}
+                                <Accordion
+                                    title="Administrative & Academic Info"
+                                    icon={Book}
+                                    isOpen={openSection === 'academic'}
+                                    onToggle={() => toggleSection('academic')}
+                                >
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-600 border-b border-slate-100 pb-2 mb-4">Residential Address</h4>
-                                            {student.residentialAddress && (student.residentialAddress.street || student.residentialAddress.houseNo) ? (
-                                                <div className="text-sm text-slate-700 space-y-1">
-                                                    <p>{student.residentialAddress.houseNo}, {student.residentialAddress.street}</p>
-                                                    <p>{student.residentialAddress.locality}</p>
-                                                    <p>{student.residentialAddress.city}, {student.residentialAddress.state} - {student.residentialAddress.pinCode}</p>
-                                                    <p>{student.residentialAddress.country}</p>
-                                                </div>
-                                            ) : (
-                                                <p className="font-medium flex items-start gap-2">
-                                                    <MapPin size={14} className="text-slate-400 mt-1" />
-                                                    {student.address || 'N/A'}
-                                                </p>
-                                            )}
+                                            <p className="text-xs text-slate-500 mb-1">Application No</p>
+                                            <p className="font-semibold text-lg">{student.applicationNo || 'N/A'}</p>
                                         </div>
-
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-600 border-b border-slate-100 pb-2 mb-4">Permanent Address</h4>
-                                            {student.permanentAddress && (student.permanentAddress.street || student.permanentAddress.houseNo) ? (
-                                                <div className="text-sm text-slate-700 space-y-1">
-                                                    <p>{student.permanentAddress.houseNo}, {student.permanentAddress.street}</p>
-                                                    <p>{student.permanentAddress.locality}</p>
-                                                    <p>{student.permanentAddress.city}, {student.permanentAddress.state} - {student.permanentAddress.pinCode}</p>
-                                                    <p>{student.permanentAddress.country}</p>
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-slate-500 italic">No permanent address recorded.</p>
-                                            )}
+                                            <p className="text-xs text-slate-500 mb-1">Admission No</p>
+                                            <p className="font-semibold text-lg">{student.admissionNo}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Date of Submission</p>
+                                            <p className="font-medium">{student.submissionDate ? new Date(student.submissionDate).toLocaleDateString() : 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Class & Section</p>
+                                            <p className="font-semibold text-lg">{student.className || student.class} - {student.section}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Roll Number</p>
+                                            <p className="font-semibold text-lg">{student.rollNo || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Fee Status</p>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${student.feesStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                                {student.feesStatus || 'Pending'}
+                                            </span>
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Guardian Details (Conditionally Displayed) */}
-                                    {student.isGuardian && (
+                                {/* Personal Information - ACCORDION */}
+                                <Accordion
+                                    title="Personal Information"
+                                    icon={User}
+                                    isOpen={openSection === 'personal'}
+                                    onToggle={() => toggleSection('personal')}
+                                >
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8">
                                         <div>
-                                            <h4 className="text-sm font-semibold text-violet-600 border-b border-violet-100 pb-2 mb-4">Guardian Information</h4>
+                                            <p className="text-xs text-slate-500 mb-1">Full Name</p>
+                                            <p className="font-medium text-lg">{student.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Date of Birth</p>
+                                            <p className="font-medium flex items-center gap-2">
+                                                <Calendar size={14} className="text-slate-400" />
+                                                {student.dob ? new Date(student.dob).toLocaleDateString() : 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Gender</p>
+                                            <p className="font-medium">{student.gender || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Blood Group</p>
+                                            <p className="font-medium">{student.bloodGroup || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Place of Birth</p>
+                                            <p className="font-medium">{student.placeOfBirth || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Nationality</p>
+                                            <p className="font-medium">{student.nationality || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Religion</p>
+                                            <p className="font-medium">{student.religion || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Caste</p>
+                                            <p className="font-medium">{student.caste || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Category</p>
+                                            <p className="font-medium">{student.category || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Aadhar Number</p>
+                                            <p className="font-medium">{student.aadharNo || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </Accordion>
+
+                                {/* Parent Details - ACCORDION - Moved Below Personal */}
+                                <Accordion
+                                    title="Parents & Guardian Details"
+                                    icon={User}
+                                    isOpen={openSection === 'guardian'}
+                                    onToggle={() => toggleSection('guardian')}
+                                >
+                                    <div className="space-y-8">
+                                        {/* Father */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-indigo-600 border-b border-indigo-100 pb-2 mb-4">Father's Information</h4>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                                 <div>
-                                                    <p className="text-xs text-slate-500 mb-1">Guardian Name</p>
-                                                    <p className="font-medium">{student.guardianName || 'N/A'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-slate-500 mb-1">Relationship</p>
-                                                    <p className="font-medium">{student.guardianRelation || 'N/A'}</p>
+                                                    <p className="text-xs text-slate-500 mb-1">Name</p>
+                                                    <p className="font-medium">{student.fatherName || 'N/A'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-slate-500 mb-1">Mobile</p>
                                                     <p className="font-medium flex items-center gap-2">
                                                         <Phone size={14} className="text-slate-400" />
-                                                        {student.guardianPhone || 'N/A'}
+                                                        {student.fatherMobile || 'N/A'}
                                                     </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Email</p>
+                                                    <p className="font-medium text-xs break-all">{student.fatherEmail || 'N/A'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-slate-500 mb-1">Occupation</p>
-                                                    <p className="font-medium">{student.guardianOccupation || 'N/A'}</p>
+                                                    <p className="font-medium">{student.fatherOccupation || 'N/A'}</p>
                                                 </div>
                                                 <div className="col-span-1 md:col-span-2">
-                                                    <p className="text-xs text-slate-500 mb-1">Guardian Address</p>
-                                                    <p className="font-medium text-sm">{student.guardianAddress || 'N/A'}</p>
+                                                    <p className="text-xs text-slate-500 mb-1">Office Address</p>
+                                                    <p className="font-medium text-sm">{student.fatherOfficeAddress || 'N/A'}</p>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Emergency Contact */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-orange-600 border-b border-orange-100 pb-2 mb-4">Emergency Contact</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Contact Name</p>
-                                                <p className="font-medium">{student.emergencyContact?.name || student.fatherName || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Relationship</p>
-                                                <p className="font-medium">{student.emergencyContact?.relation || 'Father'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Mobile</p>
-                                                <p className="font-medium flex items-center gap-2">
-                                                    <Phone size={14} className="text-slate-400" />
-                                                    {student.emergencyContact?.phone || student.fatherMobile || 'N/A'}
-                                                </p>
+                                        {/* Mother */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-pink-600 border-b border-pink-100 pb-2 mb-4">Mother's Information</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Name</p>
+                                                    <p className="font-medium">{student.motherName || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Mobile</p>
+                                                    <p className="font-medium flex items-center gap-2">
+                                                        <Phone size={14} className="text-slate-400" />
+                                                        {student.motherMobile || 'N/A'}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Email</p>
+                                                    <p className="font-medium text-xs break-all">{student.motherEmail || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Occupation</p>
+                                                    <p className="font-medium">{student.motherOccupation || 'N/A'}</p>
+                                                </div>
+                                                <div className="col-span-1 md:col-span-2">
+                                                    <p className="text-xs text-slate-500 mb-1">Office Address</p>
+                                                    <p className="font-medium text-sm">{student.motherOfficeAddress || 'N/A'}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Transportation Details */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-600 border-b border-blue-100 pb-2 mb-4">Transportation Details</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                        {/* Address Details */}
+                                        <div className="col-span-2 md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
-                                                <p className="text-xs text-slate-500 mb-1">Mode</p>
-                                                <p className="font-medium">{student.transportation?.mode || 'N/A'}</p>
+                                                <h4 className="text-sm font-semibold text-slate-600 border-b border-slate-100 pb-2 mb-4">Residential Address</h4>
+                                                {student.residentialAddress && (student.residentialAddress.street || student.residentialAddress.houseNo) ? (
+                                                    <div className="text-sm text-slate-700 space-y-1">
+                                                        <p>{student.residentialAddress.houseNo}, {student.residentialAddress.street}</p>
+                                                        <p>{student.residentialAddress.locality}</p>
+                                                        <p>{student.residentialAddress.city}, {student.residentialAddress.state} - {student.residentialAddress.pinCode}</p>
+                                                        <p>{student.residentialAddress.country}</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="font-medium flex items-start gap-2">
+                                                        <MapPin size={14} className="text-slate-400 mt-1" />
+                                                        {student.address || 'N/A'}
+                                                    </p>
+                                                )}
                                             </div>
-                                            {student.transportation?.mode === 'School Bus' && (
-                                                <>
-                                                    <div>
-                                                        <p className="text-xs text-slate-500 mb-1">Route No</p>
-                                                        <p className="font-medium">{student.transportation?.routeNumber || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-slate-500 mb-1">Pickup Point</p>
-                                                        <p className="font-medium">{student.transportation?.pickupPoint || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-slate-500 mb-1">Drop Point</p>
-                                                        <p className="font-medium">{student.transportation?.dropPoint || '-'}</p>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    {/* Sibling Information */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-teal-600 border-b border-teal-100 pb-2 mb-4">Sibling Information</h4>
-                                        {student.siblings && student.siblings.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {student.siblings.map((sib, idx) => (
-                                                    <div key={idx} className="bg-teal-50 border border-teal-100 rounded-lg p-3">
-                                                        <p className="font-semibold text-teal-900">{sib.name}</p>
-                                                        <p className="text-xs text-teal-700">Class: {sib.class} - {sib.section} • Adm: {sib.admissionNo}</p>
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-slate-600 border-b border-slate-100 pb-2 mb-4">Permanent Address</h4>
+                                                {student.permanentAddress && (student.permanentAddress.street || student.permanentAddress.houseNo) ? (
+                                                    <div className="text-sm text-slate-700 space-y-1">
+                                                        <p>{student.permanentAddress.houseNo}, {student.permanentAddress.street}</p>
+                                                        <p>{student.permanentAddress.locality}</p>
+                                                        <p>{student.permanentAddress.city}, {student.permanentAddress.state} - {student.permanentAddress.pinCode}</p>
+                                                        <p>{student.permanentAddress.country}</p>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-slate-500 italic">No siblings linked.</p>
-                                        )}
-                                    </div>
-
-                                    {/* Conveyance removed from here and moved to Fee Overview */}
-                                </div>
-                            </Accordion>
-
-                            {/* Fee Overview & Conveyance - ACCORDION */}
-                            <Accordion
-                                title="Fee Overview & Conveyance"
-                                icon={CreditCard}
-                                isOpen={openSection === 'fees'}
-                                onToggle={() => toggleSection('fees')}
-                            >
-                                <div className="space-y-6">
-                                    {/* Summary Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Annual Fee</p>
-                                            <p className="text-2xl font-bold text-slate-900 mt-2">₹{student?.feeDetails?.totalFee?.toLocaleString()}</p>
-                                            <div className="mt-2 text-xs text-slate-500 flex flex-col gap-1">
-                                                <span className="flex justify-between"><span>Tuition:</span> <span>₹{student?.feeDetails?.tuitionFee?.toLocaleString()}</span></span>
-                                                <span className="flex justify-between"><span>Materials:</span> <span>₹{student?.feeDetails?.materialsFee?.toLocaleString()}</span></span>
-                                                {student?.conveyanceSlab > 0 && (
-                                                    <span className="flex justify-between text-blue-600 font-medium"><span>Conveyance:</span> <span>₹{student?.feeDetails?.conveyanceFee?.toLocaleString()}</span></span>
+                                                ) : (
+                                                    <p className="text-sm text-slate-500 italic">No permanent address recorded.</p>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Amount Paid</p>
-                                            <p className="text-2xl font-bold text-emerald-700 mt-2">₹{student?.feeDetails?.paid?.toLocaleString()}</p>
-                                            <div className="w-full bg-emerald-200 rounded-full h-1.5 mt-3">
-                                                <div
-                                                    className="bg-emerald-500 h-1.5 rounded-full"
-                                                    style={{ width: `${Math.min((student?.feeDetails?.paid / student?.feeDetails?.totalFee) * 100, 100)}%` }}
-                                                ></div>
+
+                                        {/* Guardian Details (Conditionally Displayed) */}
+                                        {student.isGuardian && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-violet-600 border-b border-violet-100 pb-2 mb-4">Guardian Information</h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Guardian Name</p>
+                                                        <p className="font-medium">{student.guardianName || 'N/A'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Relationship</p>
+                                                        <p className="font-medium">{student.guardianRelation || 'N/A'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Mobile</p>
+                                                        <p className="font-medium flex items-center gap-2">
+                                                            <Phone size={14} className="text-slate-400" />
+                                                            {student.guardianPhone || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 mb-1">Occupation</p>
+                                                        <p className="font-medium">{student.guardianOccupation || 'N/A'}</p>
+                                                    </div>
+                                                    <div className="col-span-1 md:col-span-2">
+                                                        <p className="text-xs text-slate-500 mb-1">Guardian Address</p>
+                                                        <p className="font-medium text-sm">{student.guardianAddress || 'N/A'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Emergency Contact */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-orange-600 border-b border-orange-100 pb-2 mb-4">Emergency Contact</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Contact Name</p>
+                                                    <p className="font-medium">{student.emergencyContact?.name || student.fatherName || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Relationship</p>
+                                                    <p className="font-medium">{student.emergencyContact?.relation || 'Father'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Mobile</p>
+                                                    <p className="font-medium flex items-center gap-2">
+                                                        <Phone size={14} className="text-slate-400" />
+                                                        {student.emergencyContact?.phone || student.fatherMobile || 'N/A'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="bg-rose-50 p-4 rounded-xl border border-rose-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-rose-600 uppercase tracking-wider">Pending Due</p>
-                                            <p className="text-2xl font-bold text-rose-700 mt-2">₹{student?.feeDetails?.pending?.toLocaleString()}</p>
-                                            <p className="text-xs text-rose-500 mt-2">
-                                                Due immediately
+
+                                        {/* Transportation Details */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-blue-600 border-b border-blue-100 pb-2 mb-4">Transportation Details</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <p className="text-xs text-slate-500 mb-1">Mode</p>
+                                                    <p className="font-medium">{student.transportation?.mode || 'N/A'}</p>
+                                                </div>
+                                                {student.transportation?.mode === 'School Bus' && (
+                                                    <>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500 mb-1">Route No</p>
+                                                            <p className="font-medium">{student.transportation?.routeNumber || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500 mb-1">Pickup Point</p>
+                                                            <p className="font-medium">{student.transportation?.pickupPoint || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500 mb-1">Drop Point</p>
+                                                            <p className="font-medium">{student.transportation?.dropPoint || '-'}</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Sibling Information */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-teal-600 border-b border-teal-100 pb-2 mb-4">Sibling Information</h4>
+                                            {student.siblings && student.siblings.length > 0 ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {student.siblings.map((sib, idx) => (
+                                                        <div key={idx} className="bg-teal-50 border border-teal-100 rounded-lg p-3">
+                                                            <p className="font-semibold text-teal-900">{sib.name}</p>
+                                                            <p className="text-xs text-teal-700">Class: {sib.class} - {sib.section} • Adm: {sib.admissionNo}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-slate-500 italic">No siblings linked.</p>
+                                            )}
+                                        </div>
+
+                                        {/* Conveyance removed from here and moved to Fee Overview */}
+                                    </div>
+                                </Accordion>
+
+                                {/* Documents - ACCORDION */}
+                                <Accordion
+                                    title="Documents"
+                                    icon={File}
+                                    isOpen={openSection === 'documents'}
+                                    onToggle={() => toggleSection('documents')}
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {documents.length > 0 ? (
+                                            documents.map((doc, index) => (
+                                                <div key={index} className="flex items-center p-3 border border-slate-200 rounded-lg group">
+                                                    <div className="p-2 rounded-lg mr-3 bg-indigo-50 text-indigo-600">
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold text-slate-500 uppercase mb-0.5">{doc.category || 'Document'}</p>
+                                                        <p className="text-sm font-medium text-slate-900 truncate" title={doc.name}>{doc.name}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDownload(doc)}
+                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+                                                        title="Download/View Document"
+                                                    >
+                                                        <Download size={18} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-1 md:col-span-2 text-center py-8 text-slate-500 italic border-2 border-dashed border-slate-200 rounded-lg">
+                                                No documents uploaded
+                                            </div>
+                                        )}
+                                    </div>
+                                </Accordion>
+
+                                {/* Previous Education - ACCORDION */}
+                                <Accordion
+                                    title="Previous Education"
+                                    icon={Book}
+                                    isOpen={openSection === 'education'}
+                                    onToggle={() => toggleSection('education')}
+                                >
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="col-span-1 lg:col-span-2">
+                                            <p className="text-xs text-slate-500 mb-1">School Attended</p>
+                                            <p className="font-medium">{student.previousSchool || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 mb-1">Details</p>
+                                            <p className="text-sm text-slate-600">
+                                                {student.previousClass ? `Class: ${student.previousClass} ` : ''}
+                                                {student.mediumOfInstruction ? ` • Medium: ${student.mediumOfInstruction} ` : ''}
                                             </p>
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Conveyance Specifics */}
-                                    {student?.conveyanceSlab > 0 ? (
-                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                                                    <Bus size={20} />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-blue-900">Conveyance Active</p>
-                                                    <p className="text-sm text-blue-700">Slab {student.conveyanceSlab} • ₹{student?.feeDetails?.monthlyConveyance}/month</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs text-blue-600 font-semibold uppercase">Total Conveyance</p>
-                                                <p className="text-xl font-bold text-blue-800">₹{student?.feeDetails?.conveyanceFee?.toLocaleString()}</p>
-                                            </div>
+                                {/* Health & Other Details - ACCORDION */}
+                                <Accordion
+                                    title="Health & Other Details"
+                                    icon={Ban}
+                                    isOpen={openSection === 'health'}
+                                    onToggle={() => toggleSection('health')}
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className={`p-4 rounded-lg border ${student.hasLearningDisability ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                            <p className="font-semibold text-sm mb-1">Learning Disability</p>
+                                            <p className="text-xs text-slate-600">{student.hasLearningDisability ? student.learningDisabilityDetails : 'None Reported'}</p>
                                         </div>
-                                    ) : (
-                                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 opacity-75">
-                                            <div className="p-2 bg-slate-200 text-slate-500 rounded-lg">
-                                                <Bus size={20} />
-                                            </div>
-                                            <p className="text-sm text-slate-600 font-medium">No conveyance facility availed.</p>
+                                        <div className={`p-4 rounded-lg border ${student.hasMedicalCondition ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                            <p className="font-semibold text-sm mb-1">Medical Condition</p>
+                                            <p className="text-xs text-slate-600">{student.hasMedicalCondition ? student.medicalConditionDetails : 'None Reported'}</p>
                                         </div>
-                                    )}
-
-                                    {/* Transaction History */}
-                                    <div>
-                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                            <FileText size={16} className="text-slate-400" />
-                                            Transaction History
-                                        </h3>
-                                        <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                            <table className="w-full text-sm text-left">
-                                                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                                                    <tr>
-                                                        <th className="px-4 py-3">Date</th>
-                                                        <th className="px-4 py-3">Receipt No</th>
-                                                        <th className="px-4 py-3">Type</th>
-                                                        <th className="px-4 py-3">Mode</th>
-                                                        <th className="px-4 py-3 text-right">Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {student?.feeHistory?.length > 0 ? (
-                                                        student.feeHistory.map((txn, idx) => (
-                                                            <tr key={idx} className="hover:bg-slate-50/50">
-                                                                <td className="px-4 py-3 text-slate-600">
-                                                                    {new Date(txn.paymentDate || txn.createdAt).toLocaleDateString()}
-                                                                </td>
-                                                                <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                                                                    {txn.receiptNo || '-'}
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                                                                        {txn.feeType || txn.type || 'Fee'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-slate-600">
-                                                                    {txn.paymentMode || txn.mode || '-'}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right font-bold text-slate-900">
-                                                                    ₹{txn.amount?.toLocaleString()}
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan="5" className="px-4 py-8 text-center text-slate-500 italic">
-                                                                No transactions recorded yet.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                        <div className={`p-4 rounded-lg border ${student.hasAllergy ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                                            <p className="font-semibold text-sm mb-1">Allergies</p>
+                                            <p className="text-xs text-slate-600">{student.hasAllergy ? student.allergyDetails : 'None Reported'}</p>
                                         </div>
                                     </div>
-                                </div>
-                            </Accordion>
+                                </Accordion>
+                            </div>
+                        ) : (
+                            /* Mode: EDIT Form */
+                            <form id="edit-student-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-                            {/* Documents - ACCORDION */}
-                            <Accordion
-                                title="Documents"
-                                icon={File}
-                                isOpen={openSection === 'documents'}
-                                onToggle={() => toggleSection('documents')}
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {documents.length > 0 ? (
-                                        documents.map((doc, index) => (
-                                            <div key={index} className="flex items-center p-3 border border-slate-200 rounded-lg group">
-                                                <div className="p-2 rounded-lg mr-3 bg-indigo-50 text-indigo-600">
-                                                    <FileText size={20} />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-slate-500 uppercase mb-0.5">{doc.category || 'Document'}</p>
-                                                    <p className="text-sm font-medium text-slate-900 truncate" title={doc.name}>{doc.name}</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleDownload(doc)}
-                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-                                                    title="Download/View Document"
-                                                >
-                                                    <Download size={18} />
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-span-1 md:col-span-2 text-center py-8 text-slate-500 italic border-2 border-dashed border-slate-200 rounded-lg">
-                                            No documents uploaded
+                                {/* Administrative Details - 1st */}
+                                <Accordion
+                                    title="Administrative Info"
+                                    icon={Book}
+                                    isOpen={openSection === 'academic'}
+                                    onToggle={() => toggleSection('academic')}
+                                >
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Application No</label>
+                                            <input {...register("applicationNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
-                                    )}
-                                </div>
-                            </Accordion>
-
-                            {/* Previous Education - ACCORDION */}
-                            <Accordion
-                                title="Previous Education"
-                                icon={Book}
-                                isOpen={openSection === 'education'}
-                                onToggle={() => toggleSection('education')}
-                            >
-                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <div className="col-span-1 lg:col-span-2">
-                                        <p className="text-xs text-slate-500 mb-1">School Attended</p>
-                                        <p className="font-medium">{student.previousSchool || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Details</p>
-                                        <p className="text-sm text-slate-600">
-                                            {student.previousClass ? `Class: ${student.previousClass} ` : ''}
-                                            {student.mediumOfInstruction ? ` • Medium: ${student.mediumOfInstruction} ` : ''}
-                                        </p>
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Health & Other Details - ACCORDION */}
-                            <Accordion
-                                title="Health & Other Details"
-                                icon={Ban}
-                                isOpen={openSection === 'health'}
-                                onToggle={() => toggleSection('health')}
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className={`p-4 rounded-lg border ${student.hasLearningDisability ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
-                                        <p className="font-semibold text-sm mb-1">Learning Disability</p>
-                                        <p className="text-xs text-slate-600">{student.hasLearningDisability ? student.learningDisabilityDetails : 'None Reported'}</p>
-                                    </div>
-                                    <div className={`p-4 rounded-lg border ${student.hasMedicalCondition ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
-                                        <p className="font-semibold text-sm mb-1">Medical Condition</p>
-                                        <p className="text-xs text-slate-600">{student.hasMedicalCondition ? student.medicalConditionDetails : 'None Reported'}</p>
-                                    </div>
-                                    <div className={`p-4 rounded-lg border ${student.hasAllergy ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
-                                        <p className="font-semibold text-sm mb-1">Allergies</p>
-                                        <p className="text-xs text-slate-600">{student.hasAllergy ? student.allergyDetails : 'None Reported'}</p>
-                                    </div>
-                                </div>
-                            </Accordion>
-                        </div>
-                    ) : (
-                        /* Mode: EDIT Form */
-                        <form id="edit-student-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-                            {/* Administrative Details - 1st */}
-                            <Accordion
-                                title="Administrative Info"
-                                icon={Book}
-                                isOpen={openSection === 'academic'}
-                                onToggle={() => toggleSection('academic')}
-                            >
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Application No</label>
-                                        <input {...register("applicationNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Submission Date</label>
-                                        <input type="date" {...register("submissionDate")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Admission No</label>
-                                        <input {...register("admissionNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Class</label>
-                                        <select {...register("className")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                            <option value="Mont 1">Mont 1</option>
-                                            <option value="Mont 2">Mont 2</option>
-                                            <option value="Grade 1">Grade 1</option>
-                                            <option value="Grade 2">Grade 2</option>
-                                            <option value="Grade 3">Grade 3</option>
-                                            <option value="Grade 4">Grade 4</option>
-                                            <option value="Grade 5">Grade 5</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Section</label>
-                                        <select {...register("section")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                            <option value="A">A</option>
-                                            <option value="B">B</option>
-                                            <option value="C">C</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Roll No</label>
-                                        <input {...register("rollNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Personal Information - 2nd */}
-                            <Accordion
-                                title="Personal Info"
-                                icon={User}
-                                isOpen={openSection === 'personal'}
-                                onToggle={() => toggleSection('personal')}
-                            >
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
-                                        <input {...register("name", { required: true })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">DOB</label>
-                                        <input type="date" {...register("dob")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
-                                        <select {...register("gender")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Blood Group</label>
-                                        <select {...register("bloodGroup")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                            <option value="">Select</option>
-                                            <option value="A+">A+</option>
-                                            <option value="A-">A-</option>
-                                            <option value="B+">B+</option>
-                                            <option value="B-">B-</option>
-                                            <option value="AB+">AB+</option>
-                                            <option value="AB-">AB-</option>
-                                            <option value="O+">O+</option>
-                                            <option value="O-">O-</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Nationality</label>
-                                        <input {...register("nationality")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Religion</label>
-                                        <input {...register("religion")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Caste</label>
-                                        <input {...register("caste")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
-                                        <select {...register("category")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                            <option value="General">General</option>
-                                            <option value="SC">SC</option>
-                                            <option value="ST">ST</option>
-                                            <option value="OBC">OBC</option>
-                                            <option value="Others">Others</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Aadhar No</label>
-                                        <input {...register("aadharNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Parents - 3rd (Below Personal) */}
-                            <Accordion
-                                title="Parents & Guardian & Address"
-                                icon={User}
-                                isOpen={openSection === 'guardian'}
-                                onToggle={() => toggleSection('guardian')}
-                            >
-                                <div className="space-y-6">
-                                    {/* Father */}
-                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
-                                        <h4 className="text-xs font-bold text-slate-700">Father's Info</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
-                                                <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
-                                                <input {...register("fatherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
-                                                <input {...register("fatherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
-                                                <input {...register("fatherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
-                                                <input {...register("fatherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Designation</label>
-                                                <input {...register("fatherDesignation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Income</label>
-                                                <input {...register("fatherIncome")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Submission Date</label>
+                                            <input type="date" {...register("submissionDate")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Admission No</label>
+                                            <input {...register("admissionNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Class</label>
+                                            <select {...register("className")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="Mont 1">Mont 1</option>
+                                                <option value="Mont 2">Mont 2</option>
+                                                <option value="Grade 1">Grade 1</option>
+                                                <option value="Grade 2">Grade 2</option>
+                                                <option value="Grade 3">Grade 3</option>
+                                                <option value="Grade 4">Grade 4</option>
+                                                <option value="Grade 5">Grade 5</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Section</label>
+                                            <select {...register("section")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Roll No</label>
+                                            <input {...register("rollNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Mother */}
-                                    <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
-                                        <h4 className="text-xs font-bold text-slate-700">Mother's Info</h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
-                                                <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
-                                                <input {...register("motherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
-                                                <input {...register("motherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
-                                                <input {...register("motherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
-                                                <input {...register("motherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                            </div>
+                                {/* Personal Information - 2nd */}
+                                <Accordion
+                                    title="Personal Info"
+                                    icon={User}
+                                    isOpen={openSection === 'personal'}
+                                    onToggle={() => toggleSection('personal')}
+                                >
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
+                                            <input {...register("name", { required: true })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">DOB</label>
+                                            <input type="date" {...register("dob")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Gender</label>
+                                            <select {...register("gender")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Blood Group</label>
+                                            <select {...register("bloodGroup")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="">Select</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Nationality</label>
+                                            <input {...register("nationality")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Religion</label>
+                                            <input {...register("religion")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Caste</label>
+                                            <input {...register("caste")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                                            <select {...register("category")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="General">General</option>
+                                                <option value="SC">SC</option>
+                                                <option value="ST">ST</option>
+                                                <option value="OBC">OBC</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Aadhar No</label>
+                                            <input {...register("aadharNo")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Address Details */}
-                                    <div className="col-span-2 space-y-4">
-                                        {/* Residential */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                            <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                                <MapPin size={14} /> Residential Address
-                                            </h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                                <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">House No</label>
-                                                    <input {...register("resHouseNo")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="House No" />
+                                {/* Parents - 3rd (Below Personal) */}
+                                <Accordion
+                                    title="Parents & Guardian & Address"
+                                    icon={User}
+                                    isOpen={openSection === 'guardian'}
+                                    onToggle={() => toggleSection('guardian')}
+                                >
+                                    <div className="space-y-6">
+                                        {/* Father */}
+                                        <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                            <h4 className="text-xs font-bold text-slate-700">Father's Info</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                    <input {...register("fatherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                                 <div className="col-span-2">
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">Street Name</label>
-                                                    <input {...register("resStreet")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Street Name / Road" />
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                    <input {...register("fatherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">Locality</label>
-                                                    <input {...register("resLocality")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Locality / Village" />
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                    <input {...register("fatherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">City</label>
-                                                    <input {...register("resCity")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="City / District" />
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                    <input {...register("fatherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                    <input {...register("fatherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">State</label>
-                                                    <input {...register("resState")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="State" />
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Designation</label>
+                                                    <input {...register("fatherDesignation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">PIN Code</label>
-                                                    <input {...register("resPinCode")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="PIN Code" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-medium text-slate-500 uppercase">Country</label>
-                                                    <input {...register("resCountry")} defaultValue="India" className="w-full p-2 border border-slate-300 rounded text-sm" />
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Income</label>
+                                                    <input {...register("fatherIncome")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Permanent */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <h4 className="text-xs font-bold text-slate-700 flex items-center gap-2">
-                                                    <MapPin size={14} /> Permanent Address
-                                                </h4>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" {...register("sameAsResidential")} className="rounded text-indigo-600 w-4 h-4" />
-                                                    <span className="text-xs text-slate-600">Same as Residential</span>
-                                                </label>
+                                        {/* Mother */}
+                                        <div className="space-y-3 p-3 bg-slate-50 rounded-lg">
+                                            <h4 className="text-xs font-bold text-slate-700">Mother's Info</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                    <input {...register("motherName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                    <input {...register("motherMobile")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                                                    <input {...register("motherEmail")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Occupation</label>
+                                                    <input {...register("motherOccupation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Office Address</label>
+                                                    <input {...register("motherOfficeAddress")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                </div>
                                             </div>
+                                        </div>
 
-                                            {!watch('sameAsResidential') && (
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 animate-in fade-in slide-in-from-top-2">
+                                        {/* Address Details */}
+                                        <div className="col-span-2 space-y-4">
+                                            {/* Residential */}
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                                    <MapPin size={14} /> Residential Address
+                                                </h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">House No</label>
-                                                        <input {...register("permHouseNo")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="House No" />
+                                                        <input {...register("resHouseNo")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="House No" />
                                                     </div>
                                                     <div className="col-span-2">
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">Street Name</label>
-                                                        <input {...register("permStreet")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Street Name / Road" />
+                                                        <input {...register("resStreet")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Street Name / Road" />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">Locality</label>
-                                                        <input {...register("permLocality")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Locality / Village" />
+                                                        <input {...register("resLocality")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Locality / Village" />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">City</label>
-                                                        <input {...register("permCity")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="City / District" />
+                                                        <input {...register("resCity")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="City / District" />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">State</label>
-                                                        <input {...register("permState")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="State" />
+                                                        <input {...register("resState")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="State" />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">PIN Code</label>
-                                                        <input {...register("permPinCode")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="PIN Code" />
+                                                        <input {...register("resPinCode")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="PIN Code" />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[10px] font-medium text-slate-500 uppercase">Country</label>
-                                                        <input {...register("permCountry")} defaultValue="India" className="w-full p-2 border border-slate-300 rounded text-sm" />
+                                                        <input {...register("resCountry")} defaultValue="India" className="w-full p-2 border border-slate-300 rounded text-sm" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Permanent */}
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                                                        <MapPin size={14} /> Permanent Address
+                                                    </h4>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input type="checkbox" {...register("sameAsResidential")} className="rounded text-indigo-600 w-4 h-4" />
+                                                        <span className="text-xs text-slate-600">Same as Residential</span>
+                                                    </label>
+                                                </div>
+
+                                                {!watch('sameAsResidential') && (
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 animate-in fade-in slide-in-from-top-2">
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">House No</label>
+                                                            <input {...register("permHouseNo")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="House No" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">Street Name</label>
+                                                            <input {...register("permStreet")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Street Name / Road" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">Locality</label>
+                                                            <input {...register("permLocality")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="Locality / Village" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">City</label>
+                                                            <input {...register("permCity")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="City / District" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">State</label>
+                                                            <input {...register("permState")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="State" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">PIN Code</label>
+                                                            <input {...register("permPinCode")} className="w-full p-2 border border-slate-300 rounded text-sm" placeholder="PIN Code" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-medium text-slate-500 uppercase">Country</label>
+                                                            <input {...register("permCountry")} defaultValue="India" className="w-full p-2 border border-slate-300 rounded text-sm" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Guardian Details Toggle */}
+                                        <div className="pt-4 border-t border-slate-200">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <input
+                                                    type="checkbox"
+                                                    id="editIsGuardian"
+                                                    {...register('isGuardian')}
+                                                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                                                />
+                                                <label htmlFor="editIsGuardian" className="text-sm font-medium text-slate-800 cursor-pointer">
+                                                    Student is NOT living with parents (Edit Guardian Details)
+                                                </label>
+                                            </div>
+
+                                            {watch('isGuardian') && (
+                                                <div className="space-y-3 p-3 bg-violet-50 rounded-lg border border-violet-100 animate-in fade-in">
+                                                    <h4 className="text-xs font-bold text-violet-700 mb-2">Guardian's Info</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Guardian Name <span className="text-red-500">*</span></label>
+                                                            <input {...register("guardianName", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                            {errors.guardianName && <span className="text-[10px] text-red-500">Required</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Relationship <span className="text-red-500">*</span></label>
+                                                            <input {...register("guardianRelation", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                            {errors.guardianRelation && <span className="text-[10px] text-red-500">Required</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Phone <span className="text-red-500">*</span></label>
+                                                            <input {...register("guardianPhone", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                            {errors.guardianPhone && <span className="text-[10px] text-red-500">Required</span>}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Occupation <span className="text-red-500">*</span></label>
+                                                            <input {...register("guardianOccupation", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                            {errors.guardianOccupation && <span className="text-[10px] text-red-500">Required</span>}
+                                                        </div>
+                                                        <div className="col-span-1 md:col-span-2">
+                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Guardian Address <span className="text-red-500">*</span></label>
+                                                            <textarea {...register("guardianAddress", { required: watch('isGuardian') })} rows={2} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                            {errors.guardianAddress && <span className="text-[10px] text-red-500">Required</span>}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Guardian Details Toggle */}
-                                    <div className="pt-4 border-t border-slate-200">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <input
-                                                type="checkbox"
-                                                id="editIsGuardian"
-                                                {...register('isGuardian')}
-                                                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                                            />
-                                            <label htmlFor="editIsGuardian" className="text-sm font-medium text-slate-800 cursor-pointer">
-                                                Student is NOT living with parents (Edit Guardian Details)
-                                            </label>
-                                        </div>
-
-                                        {watch('isGuardian') && (
-                                            <div className="space-y-3 p-3 bg-violet-50 rounded-lg border border-violet-100 animate-in fade-in">
-                                                <h4 className="text-xs font-bold text-violet-700 mb-2">Guardian's Info</h4>
+                                        {/* Emergency Contact */}
+                                        <div className="pt-4 border-t border-slate-200 mt-4">
+                                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                                                <h4 className="text-xs font-bold text-orange-700 mb-2">Emergency Contact</h4>
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                                     <div>
-                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Guardian Name <span className="text-red-500">*</span></label>
-                                                        <input {...register("guardianName", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                        {errors.guardianName && <span className="text-[10px] text-red-500">Required</span>}
+                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
+                                                        <input {...register("emergencyName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Relationship <span className="text-red-500">*</span></label>
-                                                        <input {...register("guardianRelation", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                        {errors.guardianRelation && <span className="text-[10px] text-red-500">Required</span>}
+                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
+                                                        <input {...register("emergencyPhone")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Phone <span className="text-red-500">*</span></label>
-                                                        <input {...register("guardianPhone", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                        {errors.guardianPhone && <span className="text-[10px] text-red-500">Required</span>}
+                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Relation</label>
+                                                        <input {...register("emergencyRelation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Occupation <span className="text-red-500">*</span></label>
-                                                        <input {...register("guardianOccupation", { required: watch('isGuardian') })} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                        {errors.guardianOccupation && <span className="text-[10px] text-red-500">Required</span>}
-                                                    </div>
-                                                    <div className="col-span-1 md:col-span-2">
-                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Guardian Address <span className="text-red-500">*</span></label>
-                                                        <textarea {...register("guardianAddress", { required: watch('isGuardian') })} rows={2} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                        {errors.guardianAddress && <span className="text-[10px] text-red-500">Required</span>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Emergency Contact */}
-                                    <div className="pt-4 border-t border-slate-200 mt-4">
-                                        <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
-                                            <h4 className="text-xs font-bold text-orange-700 mb-2">Emergency Contact</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
-                                                    <input {...register("emergencyName")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile</label>
-                                                    <input {...register("emergencyPhone")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Relation</label>
-                                                    <input {...register("emergencyRelation")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* Transportation Details (Edit) */}
-                                    <div className="pt-4 border-t border-slate-200 mt-4">
-                                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                            <h4 className="text-xs font-bold text-blue-700 mb-2">Transportation Details</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Mode of Transport</label>
-                                                    <select {...register("transportMode")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                                        <option value="Walking">Walking / Self</option>
-                                                        <option value="Private">Private Transport</option>
-                                                        <option value="School Bus">School Bus</option>
-                                                    </select>
+                                        {/* Transportation Details (Edit) */}
+                                        <div className="pt-4 border-t border-slate-200 mt-4">
+                                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                                <h4 className="text-xs font-bold text-blue-700 mb-2">Transportation Details</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-slate-700 mb-1">Mode of Transport</label>
+                                                        <select {...register("transportMode")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                            <option value="Walking">Walking / Self</option>
+                                                            <option value="Private">Private Transport</option>
+                                                            <option value="School Bus">School Bus</option>
+                                                        </select>
+                                                    </div>
+                                                    {transportMode === 'School Bus' && (
+                                                        <>
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-slate-700 mb-1">Route Number</label>
+                                                                <input {...register("routeNumber")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Route No" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-slate-700 mb-1">Pickup Point</label>
+                                                                <input {...register("pickupPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Pickup Point" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-slate-700 mb-1">Drop Point</label>
+                                                                <input {...register("dropPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Drop Point" />
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
-                                                {transportMode === 'School Bus' && (
-                                                    <>
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Route Number</label>
-                                                            <input {...register("routeNumber")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Route No" />
+                                            </div>
+                                        </div>
+
+                                        {/* Sibling Information (Edit) */}
+                                        <div className="pt-4 border-t border-slate-200 mt-4">
+                                            <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
+                                                <h4 className="text-xs font-bold text-teal-700 mb-2">Sibling Information</h4>
+
+                                                <div className="mb-4">
+                                                    <label className="block text-xs font-medium text-slate-700 mb-1">Add Sibling</label>
+                                                    <StudentSearch
+                                                        onSelect={(student) => {
+                                                            if (!siblings.find(s => (s.id || s.studentId) === student.id)) {
+                                                                setSiblings([...siblings, student]);
+                                                            }
+                                                        }}
+                                                        excludeIds={[id, ...siblings.map(s => s.id || s.studentId)]}
+                                                    />
+                                                </div>
+
+                                                {siblings.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        <p className="text-xs font-medium text-slate-600">Linked Siblings:</p>
+                                                        <div className="grid gap-2">
+                                                            {siblings.map((sib, idx) => (
+                                                                <div key={idx} className="flex items-center justify-between bg-white border border-teal-100 p-2 rounded">
+                                                                    <div>
+                                                                        <p className="font-semibold text-teal-900 text-sm">{sib.name}</p>
+                                                                        <p className="text-xs text-teal-700">Class: {sib.className || sib.class} - {sib.section} | Adm: {sib.admissionNo}</p>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setSiblings(siblings.filter((_, i) => i !== idx))}
+                                                                        className="text-red-400 hover:text-red-600"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Pickup Point</label>
-                                                            <input {...register("pickupPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Pickup Point" />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-slate-700 mb-1">Drop Point</label>
-                                                            <input {...register("dropPoint")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Drop Point" />
-                                                        </div>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Sibling Information (Edit) */}
-                                    <div className="pt-4 border-t border-slate-200 mt-4">
-                                        <div className="p-3 bg-teal-50 rounded-lg border border-teal-100">
-                                            <h4 className="text-xs font-bold text-teal-700 mb-2">Sibling Information</h4>
 
-                                            <div className="mb-4">
-                                                <label className="block text-xs font-medium text-slate-700 mb-1">Add Sibling</label>
-                                                <StudentSearch
-                                                    onSelect={(student) => {
-                                                        if (!siblings.find(s => (s.id || s.studentId) === student.id)) {
-                                                            setSiblings([...siblings, student]);
-                                                        }
-                                                    }}
-                                                    excludeIds={[id, ...siblings.map(s => s.id || s.studentId)]}
-                                                />
-                                            </div>
 
-                                            {siblings.length > 0 && (
-                                                <div className="space-y-2">
-                                                    <p className="text-xs font-medium text-slate-600">Linked Siblings:</p>
-                                                    <div className="grid gap-2">
-                                                        {siblings.map((sib, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between bg-white border border-teal-100 p-2 rounded">
-                                                                <div>
-                                                                    <p className="font-semibold text-teal-900 text-sm">{sib.name}</p>
-                                                                    <p className="text-xs text-teal-700">Class: {sib.className || sib.class} - {sib.section} | Adm: {sib.admissionNo}</p>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setSiblings(siblings.filter((_, i) => i !== idx))}
-                                                                    className="text-red-400 hover:text-red-600"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
+                                {/* Documents (Edit Mode) */}
+                                <Accordion
+                                    title="Documents"
+                                    icon={File}
+                                    isOpen={openSection === 'documents'}
+                                    onToggle={() => toggleSection('documents')}
+                                >
+                                    <div className="space-y-4">
+                                        {[
+                                            'Student Photo',
+                                            'Birth Certificate',
+                                            'Transfer Certificate',
+                                            'Previous Marksheet',
+                                            'Report Card (Previous School)',
+                                            'Caste Certificate',
+                                            'Aadhar Card (Student)',
+                                            "Parent's Aadhar Card",
+                                            'Medical Certificate',
+                                            'Address Proof'
+                                        ].map((docType) => {
+                                            const existingDoc = documents.find(d => d.category === docType);
+                                            return (
+                                                <div key={docType} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-slate-900">{docType}</p>
+                                                        {existingDoc ? (
+                                                            <div className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                                                Uploaded: {existingDoc.name}
                                                             </div>
-                                                        ))}
+                                                        ) : (
+                                                            <p className="text-xs text-slate-500 mt-1 italic">Not uploaded</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {existingDoc && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteClick(existingDoc)}
+                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                                title="Delete Document"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                        <label className="cursor-pointer p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors relative">
+                                                            <Upload size={16} />
+                                                            <input
+                                                                type="file"
+                                                                className="hidden" // Hidden input, triggered by label
+                                                                onChange={(e) => handleFileUpload(e, docType)}
+                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                            />
+                                                        </label>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
+                                            );
+                                        })}
                                     </div>
-                                </div>
-                            </Accordion>
+                                </Accordion>
 
-
-
-                            {/* Documents (Edit Mode) */}
-                            <Accordion
-                                title="Documents"
-                                icon={File}
-                                isOpen={openSection === 'documents'}
-                                onToggle={() => toggleSection('documents')}
-                            >
-                                <div className="space-y-4">
-                                    {[
-                                        'Student Photo',
-                                        'Birth Certificate',
-                                        'Transfer Certificate',
-                                        'Previous Marksheet',
-                                        'Report Card (Previous School)',
-                                        'Caste Certificate',
-                                        'Aadhar Card (Student)',
-                                        "Parent's Aadhar Card",
-                                        'Medical Certificate',
-                                        'Address Proof'
-                                    ].map((docType) => {
-                                        const existingDoc = documents.find(d => d.category === docType);
-                                        return (
-                                            <div key={docType} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                                <div>
-                                                    <p className="text-sm font-medium text-slate-900">{docType}</p>
-                                                    {existingDoc ? (
-                                                        <div className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                                            Uploaded: {existingDoc.name}
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-xs text-slate-500 mt-1 italic">Not uploaded</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {existingDoc && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDeleteClick(existingDoc)}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                                            title="Delete Document"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                    <label className="cursor-pointer p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors relative">
-                                                        <Upload size={16} />
-                                                        <input
-                                                            type="file"
-                                                            className="hidden" // Hidden input, triggered by label
-                                                            onChange={(e) => handleFileUpload(e, docType)}
-                                                            accept=".pdf,.jpg,.jpeg,.png"
-                                                        />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </Accordion>
-
-                            {/* Fee Overview & Conveyance (New in Edit Mode) */}
-                            <Accordion
-                                title="Fee Overview & Conveyance"
-                                icon={CreditCard}
-                                isOpen={openSection === 'fees'}
-                                onToggle={() => toggleSection('fees')}
-                            >
-                                <div className="space-y-6">
-                                    {/* Summary Cards (Dynamic based on form state) */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Annual Fee</p>
-                                            {/* Calculate dynamic total based on watched slab */}
-                                            {(() => {
-                                                const currentSlabId = watchConveyance ? parseInt(watchConveyance) : 0;
-                                                const currentConveyanceFee = calculateTotalConveyanceFee(currentSlabId);
-                                                const currentTotal = 20000 + 6500 + currentConveyanceFee;
-                                                return (
-                                                    <>
-                                                        <p className="text-2xl font-bold text-slate-900 mt-2">₹{currentTotal.toLocaleString()}</p>
-                                                        <div className="mt-2 text-xs text-slate-500 flex flex-col gap-1">
-                                                            <span className="flex justify-between"><span>Tuition:</span> <span>₹20,000</span></span>
-                                                            <span className="flex justify-between"><span>Materials:</span> <span>₹6,500</span></span>
-                                                            {currentSlabId > 0 && (
-                                                                <span className="flex justify-between text-blue-600 font-medium"><span>Conveyance:</span> <span>₹{currentConveyanceFee.toLocaleString()}</span></span>
-                                                            )}
-                                                        </div>
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
-                                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Amount Paid</p>
-                                            <p className="text-2xl font-bold text-emerald-700 mt-2">₹{student?.feeDetails?.paid?.toLocaleString()}</p>
-                                            <div className="w-full bg-emerald-200 rounded-full h-1.5 mt-3">
-                                                <div
-                                                    className="bg-emerald-500 h-1.5 rounded-full"
-                                                    style={{ width: `${Math.min((student?.feeDetails?.paid / student?.feeDetails?.totalFee) * 100, 100)}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-rose-50 p-4 rounded-xl border border-rose-100 flex flex-col justify-between">
-                                            <p className="text-xs font-bold text-rose-600 uppercase tracking-wider">Pending Due</p>
-                                            {/* Show pending based on original fetch since edits aren't saved yet, OR estimate? 
-                                                Better to show current actual pending from DB, with a note if slab changes affect it?
-                                                Actually, if slab increases, pending increases.
-                                            */}
-                                            {(() => {
-                                                const currentSlabId = watchConveyance ? parseInt(watchConveyance) : 0;
-                                                const currentConveyanceFee = calculateTotalConveyanceFee(currentSlabId);
-                                                const currentTotal = 20000 + 6500 + currentConveyanceFee;
-                                                const currentPending = currentTotal - (student?.feeDetails?.paid || 0);
-
-                                                return (
-                                                    <>
-                                                        <p className="text-2xl font-bold text-rose-700 mt-2">₹{currentPending.toLocaleString()}</p>
-                                                        <p className="text-xs text-rose-500 mt-2">
-                                                            Projected Due
+                                {/* Fee Overview & Conveyance (Edit Mode) */}
+                                <Accordion
+                                    title="Fee Overview & Conveyance"
+                                    icon={CreditCard}
+                                    isOpen={openSection === 'fees'}
+                                    onToggle={() => toggleSection('fees')}
+                                >
+                                    <div className="space-y-6">
+                                        {/* Conveyance Selector */}
+                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                            <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                                                <Bus size={16} />
+                                                Conveyance Slab Selection
+                                            </label>
+                                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                                <select
+                                                    {...register("conveyanceSlab")}
+                                                    className="w-full md:w-auto flex-1 p-2 border rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
+                                                >
+                                                    {CONVEYANCE_SLABS.map(slab => (
+                                                        <option key={slab.id} value={slab.id}>
+                                                            {slab.label} {slab.id > 0 ? `(₹${slab.monthly}/mo)` : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {watchConveyance > 0 && (
+                                                    <div className="text-right flex-1">
+                                                        <p className="text-xs text-blue-600 font-semibold uppercase">Est. Conveyance Fee</p>
+                                                        <p className="text-lg font-bold text-blue-800">
+                                                            ₹{calculateTotalConveyanceFee(watchConveyance).toLocaleString()}
+                                                            <span className="text-xs font-normal text-blue-600 ml-1">
+                                                                (₹{calculateConveyanceFee(watchConveyance)}/mo)
+                                                            </span>
                                                         </p>
-                                                    </>
-                                                );
-                                            })()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-blue-600 mt-3">
+                                                * Updates to conveyance slab will immediately affect the student's total payable fee upon saving.
+                                            </p>
                                         </div>
                                     </div>
+                                </Accordion>
 
-                                    {/* Conveyance Selector */}
-                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                                        <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                                            <Bus size={16} />
-                                            Conveyance Slab Selection
-                                        </label>
-                                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                                            <select
-                                                {...register("conveyanceSlab")}
-                                                className="w-full md:w-auto flex-1 p-2 border rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
-                                            >
-                                                {CONVEYANCE_SLABS.map(slab => (
-                                                    <option key={slab.id} value={slab.id}>
-                                                        {slab.label} {slab.id > 0 ? `(₹${slab.monthly}/mo)` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {watchConveyance > 0 && (
-                                                <div className="text-right flex-1">
-                                                    <p className="text-xs text-blue-600 font-semibold uppercase">Est. Conveyance Fee</p>
-                                                    <p className="text-lg font-bold text-blue-800">
-                                                        ₹{calculateTotalConveyanceFee(watchConveyance).toLocaleString()}
-                                                        <span className="text-xs font-normal text-blue-600 ml-1">
-                                                            (₹{calculateConveyanceFee(watchConveyance)}/mo)
-                                                        </span>
-                                                    </p>
+                                {/* Previous Education (Edit) */}
+                                <Accordion
+                                    title="Previous Education"
+                                    icon={Book}
+                                    isOpen={openSection === 'education'}
+                                    onToggle={() => toggleSection('education')}
+                                >
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Previous School</label>
+                                            <input {...register("previousSchool")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Previous Class</label>
+                                            <input {...register("previousClass")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">Medium</label>
+                                            <input {...register("mediumOfInstruction")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </Accordion>
+
+                                {/* Health (Edit) */}
+                                <Accordion
+                                    title="Health Details"
+                                    icon={Ban}
+                                    isOpen={openSection === 'health'}
+                                    onToggle={() => toggleSection('health')}
+                                >
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
+                                                <input type="checkbox" {...register("hasMedicalCondition")} className="rounded text-indigo-600" />
+                                                Has Medical Condition?
+                                            </label>
+                                            <textarea {...register("medicalConditionDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
+                                                <input type="checkbox" {...register("hasAllergy")} className="rounded text-indigo-600" />
+                                                Has Allergies?
+                                            </label>
+                                            <textarea {...register("allergyDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </Accordion>
+                            </form>
+                        )}
+                    </div>
+
+                    {/* Delete Modal */}
+                    <ConfirmationModal
+                        isOpen={isDeleteModalOpen}
+                        onClose={() => setIsDeleteModalOpen(false)}
+                        onConfirm={handleConfirmDelete}
+                        title="Delete Document"
+                        message={`Are you sure you want to delete ${documentToDelete?.name}? This action cannot be undone.`}
+                        confirmText="Delete"
+                        confirmButtonClass="bg-red-600 hover:bg-red-700"
+                    />
+
+                    {/* Right Side: Fee Sidebar (Only clearly visible in View mode) */}
+                    {mode === 'view' && (
+                        <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-6 space-y-6">
+                            {/* Summary Cards */}
+                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+                                    <CreditCard size={18} className="text-indigo-600" />
+                                    Fee Overview
+                                </h3>
+
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                    <div className="flex justify-between items-end mb-1">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Annual Fee</p>
+                                        <p className="text-[10px] font-medium text-slate-400">2025-26 Session</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-slate-900">₹{student?.feeDetails?.totalFee?.toLocaleString()}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Total Paid</p>
+                                        <p className="text-lg font-bold text-emerald-700">₹{student?.feeDetails?.paid?.toLocaleString()}</p>
+                                    </div>
+                                    <div className="bg-rose-50 p-3 rounded-lg border border-rose-100">
+                                        <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">Total Balance</p>
+                                        <p className="text-lg font-bold text-rose-700">₹{student?.feeDetails?.pending?.toLocaleString()}</p>
+                                    </div>
+                                </div>
+
+                                <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
+                                    <div
+                                        className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(((student?.feeDetails?.paid || 0) / (student?.feeDetails?.totalFee || 1)) * 100, 100)}%` }}
+                                    ></div>
+                                </div>
+
+                                {/* Detailed Breakdown */}
+                                <div className="pt-2">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Payments to Make</p>
+                                        <span className="text-[10px] font-medium text-slate-400 italic">Expected Annual</span>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {student?.feeDetails?.breakdown?.map(cat => (
+                                            <div key={cat.id} className="group">
+                                                <div className="flex items-center justify-between text-sm mb-1">
+                                                    <span className="text-slate-700 font-medium group-hover:text-indigo-600 transition-colors">{cat.name}</span>
+                                                    <span className="font-bold text-slate-900">₹{cat.total.toLocaleString()}</span>
                                                 </div>
-                                            )}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex gap-2 items-center">
+                                                        <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${cat.pending === 0 ? 'bg-emerald-500' : 'bg-indigo-400'}`}
+                                                                style={{ width: `${Math.min((cat.paid / cat.total) * 100, 100)}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400">{Math.round((cat.paid / cat.total) * 100)}%</span>
+                                                    </div>
+                                                    <div className="text-[10px] font-bold">
+                                                        {cat.pending > 0 ? (
+                                                            <span className="text-rose-600">₹{cat.pending.toLocaleString()} Due</span>
+                                                        ) : (
+                                                            <span className="text-emerald-600 font-bold uppercase tracking-tight">Fully Paid</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Recent Transactions */}
+                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <FileText size={18} className="text-indigo-600" />
+                                        Transaction History
+                                    </div>
+                                    <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">{student?.feeHistory?.length || 0} Total</span>
+                                </h3>
+
+                                <div className="space-y-3">
+                                    {student?.feeHistory?.slice(0, 5).map((txn, idx) => (
+                                        <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-slate-300 transition-colors">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="font-bold text-slate-900">₹{txn.amount?.toLocaleString()}</p>
+                                                <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase uppercase tracking-tighter">
+                                                    {txn.paymentMode || txn.mode || 'Cash'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">Receipt No</p>
+                                                    <p className="text-[11px] font-bold text-slate-700 font-mono">{txn.receiptNo || 'MANUAL-ENTRY'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[11px] text-slate-500 font-medium">{new Date(txn.paymentDate || txn.createdAt).toLocaleDateString()}</p>
+                                                    <p className="text-[10px] text-slate-400 italic">{txn.feeType || 'Payment'}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-blue-600 mt-3">
-                                            * Updates to conveyance slab will immediately affect the student's total payable fee upon saving.
-                                        </p>
-                                    </div>
-
-                                    {/* Transaction History (Read Only) */}
-                                    <div>
-                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                            <FileText size={16} className="text-slate-400" />
-                                            Transaction History
-                                        </h3>
-                                        <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                            <table className="w-full text-sm text-left">
-                                                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                                                    <tr>
-                                                        <th className="px-4 py-3">Date</th>
-                                                        <th className="px-4 py-3">Receipt No</th>
-                                                        <th className="px-4 py-3">Type</th>
-                                                        <th className="px-4 py-3">Mode</th>
-                                                        <th className="px-4 py-3 text-right">Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {student?.feeHistory?.length > 0 ? (
-                                                        student.feeHistory.map((txn, idx) => (
-                                                            <tr key={idx} className="hover:bg-slate-50/50">
-                                                                <td className="px-4 py-3 text-slate-600">
-                                                                    {new Date(txn.paymentDate || txn.createdAt).toLocaleDateString()}
-                                                                </td>
-                                                                <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                                                                    {txn.receiptNo || '-'}
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                                                                        {txn.feeType || txn.type || 'Fee'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-slate-600">
-                                                                    {txn.paymentMode || txn.mode || '-'}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right font-bold text-slate-900">
-                                                                    ₹{txn.amount?.toLocaleString()}
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan="5" className="px-4 py-8 text-center text-slate-500 italic">
-                                                                No transactions recorded yet.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                    ))}
+                                    {student?.feeHistory?.length === 0 && (
+                                        <div className="text-center py-6">
+                                            <div className="p-3 bg-slate-50 rounded-full w-fit mx-auto mb-3 text-slate-300">
+                                                <CreditCard size={24} />
+                                            </div>
+                                            <p className="text-sm text-slate-500 italic">No payments recorded yet.</p>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
-                            </Accordion>
-
-                            {/* Previous Education */}
-                            <Accordion
-                                title="Previous Education"
-                                icon={Book}
-                                isOpen={openSection === 'education'}
-                                onToggle={() => toggleSection('education')}
-                            >
-                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Previous School</label>
-                                        <input {...register("previousSchool")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Previous Class</label>
-                                        <input {...register("previousClass")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-700 mb-1">Medium</label>
-                                        <input {...register("mediumOfInstruction")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                            {/* Health */}
-                            <Accordion
-                                title="Health Details"
-                                icon={Ban}
-                                isOpen={openSection === 'health'}
-                                onToggle={() => toggleSection('health')}
-                            >
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
-                                            <input type="checkbox" {...register("hasMedicalCondition")} className="rounded text-indigo-600" />
-                                            Has Medical Condition?
-                                        </label>
-                                        <textarea {...register("medicalConditionDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="flex items-center gap-2 text-xs font-medium text-slate-700 mb-1">
-                                            <input type="checkbox" {...register("hasAllergy")} className="rounded text-indigo-600" />
-                                            Has Allergies?
-                                        </label>
-                                        <textarea {...register("allergyDetails")} placeholder="Details" rows={1} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                    </div>
-                                </div>
-                            </Accordion>
-
-                        </form>
+                                {student?.feeHistory?.length > 5 && (
+                                    <button
+                                        onClick={() => navigate('/admin/receipts', { state: { studentId: id } })}
+                                        className="w-full mt-4 py-2 border border-slate-200 text-sm font-bold text-indigo-600 hover:text-indigo-700 hover:bg-slate-50 hover:border-indigo-100 rounded-lg transition-all flex items-center justify-center gap-2"
+                                    >
+                                        View Full History <ArrowLeft size={14} className="rotate-180" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
-
-            {/* Delete Modal */}
-            <ConfirmationModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                title="Delete Document"
-                message={`Are you sure you want to delete ${documentToDelete?.name}? This action cannot be undone.`}
-                confirmText="Delete"
-                confirmButtonClass="bg-red-600 hover:bg-red-700"
-            />
-        </div>
+        </>
     );
 }

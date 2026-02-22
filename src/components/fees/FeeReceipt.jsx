@@ -188,11 +188,35 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
-                            <tr>
-                                <td className="px-6 py-4 font-medium text-slate-900">{transaction.type}</td>
-                                <td className="px-6 py-4 text-slate-600">{transaction.mode}</td>
-                                <td className="px-6 py-4 text-right font-bold text-slate-900">₹{Number(transaction.amount).toLocaleString()}</td>
-                            </tr>
+                            {(transaction.breakdown && transaction.breakdown.length > 0) ? (
+                                transaction.breakdown.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td className="px-6 py-4 font-medium text-slate-900">{item.feeType}</td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {idx === 0 ? (
+                                                <>
+                                                    {transaction.mode || transaction.paymentMode}
+                                                    {transaction.transactionId && (
+                                                        <span className="block text-xs text-slate-500 mt-1">Ref: {transaction.transactionId}</span>
+                                                    )}
+                                                </>
+                                            ) : null}
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-bold text-slate-900">₹{Number(item.amount).toLocaleString()}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td className="px-6 py-4 font-medium text-slate-900">{transaction.type || transaction.feeType}</td>
+                                    <td className="px-6 py-4 text-slate-600">
+                                        {transaction.mode || transaction.paymentMode}
+                                        {transaction.transactionId && (
+                                            <span className="block text-xs text-slate-500 mt-1">Ref: {transaction.transactionId}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-bold text-slate-900">₹{Number(transaction.amount).toLocaleString()}</td>
+                                </tr>
+                            )}
                         </tbody>
                         <tfoot className="bg-slate-50 border-t border-slate-200">
                             <tr>

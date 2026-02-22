@@ -145,23 +145,32 @@ const generateFeeReceipt = (fee, student) => {
 
         currentY += rowHeight;
 
-        // Table Body Row
-        // Frontend only shows one row for the transaction usually (unless breakdown logic changes)
-        // Here we show the feeType
+        // Table Body Rows
         doc.fillColor('#0f172a').fontSize(9).font('Helvetica');
 
-        // Border for row
-        doc.rect(margin, currentY, contentWidth, rowHeight + 10).strokeColor('#f1f5f9').stroke(); // Light border
+        const breakdown = fee.breakdown || [{ feeType: fee.feeType || fee.type || 'Fee Payment', amount: fee.amount }];
 
-        // Content
-        const feeType = fee.feeType || fee.type || 'Fee Payment';
-        doc.text(feeType, col1X, currentY + 10);
-        doc.text(fee.paymentMode || fee.mode || 'Cash', col2X, currentY + 10);
+        // Draw a border for all items combined
+        const totalRowsHeight = breakdown.length * rowHeight;
+        doc.rect(margin, currentY, contentWidth, totalRowsHeight + 10).strokeColor('#f1f5f9').stroke(); // Light border
 
-        const amountStr = `Rs. ${Number(fee.amount).toLocaleString('en-IN')}`;
-        doc.font('Helvetica-Bold').text(amountStr, col3X, currentY + 10, { align: 'right', width: 90 });
+        breakdown.forEach((item, index) => {
+            const itemType = item.feeType || 'Fee Payment';
+            doc.text(itemType, col1X, currentY + 10);
 
-        currentY += rowHeight + 10;
+            // Only show mode on the first item for clarity, or show on all
+            if (index === 0) {
+                doc.text(fee.paymentMode || fee.mode || 'Cash', col2X, currentY + 10);
+            }
+
+            const itemAmountStr = `Rs. ${Number(item.amount).toLocaleString('en-IN')}`;
+            doc.font('Helvetica-Bold').text(itemAmountStr, col3X, currentY + 10, { align: 'right', width: 90 });
+            doc.font('Helvetica'); // reset to normal for next row if any
+
+            currentY += rowHeight;
+        });
+
+        currentY += 10; // Add the padding at the bottom of the bounding box
 
         // Table Footer (Total)
         doc.rect(margin, currentY, contentWidth, rowHeight).fill('#f8fafc');

@@ -1,5 +1,6 @@
 const Fee = require('../models/Fee');
 const Student = require('../models/Student');
+const FeeCategory = require('../models/FeeCategory');
 const { generateFeeReceipt } = require('../utils/pdfGenerator');
 const { sendFeeReceiptEmail } = require('../utils/emailService');
 
@@ -20,7 +21,19 @@ const getFees = async (req, res) => {
 // @access  Private
 const addFee = async (req, res) => {
     try {
-        const { studentId, type, amount, date, mode, remarks } = req.body;
+        // Support legacy single 'type'/'amount' or the new 'breakdown' array
+        const { studentId, type, amount, breakdown, date, mode, transactionId, remarks } = req.body;
+
+        const feeBreakdown = breakdown || (type && amount ? [{ feeType: type, amount: Number(amount) }] : []);
+
+        if (feeBreakdown.length === 0) {
+            return res.status(400).json({ message: 'No fee details provided' });
+        }
+
+        // Enforce transactionId if mode is not Cash
+        if (mode !== 'Cash' && (!transactionId || transactionId.trim() === '')) {
+            return res.status(400).json({ message: `Transaction ID is required for ${mode} payments.` });
+        }
 
         const student = await Student.findById(studentId);
         if (!student) {
@@ -39,35 +52,44 @@ const addFee = async (req, res) => {
 
         const receiptNo = `${timestamp}-${student.admissionNo}`;
 
-        const fee = await Fee.create({
+        const totalAmount = feeBreakdown.reduce((sum, item) => sum + Number(item.amount), 0);
+        const feeTypeLabel = feeBreakdown.length === 1 ? feeBreakdown[0].feeType : 'Split Payment';
+
+        const newFee = new Fee({
             student: studentId,
-            feeType: type,
-            amount,
+            feeType: feeTypeLabel,
+            amount: totalAmount,
             academicYear: '2025-2026', // Hardcoded for now, should be dynamic or from request
             paymentDate: date,
             paymentMode: mode,
-            status: 'Paid', // Assuming immediate payment for now
+            transactionId: transactionId || '',
+            status: 'Paid',
             remarks: remarks || '',
-            receiptNo
+            receiptNo,
+            breakdown: feeBreakdown
         });
 
-        // Calculate total paid including this new fee
-        const existingFees = await Fee.find({ student: studentId });
-        // Note: existingFees DOES include the one we just created? No, we just created 'fee' const, it's in DB?
-        // Wait, Fee.create is async, so it IS in DB.
-        // But let's be safe. 'fee' is the new one.
-        // Let's sum up all fees for this student.
+        const insertedFee = await newFee.save();
 
-        // Check total paid (Tuition + Materials = 26500)
-        // If we want to support dynamic structure per class, we'd need to look it up.
-        // For now, hardcoded 26500 as per request for global logic or assume we just check total.
+        // Calculate total expected fee for this student's class
+        const className = student.className || student.class;
+        const activeCategories = await FeeCategory.find({ isActive: true });
+
+        // Sum up all due amounts for the specific class from active categories
+        let totalExpectedFee = 0;
+        activeCategories.forEach(category => {
+            // Find if this category has an amount defined for this student's class
+            const classAmountObj = category.amounts.find(a => a.className === className);
+            if (classAmountObj && classAmountObj.amount > 0) {
+                totalExpectedFee += classAmountObj.amount;
+            }
+        });
 
         const allFees = await Fee.find({ student: studentId });
         const totalPaid = allFees.reduce((sum, f) => sum + (f.amount || 0), 0);
 
-        const TOTAL_FEE = 26500; // Hardcoded global total for now
-
-        if (totalPaid >= TOTAL_FEE) {
+        // Calculate student's status based on newly discovered total expected
+        if (totalExpectedFee > 0 && totalPaid >= totalExpectedFee) {
             student.feesStatus = 'Paid';
         } else if (totalPaid > 0) {
             student.feesStatus = 'Partially Paid';
@@ -89,9 +111,29 @@ const addFee = async (req, res) => {
         }
 
         // Update Conveyance Payment Date if applicable
-        // Check if feeType string contains "Conveyance" or "Full" (case-insensitive)
-        if (type && (type.toLowerCase().includes('conveyance') || type.toLowerCase().includes('full'))) {
-            student.lastConveyancePayment = date || new Date(); // Use payment date or now
+        // Check if any feeType in the breakdown string contains "Conveyance" or "Full" (case-insensitive)
+        const conveyanceItem = feeBreakdown.find(item =>
+            item.feeType && (item.feeType.toLowerCase().includes('conveyance') || item.feeType.toLowerCase().includes('full'))
+        );
+
+        if (conveyanceItem) {
+            // Find the category rules from the DB based on the feeType name
+            const conveyanceCategory = activeCategories.find(c => c.name === conveyanceItem.feeType);
+
+            let requiredMonthlyAmount = 0;
+            if (conveyanceCategory && conveyanceCategory.hasSlabs) {
+                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                requiredMonthlyAmount = conveyanceCategory.baseAmount + (slabCount * conveyanceCategory.slabMultiplier);
+            } else {
+                // Fallback to old flat 200 + (slab*100) if category not formally configured or hasSlabs is false
+                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                requiredMonthlyAmount = slabCount > 0 ? (200 + (slabCount * 100)) : 0;
+            }
+
+            // Only flip the "Paid" month flag if they paid at least ONE full month's worth of conveyance
+            if (Number(conveyanceItem.amount) >= requiredMonthlyAmount && requiredMonthlyAmount > 0) {
+                student.lastConveyancePayment = date || new Date(); // Use payment date or now
+            }
         }
 
         await student.save();
@@ -101,8 +143,9 @@ const addFee = async (req, res) => {
         (async () => {
             try {
                 // 1. Generate PDF Receipt
-                console.log(`Generating receipt PDF for Fee ID: ${fee._id}`);
-                const pdfBuffer = await generateFeeReceipt(fee, student);
+                console.log(`Generating receipt PDF for Receipt No: ${receiptNo}`);
+
+                const pdfBuffer = await generateFeeReceipt(insertedFee, student);
 
                 // 2. Determine Recipient Email
                 // Requirement: Send ONLY to Father's email. If not present, do not send.
@@ -115,9 +158,9 @@ const addFee = async (req, res) => {
                     const emailResult = await sendFeeReceiptEmail({
                         toEmail: recipientEmail,
                         studentName: student.name,
-                        feeAmount: fee.amount,
-                        receiptNo: fee.receiptNo,
-                        paymentDate: fee.paymentDate,
+                        feeAmount: masterTransaction.amount,
+                        receiptNo: receiptNo,
+                        paymentDate: date,
                         pdfBuffer: pdfBuffer
                     });
 
@@ -134,7 +177,7 @@ const addFee = async (req, res) => {
             }
         })();
 
-        res.status(201).json(fee);
+        res.status(201).json({ receiptNo, insertedFee });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

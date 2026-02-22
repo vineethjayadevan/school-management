@@ -12,7 +12,14 @@ const feeSchema = mongoose.Schema({
     // Payment Details
     paymentDate: { type: Date },
     paymentMode: { type: String }, // Cash, Online, Cheque, UPI
+    transactionId: { type: String }, // Reference Number for Non-Cash
     receiptNo: { type: String },
+
+    // Split Payment Details Array
+    breakdown: [{
+        feeType: { type: String, required: true },
+        amount: { type: Number, required: true }
+    }],
 
     remarks: { type: String }
 }, {
