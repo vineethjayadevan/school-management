@@ -28,6 +28,7 @@ import {
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import api from '../services/api';
 import { useToast } from '../components/ui/Toast';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 // --- Shared Components ---
 
@@ -2173,6 +2174,7 @@ export default function Home() {
                     </div>
                 )}
             </AnimatePresence >
+            <WhatsAppButton />
         </div >
     );
 }

@@ -183,6 +183,7 @@ const generateFeeReceipt = (fee, student) => {
         doc.text("Total Paid", col2X + 50, currentY + 8, { align: 'right', width: 100 }); // Approx position
 
         doc.fillColor('#4f46e5').fontSize(11).font('Helvetica-Bold'); // Indigo-600
+        const amountStr = `Rs. ${Number(fee.amount).toLocaleString('en-IN')}`;
         doc.text(amountStr, col3X, currentY + 7, { align: 'right', width: 90 });
 
         currentY += rowHeight + 40;
