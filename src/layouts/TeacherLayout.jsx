@@ -9,7 +9,8 @@ import {
     Menu,
     X,
     Bell,
-    CheckSquare
+    CheckSquare,
+    User
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -28,8 +29,9 @@ export default function TeacherLayout() {
     const navigation = [
         { name: 'Dashboard', href: '/teacher/dashboard', icon: LayoutDashboard },
         { name: 'My Classes', href: '/teacher/classes', icon: BookOpen },
-        { name: 'Assignments', href: '/teacher/assignments', icon: CheckSquare },
+        { name: 'Attendance', href: '/teacher/attendance', icon: CheckSquare },
         { name: 'Schedule', href: '/teacher/schedule', icon: Calendar },
+        { name: 'My Profile', href: '/teacher/profile', icon: User },
     ];
 
     if (!user) return null;

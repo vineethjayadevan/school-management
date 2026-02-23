@@ -43,6 +43,8 @@ import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import ClassDetails from './pages/teacher/ClassDetails';
 import MyClasses from './pages/teacher/MyClasses';
 import TeacherProfile from './pages/teacher/TeacherProfile';
+import AttendanceMarking from './pages/teacher/AttendanceMarking';
+import TeacherSchedule from './pages/teacher/TeacherSchedule';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentFees from './pages/student/StudentFees';
 
@@ -183,8 +185,9 @@ function App() {
                     <Route path="classes" element={<MyClasses />} />
                     <Route path="classes/:className/:sectionName" element={<ClassDetails />} />
                     <Route path="profile" element={<TeacherProfile />} />
+                    <Route path="attendance" element={<AttendanceMarking />} />
                     <Route path="assignments" element={<div>Assignments Placeholder</div>} />
-                    <Route path="schedule" element={<div>Schedule Placeholder</div>} />
+                    <Route path="schedule" element={<TeacherSchedule />} />
                 </Route>
 
                 {/* STUDENT ROUTES */}

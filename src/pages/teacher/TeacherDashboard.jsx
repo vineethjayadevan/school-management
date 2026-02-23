@@ -57,21 +57,21 @@ export default function TeacherDashboard() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg shadow-indigo-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg">
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
                             <BookOpen size={24} />
                         </div>
                         <div>
-                            <p className="text-indigo-100 text-sm">Assigned Classes</p>
-                            <h3 className="text-2xl font-bold">{stats.totalClasses}</h3>
+                            <p className="text-slate-500 text-sm">Assigned Classes</p>
+                            <h3 className="text-2xl font-bold text-slate-800">{stats.totalClasses}</h3>
                         </div>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
                             <Users size={24} />
                         </div>
@@ -80,25 +80,16 @@ export default function TeacherDashboard() {
                             <h3 className="text-2xl font-bold text-slate-800">{stats.totalStudents}</h3>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 cursor-pointer hover:border-indigo-200 transition-colors"
-                    onClick={() => navigate('/teacher/profile')}
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                            <DollarSign size={24} />
+                    {stats.classBreakdown && stats.classBreakdown.length > 0 && (
+                        <div className="space-y-2 border-t border-slate-50 pt-3">
+                            {stats.classBreakdown.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-600">Class {item.className}-{item.sectionName}</span>
+                                    <span className="font-medium text-slate-800">{item.studentCount} Students</span>
+                                </div>
+                            ))}
                         </div>
-                        <div>
-                            <p className="text-slate-500 text-sm">Recent Salary</p>
-                            <h3 className="text-lg font-bold text-slate-800">
-                                {salaryHistory.length > 0 ? `₹${salaryHistory[0].amount.toLocaleString()}` : 'N/A'}
-                            </h3>
-                            <p className="text-xs text-slate-400">
-                                {salaryHistory.length > 0 ? new Date(salaryHistory[0].paymentDate || Date.now()).toLocaleDateString() : 'No Records'}
-                            </p>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

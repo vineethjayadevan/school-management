@@ -146,5 +146,20 @@ export const storageService = {
             const { data } = await api.get(`/salaries/summary?month=${month}`);
             return data;
         }
+    },
+    attendance: {
+        mark: async (attendanceData) => {
+            const { data } = await api.post('/attendance/mark', attendanceData);
+            return data;
+        },
+        getByClass: async (className, section, date) => {
+            const { data } = await api.get(`/attendance/${className}/${section}/${date}`);
+            return data;
+        },
+        getStudentStats: async (studentId, month, year) => {
+            const params = month && year ? `?month=${month}&year=${year}` : '';
+            const { data } = await api.get(`/attendance/student/${studentId}${params}`);
+            return data;
+        }
     }
 };

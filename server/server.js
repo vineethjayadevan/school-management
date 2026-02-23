@@ -56,6 +56,7 @@ app.use('/api/staff-categories', require('./routes/staffCategoryRoutes'));
 app.use('/api/teacher', require('./routes/teacherRoutes'));
 app.use('/api/system', require('./routes/systemRoutes'));
 
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.get('/', (req, res) => {

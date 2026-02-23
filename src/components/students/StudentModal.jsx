@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Edit, Save, User, Phone, MapPin, Calendar, Book, Users, FileText, Bus, ChevronDown, ChevronUp, CreditCard } from 'lucide-react';
 import { storageService } from '../../services/storage';
+import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee } from '../../utils/feeUtils';
 
@@ -9,7 +10,7 @@ import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee }
  * StudentModal Component
  * Reorganized with Accordions for better UI/UX in both View and Edit modes.
  */
-export default function StudentModal({ isOpen, onClose, studentId, initialMode = 'view', onUpdate }) {
+export default function StudentModal({ isOpen, onClose, studentId, initialMode = 'view', onUpdate, readOnly = false }) {
     const { addToast } = useToast();
     const [mode, setMode] = useState(initialMode);
     const [loading, setLoading] = useState(false);
@@ -37,36 +38,99 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            // Parallel fetch: Student Profile AND Fee History
-            const [data, feeHistory] = await Promise.all([
+            // Parallel fetch: Student Profile, Fee History, and Fee Categories
+            const [data, feeHistory, categoriesRes] = await Promise.all([
                 storageService.students.getById(studentId),
-                storageService.fees.getByStudent(studentId)
+                storageService.fees.getByStudent(studentId).catch(() => []),
+                api.get('/fee-categories').catch(() => ({ data: [] }))
             ]);
 
-            // Calculate fees
-            const tuitionFee = 20000;
-            const materialsFee = 6500;
+            const fetchedCategories = categoriesRes.data || [];
 
             // Conveyance Calculation
             const slab = data.conveyanceSlab ? parseInt(data.conveyanceSlab) : 0;
-            const conveyanceFee = calculateTotalConveyanceFee(slab);
+            const monthlyConveyance = calculateConveyanceFee(slab);
 
-            const totalFee = tuitionFee + materialsFee + conveyanceFee;
-            const paid = feeHistory.reduce((sum, f) => sum + (f.amount || 0), 0);
-            const pending = totalFee - paid;
+            const feeDetails = {
+                paid: 0,
+                pending: 0,
+                totalFee: 0,
+                monthlyConveyance,
+                breakdown: [],
+                paidOthers: 0
+            };
+
+            // Calculate paid per category from history breakdown
+            let totalPaidComputed = 0;
+            const categoryPaid = {};
+
+            feeHistory.forEach(txn => {
+                let txnAmountLeft = txn.amount || 0;
+                if (txn.breakdown && txn.breakdown.length > 0) {
+                    txn.breakdown.forEach(item => {
+                        const normalizedName = item.feeType?.trim().toLowerCase();
+                        if (normalizedName) {
+                            categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + item.amount;
+                        }
+                    });
+                } else if (txn.feeType) {
+                    const normalizedName = txn.feeType.trim().toLowerCase();
+                    categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + txnAmountLeft;
+                }
+                totalPaidComputed += (txn.amount || 0);
+            });
+
+            // Calculate precise pending/total per active category
+            const currentClassName = data.className || data.class;
+            let totalFeeComputed = 0;
+            let matchedPaid = 0;
+
+            fetchedCategories.forEach(category => {
+                const normalizedCatName = category.name.trim().toLowerCase();
+                let annualTotal = 0;
+                let monthlyAmount = 0;
+
+                if (category.hasSlabs) {
+                    if (slab > 0) {
+                        const baseMonthly = category.baseAmount || 0;
+                        monthlyAmount = baseMonthly + (slab * (category.slabMultiplier || 0));
+                        annualTotal = monthlyAmount * (category.months || 10);
+                    }
+                } else {
+                    const classSpecific = category.amounts?.find(a => a.className === currentClassName);
+                    annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
+                    monthlyAmount = annualTotal / (category.months || 10);
+                }
+
+                if (annualTotal > 0) {
+                    totalFeeComputed += annualTotal;
+                    const paidForCat = categoryPaid[normalizedCatName] || 0;
+                    matchedPaid += paidForCat;
+                    const pendingForCat = Math.max(0, annualTotal - paidForCat);
+
+                    feeDetails.breakdown.push({
+                        id: category._id,
+                        name: category.name,
+                        type: category.type,
+                        total: annualTotal,
+                        paid: paidForCat,
+                        pending: pendingForCat,
+                        monthly: monthlyAmount,
+                        months: category.months || 10,
+                        isConveyance: category.hasSlabs || normalizedCatName.includes('conveyance')
+                    });
+                }
+            });
+
+            feeDetails.paid = totalPaidComputed;
+            feeDetails.totalFee = totalFeeComputed;
+            feeDetails.pending = Math.max(0, totalFeeComputed - totalPaidComputed);
+            feeDetails.paidOthers = Math.max(0, totalPaidComputed - matchedPaid);
 
             const studentWithFees = {
                 ...data,
-                feeDetails: {
-                    paid,
-                    pending,
-                    totalFee,
-                    tuitionFee,
-                    materialsFee,
-                    conveyanceFee,
-                    monthlyConveyance: calculateConveyanceFee(slab)
-                },
-                feeHistory: feeHistory || [] // Store history
+                feeDetails: feeDetails,
+                feeHistory: feeHistory || []
             };
 
             setStudent(studentWithFees);
@@ -161,13 +225,13 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {mode === 'view' && !loading && student && (
+                        {mode === 'view' && !loading && student && !readOnly && (
                             <button
                                 onClick={() => setMode('edit')}
-                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+                                className="px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
                                 title="Edit Student"
                             >
-                                <Edit size={20} />
+                                <Edit size={16} /> Edit
                             </button>
                         )}
                         <button
@@ -329,49 +393,84 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                             <AccordionItem id="fees" title="Fee Overview & Conveyance" icon={CreditCard}>
                                 <div className="space-y-4">
                                     {mode === 'view' ? (
-                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-3">
-                                            <div className="flex justify-between items-center pb-2 border-b border-slate-200">
-                                                <span className="text-sm text-slate-600">Standard Fee (Tuition + Materials)</span>
-                                                <span className="font-bold text-slate-900">₹{(student?.feeDetails?.tuitionFee + student?.feeDetails?.materialsFee).toLocaleString()}</span>
+                                        <div className="space-y-6">
+                                            {/* Top Summary Cards */}
+                                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Annual Fee</span>
+                                                    <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded-full">Current Session</span>
+                                                </div>
+                                                <div className="text-3xl font-black text-slate-900 mb-5">
+                                                    ₹{student?.feeDetails?.totalFee?.toLocaleString()}
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                                    <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)]">
+                                                        <p className="text-[10px] font-black uppercase text-emerald-600 tracking-wider mb-1">Total Paid</p>
+                                                        <p className="text-xl font-bold text-emerald-700">₹{student?.feeDetails?.paid?.toLocaleString() || 0}</p>
+                                                    </div>
+                                                    <div className="bg-rose-50 rounded-lg p-3 border border-rose-100 shadow-[inset_0_1px_2px_rgba(255,255,255,0.5)]">
+                                                        <p className="text-[10px] font-black uppercase text-rose-600 tracking-wider mb-1">Total Balance</p>
+                                                        <p className="text-xl font-bold text-rose-700">₹{student?.feeDetails?.pending?.toLocaleString() || 0}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Overall Progress Bar */}
+                                                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                                        style={{ width: `${Math.min(100, Math.max(0, ((student?.feeDetails?.paid || 0) / (student?.feeDetails?.totalFee || 1)) * 100))}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
 
-                                            {/* Conveyance Section */}
-                                            <div className="flex justify-between items-center py-2 border-b border-slate-200">
-                                                <div className="flex items-center gap-2">
-                                                    <Bus size={16} className="text-blue-600" />
-                                                    <span className="text-sm text-slate-700 font-medium">Conveyance Fee</span>
-                                                    {student?.conveyanceSlab > 0 && (
-                                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                                            Slab {student.conveyanceSlab}
-                                                        </span>
+                                            {/* Payments Breakdown */}
+                                            <div className="px-1">
+                                                <div className="flex justify-between items-center mb-5">
+                                                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Payments To Make</h4>
+                                                    <span className="text-[10px] text-slate-400 italic">Expected Annual</span>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    {student?.feeDetails?.breakdown?.map((cat, idx) => (
+                                                        <div key={cat.id || idx} className="group">
+                                                            <div className="flex justify-between items-end mb-2">
+                                                                <span className="text-sm font-semibold text-slate-700">
+                                                                    {cat.name}
+                                                                    {cat.isConveyance && student?.conveyanceSlab > 0 &&
+                                                                        <span className="ml-2 text-[10px] font-normal text-slate-400 italic">(Slab {student.conveyanceSlab})</span>
+                                                                    }
+                                                                </span>
+                                                                <span className="block font-bold text-slate-900">₹{cat.total.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full transition-all duration-500 ${cat.paid >= cat.total ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                                        style={{ width: `${Math.min(100, Math.max(0, (cat.paid / (cat.total || 1)) * 100))}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className="text-[10px] text-slate-400 font-medium w-6 text-right">
+                                                                    {Math.round((cat.paid / (cat.total || 1)) * 100)}%
+                                                                </span>
+                                                                <span className={`text-xs w-20 text-right ${cat.pending > 0 ? 'font-bold text-rose-600' : 'font-semibold text-emerald-600'}`}>
+                                                                    {cat.pending > 0 ? `₹${cat.pending.toLocaleString()} Due` : 'Cleared'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Miscellaneous (if applicable) */}
+                                                    {student?.feeDetails?.paidOthers > 0 && (
+                                                        <div className="group pt-4 border-t border-slate-100 mt-6">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-sm font-semibold text-slate-700">Miscellaneous Paid</span>
+                                                                <span className="font-bold text-emerald-600 text-sm">₹{student?.feeDetails?.paidOthers?.toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <div className="text-right">
-                                                    {student?.conveyanceSlab > 0 ? (
-                                                        <>
-                                                            <span className="block font-bold text-slate-900">₹{student?.feeDetails?.conveyanceFee?.toLocaleString()}</span>
-                                                            <span className="text-xs text-slate-500">₹{student?.feeDetails?.monthlyConveyance}/mo (10 mos)</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-sm text-slate-400 italic">Not Availed</span>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            <div className="flex justify-between items-center pt-2">
-                                                <span className="text-sm font-semibold text-slate-700">Total Annual Payable</span>
-                                                <span className="font-bold text-indigo-700 text-lg">₹{student?.feeDetails?.totalFee?.toLocaleString()}</span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 pt-4 mt-2 border-t border-slate-200">
-                                                <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100 text-center">
-                                                    <p className="text-xs text-emerald-600 font-semibold uppercase">Total Paid</p>
-                                                    <p className="text-lg font-bold text-emerald-700">₹{student?.feeDetails?.paid?.toLocaleString() || 0}</p>
-                                                </div>
-                                                <div className="bg-rose-50 p-3 rounded-lg border border-rose-100 text-center">
-                                                    <p className="text-xs text-rose-600 font-semibold uppercase">Pending Due</p>
-                                                    <p className="text-lg font-bold text-rose-700">₹{student?.feeDetails?.pending?.toLocaleString() || 0}</p>
-                                                </div>
                                             </div>
                                         </div>
                                     ) : (
@@ -394,7 +493,7 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                                     >
                                                         {CONVEYANCE_SLABS.map(slab => (
                                                             <option key={slab.id} value={slab.id}>
-                                                                {slab.label} {slab.id > 0 ? `(₹${slab.monthly}/mo)` : ''}
+                                                                {slab.label} {slab.id > 0 ? `(₹${slab.monthly} / mo)` : ''}
                                                             </option>
                                                         ))}
                                                     </select>
@@ -427,7 +526,11 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                                             {fee.paymentDate ? new Date(fee.paymentDate).toLocaleDateString() : 'N/A'}
                                                         </td>
                                                         <td className="px-4 py-2">
-                                                            <span className="font-medium text-slate-900">{fee.feeType || 'Fee'}</span>
+                                                            <span className="font-medium text-slate-900">
+                                                                {fee.feeType === 'Split Payment' && fee.breakdown?.length > 0
+                                                                    ? fee.breakdown.map(b => b.feeType).join(', ')
+                                                                    : (fee.feeType || 'Fee')}
+                                                            </span>
                                                             <div className="text-xs text-slate-400">{fee.paymentMode}</div>
                                                         </td>
                                                         <td className="px-4 py-2 text-right font-semibold text-emerald-600">
@@ -465,6 +568,6 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

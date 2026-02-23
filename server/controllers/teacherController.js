@@ -2,6 +2,7 @@ const Class = require('../models/Class');
 const Student = require('../models/Student');
 const Salary = require('../models/Salary');
 const Staff = require('../models/Staff');
+const User = require('../models/User');
 const Subject = require('../models/Subject');
 
 // @desc    Get Teacher Statistics (Classes, Students)
@@ -11,36 +12,59 @@ const getTeacherStats = async (req, res) => {
     try {
         const teacherId = req.user.profileId;
 
-        // Find classes where teacher is either class teacher or subject teacher
-        // Note: For now, assuming Class model has sections array with classTeacher field
-        // and a way to link subjects to teachers (which might be complex if not explicitly stored).
-        // Simplified approach: Find classes where they are class teacher.
-
-        // 1. Classes as Class Teacher
+        // 1. Classes where they are class teacher
         const classesAsClassTeacher = await Class.find({
             "sections.classTeacher": teacherId
-        });
+        }).lean();
 
-        const totalClasses = classesAsClassTeacher.length; // Approximate for now
+        // 2. Classes where they are subject teacher (from Timetable)
+        const Timetable = require('../models/Timetable');
+        const timetableEntries = await Timetable.find({
+            "periods.teacher": teacherId
+        }).select('className section').lean();
 
-        // 2. Count Total Students in these sections
-        let totalStudents = 0;
+        const allAssociated = [];
+
         for (const cls of classesAsClassTeacher) {
             for (const sec of cls.sections) {
                 if (sec.classTeacher?.toString() === teacherId.toString()) {
-                    const students = await Student.countDocuments({
-                        class: cls.name,
-                        section: sec.name,
-                        status: 'Active'
-                    });
-                    totalStudents += students;
+                    allAssociated.push({ className: cls.name, section: sec.name });
                 }
             }
         }
 
+        timetableEntries.forEach(t => {
+            allAssociated.push({ className: t.className, section: t.section });
+        });
+
+        // Unique by class + section
+        const uniqueClasses = allAssociated.reduce((acc, current) => {
+            const x = acc.find(item => item.className === current.className && item.section === current.section);
+            if (!x) return acc.concat([current]);
+            return acc;
+        }, []);
+
+        let totalStudents = 0;
+        const classBreakdown = [];
+
+        for (const item of uniqueClasses) {
+            const studentCount = await Student.countDocuments({
+                className: item.className,
+                section: item.section,
+                isActive: true
+            });
+            totalStudents += studentCount;
+            classBreakdown.push({
+                className: item.className, // Consistent with frontend Attendance
+                sectionName: item.section,
+                studentCount
+            });
+        }
+
         res.json({
-            totalClasses,
-            totalStudents
+            totalClasses: classBreakdown.length,
+            totalStudents,
+            classBreakdown
         });
 
     } catch (error) {
@@ -55,24 +79,45 @@ const getTeacherClasses = async (req, res) => {
     try {
         const teacherId = req.user.profileId;
 
+        // Class Teacher Roles
         const classes = await Class.find({
             "sections.classTeacher": teacherId
         }).lean();
 
+        // Subject Teacher Roles (from Timetable)
+        const Timetable = require('../models/Timetable');
+        const timetableEntries = await Timetable.find({
+            "periods.teacher": teacherId
+        }).select('className section').lean();
+
         const myClasses = [];
 
+        // Add Class Teacher roles
         classes.forEach(cls => {
             cls.sections.forEach(sec => {
                 if (sec.classTeacher?.toString() === teacherId.toString()) {
                     myClasses.push({
-                        _id: cls._id, // Class ID (Parent)
+                        _id: cls._id,
                         name: cls.name,
+                        className: cls.name, // Added for duplicate compatibility
                         section: sec.name,
                         role: 'Class Teacher'
-                        // Add student count here if needed
                     });
                 }
             });
+        });
+
+        // Add Subject Teacher roles
+        timetableEntries.forEach(t => {
+            const exists = myClasses.find(c => c.name === t.className && c.section === t.section);
+            if (!exists) {
+                myClasses.push({
+                    name: t.className,
+                    className: t.className,
+                    section: t.section,
+                    role: 'Subject Teacher'
+                });
+            }
         });
 
         res.json(myClasses);
@@ -101,10 +146,15 @@ const getClassStudents = async (req, res) => {
             return {
                 _id: student._id,
                 name: student.name,
+                admissionNo: student.admissionNo,
                 rollNo: student.rollNo,
                 gender: student.gender,
+                guardian: student.guardian,
                 primaryPhone: student.primaryPhone || student.contact || 'N/A',
-                feesStatus: student.feesStatus || 'Pending'
+                photoUrl: student.photoUrl,
+                feesStatus: student.feesStatus || 'Pending',
+                conveyanceSlab: student.conveyanceSlab,
+                lastConveyancePayment: student.lastConveyancePayment
             };
         });
 
@@ -137,12 +187,23 @@ const getTeacherSalaryHistory = async (req, res) => {
 const getTeacherProfile = async (req, res) => {
     try {
         const teacherId = req.user.profileId;
-        const teacher = await Staff.findById(teacherId);
+        const teacher = await Staff.findById(teacherId).lean();
 
         if (!teacher) {
             return res.status(404).json({ message: 'Teacher profile not found' });
         }
-        res.json(teacher);
+
+        // Robust username fetch: Try req.user first, then direct DB query
+        let username = req.user.username;
+        if (!username) {
+            const user = await User.findOne({ profileId: teacherId }).select('username');
+            username = user?.username;
+        }
+
+        res.json({
+            ...teacher,
+            username: username || 'N/A'
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
