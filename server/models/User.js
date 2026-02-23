@@ -2,14 +2,17 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = mongoose.Schema({
+    username: { type: String, unique: true, sparse: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: false, unique: true, sparse: true },
     password: { type: String, required: true },
     role: {
         type: String,
-        enum: ['superuser', 'admin', 'office_staff', 'teacher', 'student', 'board_member'],
+        enum: ['superuser', 'admin', 'office_staff', 'teacher', 'student', 'board_member', 'superadmin', 'officestaff'],
         default: 'student'
     },
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     profileId: { type: mongoose.Schema.Types.ObjectId, refPath: 'role' }, // Links to Student or Staff ID
     avatar: { type: String, default: 'https://ui-avatars.com/api/?background=random' },
 }, {

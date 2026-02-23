@@ -46,7 +46,9 @@ import TeacherProfile from './pages/teacher/TeacherProfile';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentFees from './pages/student/StudentFees';
 
-// Guard Component
+import SystemLogin from './pages/system/SystemLogin';
+import SuperAdminDashboard from './pages/system/SuperAdminDashboard';
+
 // Guard Component
 function RequireAuth({ children, allowedRoles }) {
     const location = useLocation();
@@ -64,10 +66,11 @@ function RequireAuth({ children, allowedRoles }) {
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         // Redirect based on role if they try to access unauthorized area
+        if (user.role === 'superadmin') return <Navigate to="/system/dashboard" replace />;
         if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;
         if (user.role === 'student') return <Navigate to="/student/dashboard" replace />;
         if (user.role === 'board_member') return <Navigate to="/board/accrual-based" replace />;
-        if (['superuser', 'admin', 'office_staff'].includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
+        if (['superuser', 'admin', 'office_staff', 'officestaff'].includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
         return <Navigate to="/login" replace />;
     }
 
@@ -83,12 +86,20 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
 
+                {/* SYSTEM ADMIN ROUTES */}
+                <Route path="/system/login" element={<SystemLogin />} />
+                <Route path="/system/dashboard" element={
+                    <RequireAuth allowedRoles={['superadmin']}>
+                        <SuperAdminDashboard />
+                    </RequireAuth>
+                } />
+
                 {/* Shared Login Redirect Helper */}
                 <Route path="/redirect" element={<RedirectHandler />} />
 
                 {/* OFFICE / ADMIN ROUTES */}
                 <Route path="/admin" element={
-                    <RequireAuth allowedRoles={['superuser', 'admin', 'office_staff']}>
+                    <RequireAuth allowedRoles={['superuser', 'admin', 'office_staff', 'officestaff']}>
                         <DashboardLayout />
                     </RequireAuth>
                 }>
@@ -107,7 +118,7 @@ function App() {
                     } />
 
                     <Route path="enquiries" element={
-                        <RequireAuth allowedRoles={['superuser', 'office_staff']}>
+                        <RequireAuth allowedRoles={['superuser', 'office_staff', 'officestaff']}>
                             <EnquiryList />
                         </RequireAuth>
                     } />
@@ -227,10 +238,13 @@ function RedirectHandler() {
 
     if (!user) return <Navigate to="/login" replace />;
 
+    if (user.role === 'superadmin') {
+        return <Navigate to="/system/dashboard" replace />;
+    }
     if (['superuser', 'admin'].includes(user.role)) {
         return <Navigate to="/admin/dashboard" replace />;
     }
-    if (user.role === 'office_staff') {
+    if (user.role === 'office_staff' || user.role === 'officestaff') {
         return <Navigate to="/admin/enquiries" replace />;
     }
     if (user.role === 'teacher') return <Navigate to="/teacher/dashboard" replace />;

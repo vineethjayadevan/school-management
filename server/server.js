@@ -54,6 +54,7 @@ app.use('/api/accounting', require('./routes/accountingRoutes'));
 app.use('/api/accrual', require('./routes/accrualRoutes'));
 app.use('/api/staff-categories', require('./routes/staffCategoryRoutes'));
 app.use('/api/teacher', require('./routes/teacherRoutes'));
+app.use('/api/system', require('./routes/systemRoutes'));
 
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
