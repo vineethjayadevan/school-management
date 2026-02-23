@@ -157,6 +157,12 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                     <div>
                         <p className="text-xs text-slate-400 uppercase font-semibold">Receipt No</p>
                         <p className="text-lg font-mono font-bold text-slate-900">{transaction.receiptNo || 'PENDING'}</p>
+                        {transaction.transactionId && (
+                            <div className="mt-1">
+                                <p className="text-[10px] text-slate-400 uppercase font-semibold">Transaction ID</p>
+                                <p className="text-sm font-mono font-semibold text-indigo-600">{transaction.transactionId}</p>
+                            </div>
+                        )}
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-slate-400 uppercase font-semibold">Date</p>
@@ -193,14 +199,7 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                                     <tr key={idx}>
                                         <td className="px-6 py-4 font-medium text-slate-900">{item.feeType}</td>
                                         <td className="px-6 py-4 text-slate-600">
-                                            {idx === 0 ? (
-                                                <>
-                                                    {transaction.mode || transaction.paymentMode}
-                                                    {transaction.transactionId && (
-                                                        <span className="block text-xs text-slate-500 mt-1">Ref: {transaction.transactionId}</span>
-                                                    )}
-                                                </>
-                                            ) : null}
+                                            {idx === 0 ? (transaction.mode || transaction.paymentMode) : null}
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">₹{Number(item.amount).toLocaleString()}</td>
                                     </tr>
@@ -210,9 +209,6 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                                     <td className="px-6 py-4 font-medium text-slate-900">{transaction.type || transaction.feeType}</td>
                                     <td className="px-6 py-4 text-slate-600">
                                         {transaction.mode || transaction.paymentMode}
-                                        {transaction.transactionId && (
-                                            <span className="block text-xs text-slate-500 mt-1">Ref: {transaction.transactionId}</span>
-                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">₹{Number(transaction.amount).toLocaleString()}</td>
                                 </tr>

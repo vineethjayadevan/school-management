@@ -251,7 +251,133 @@ export default function StudentDetails() {
         doc.save(`Profile_${student.name}_${student.admissionNo}.pdf`);
     };
 
+    const handleDownloadFeeStatement = () => {
+        if (!student) return;
+        const doc = jsPDF();
+        const primaryColor = [79, 70, 229]; // Indigo 600
 
+        // Header - School Branding
+        doc.setFontSize(20);
+        doc.setTextColor(...primaryColor);
+        doc.text('STEM Global Public School', 14, 20);
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Student Fee Statement', 14, 30);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 38);
+
+        let finalY = 45;
+
+        // 1. Student & Parent Information
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Student Details', 'Parent Details']],
+            body: [
+                [
+                    `Name: ${student.name}\nClass: ${student.className || student.class} - ${student.section}\nRoll No: ${student.rollNo}\nAdmission No: ${student.admissionNo}`,
+                    `Father: ${student.fatherName || '-'}\nPhone: ${student.fatherMobile || '-'}\nEmail: ${student.fatherEmail || '-'}`
+                ]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: 255 },
+            styles: { cellPadding: 5, fontSize: 10, lineHeight: 1.5 }
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // 2. Fee Summary
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Fee Summary', 14, finalY);
+        finalY += 5;
+
+        autoTable(doc, {
+            startY: finalY,
+            body: [
+                ['Total Annual Fee', `Rs. ${student.feeDetails?.totalFee?.toLocaleString()}`],
+                ['Total Amount Paid', `Rs. ${student.feeDetails?.paid?.toLocaleString()}`],
+                ['Total Balance Due', `Rs. ${student.feeDetails?.pending?.toLocaleString()}`]
+            ],
+            theme: 'striped',
+            styles: { fontSize: 10, cellPadding: 3 },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 100 },
+                1: { halign: 'right', fontStyle: 'bold' }
+            }
+        });
+        // Add color to balance if pending
+        if (student.feeDetails?.pending > 0) {
+            doc.setTextColor(220, 38, 38); // Red
+            doc.setFontSize(10);
+            const balanceY = doc.lastAutoTable.finalY - 5;
+            // Since we can't easily re-paint a cell, we rely on the summary text
+        }
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // 3. Category-wise Breakdown
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Fee Breakdown (Category-wise)', 14, finalY);
+        finalY += 5;
+
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Fee Category', 'Annual Total', 'Paid', 'Pending', 'Status']],
+            body: student.feeDetails?.breakdown?.map(cat => [
+                cat.name,
+                `Rs. ${cat.total.toLocaleString()}`,
+                `Rs. ${cat.paid.toLocaleString()}`,
+                `Rs. ${cat.pending.toLocaleString()}`,
+                cat.pending === 0 ? 'CLEARED' : 'PENDING'
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [100, 116, 139] },
+            columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right' },
+                4: { halign: 'center' }
+            },
+            didParseCell: (data) => {
+                if (data.column.index === 4 && data.cell.text[0] === 'CLEARED') {
+                    data.cell.styles.textColor = [22, 163, 74];
+                    data.cell.styles.fontStyle = 'bold';
+                }
+                if (data.column.index === 4 && data.cell.text[0] === 'PENDING') {
+                    data.cell.styles.textColor = [220, 38, 38];
+                }
+            }
+        });
+        finalY = doc.lastAutoTable.finalY + 10;
+
+        // 4. Transaction History
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Transaction History', 14, finalY);
+        finalY += 5;
+
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Date', 'Receipt No', 'Fee Type', 'Mode', 'Amount']],
+            body: (student.feeHistory || []).map(txn => [
+                new Date(txn.paymentDate || txn.createdAt).toLocaleDateString(),
+                txn.receiptNo || 'MANUAL-ENTRY',
+                txn.feeType || 'Payment',
+                txn.paymentMode || txn.mode || 'Cash',
+                `Rs. ${txn.amount?.toLocaleString()}`
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [71, 85, 105] },
+            columnStyles: {
+                4: { halign: 'right', fontStyle: 'bold' }
+            }
+        });
+
+        // Save
+        doc.save(`FeeStatement_${student.name}_${student.admissionNo}.pdf`);
+    };
 
     const fetchStudent = async () => {
         setLoading(true);
@@ -1762,9 +1888,18 @@ export default function StudentDetails() {
                         <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-6 space-y-6">
                             {/* Summary Cards */}
                             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
-                                    <CreditCard size={18} className="text-indigo-600" />
-                                    Fee Overview
+                                <h3 className="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <CreditCard size={18} className="text-indigo-600" />
+                                        Fee Overview
+                                    </div>
+                                    <button
+                                        onClick={handleDownloadFeeStatement}
+                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                        title="Download Fee Statement"
+                                    >
+                                        <Download size={16} />
+                                    </button>
                                 </h3>
 
                                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">

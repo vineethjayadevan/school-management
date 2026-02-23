@@ -158,7 +158,7 @@ const addFee = async (req, res) => {
                     const emailResult = await sendFeeReceiptEmail({
                         toEmail: recipientEmail,
                         studentName: student.name,
-                        feeAmount: masterTransaction.amount,
+                        feeAmount: insertedFee.amount,
                         receiptNo: receiptNo,
                         paymentDate: date,
                         pdfBuffer: pdfBuffer

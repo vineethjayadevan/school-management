@@ -689,8 +689,29 @@ export default function FeeDashboard() {
     // --- History Filters State ---
     const [historySubTab, setHistorySubTab] = useState('overview'); // 'overview' | 'all'
     const [filterClass, setFilterClass] = useState('All');
+    const [filterStudentId, setFilterStudentId] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
+
+    // Reset student filter when class changes
+    useEffect(() => {
+        setFilterStudentId('All');
+    }, [filterClass]);
+
+    const studentsByClass = useMemo(() => {
+        return students.reduce((acc, s) => {
+            const cls = s.className || s.class || 'Unknown';
+            if (!acc[cls]) acc[cls] = [];
+            acc[cls].push(s);
+            return acc;
+        }, {});
+    }, [students]);
+
+    const studentsInSelectedClass = useMemo(() => {
+        if (filterClass === 'All') return [];
+        return studentsByClass[filterClass] || [];
+    }, [studentsByClass, filterClass]);
 
     // --- Filter Logic (Memoized for PDF) ---
     const filteredAllTransactions = useMemo(() => {
@@ -699,6 +720,12 @@ export default function FeeDashboard() {
 
             const matchesClass = filterClass === 'All' ||
                 (t.student && (t.student.className === filterClass || t.student.class === filterClass));
+
+            const matchesStudent = filterStudentId === 'All' || t.student?._id === filterStudentId;
+
+            const matchesSearch = !searchQuery ||
+                t.student?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                t.receiptNo?.toLowerCase().includes(searchQuery.toLowerCase());
 
             let matchesDate = true;
             if (filterDateStart) {
@@ -711,9 +738,9 @@ export default function FeeDashboard() {
                 matchesDate = matchesDate && tDate <= endDate;
             }
 
-            return matchesClass && matchesDate;
+            return matchesClass && matchesStudent && matchesSearch && matchesDate;
         });
-    }, [transactions, filterClass, filterDateStart, filterDateEnd]);
+    }, [transactions, filterClass, filterStudentId, searchQuery, filterDateStart, filterDateEnd]);
 
     const downloadPDF = () => {
         const doc = new jsPDF();
@@ -732,11 +759,16 @@ export default function FeeDashboard() {
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
 
         // Filter Summary
-        let filterText = `Class: ${filterClass}`;
-        if (filterDateStart || filterDateEnd) {
-            filterText += ` | Date: ${filterDateStart || 'Start'} - ${filterDateEnd || 'End'}`;
+        let filterSummary = [`Class: ${filterClass}`];
+        if (filterStudentId !== 'All') {
+            const student = studentsInSelectedClass.find(s => s._id === filterStudentId);
+            if (student) filterSummary.push(`Student: ${student.name}`);
         }
-        doc.text(filterText, 14, 48);
+        if (searchQuery) filterSummary.push(`Search: "${searchQuery}"`);
+        if (filterDateStart || filterDateEnd) {
+            filterSummary.push(`Date: ${filterDateStart || 'Start'} - ${filterDateEnd || 'End'}`);
+        }
+        doc.text(filterSummary.join(' | '), 14, 48);
 
         // Helper to format currency
         const formatCurrency = (amount) => `Rs. ${amount.toLocaleString()}`;
@@ -794,12 +826,13 @@ export default function FeeDashboard() {
 
         const tableColumn = ["Admission No", "Student Name", "Total Fee", "Paid", "Pending", "Status"];
 
-        // Calculate totals
+        // Calculate totals and build rows
         let totalClassFee = 0;
         let totalClassPaid = 0;
         let totalClassPending = 0;
 
-        const tableRows = studentsInClass.map(student => {
+        const tableRows = [];
+        studentsInClass.forEach(student => {
             const details = getStudentFeeDetails(student);
             const totalDue = details.reduce((sum, d) => sum + d.due, 0);
             const totalPaid = details.reduce((sum, d) => sum + d.paid, 0);
@@ -809,14 +842,30 @@ export default function FeeDashboard() {
             totalClassPaid += totalPaid;
             totalClassPending += totalPending;
 
-            return [
-                student.admissionNo,
+            // 1. Student Summary Row (Main Row)
+            tableRows.push([
+                student.admissionNo || '-',
                 student.name,
                 `Rs. ${totalDue.toLocaleString()}`,
                 `Rs. ${totalPaid.toLocaleString()}`,
                 `Rs. ${Math.max(0, totalPending).toLocaleString()}`,
                 student.feesStatus || 'Pending'
-            ];
+            ]);
+
+            // 2. Breakdown Rows (Sub-Rows)
+            details.forEach(fee => {
+                // Only show rows that have some value to keep report concise
+                if (fee.due > 0 || fee.paid > 0) {
+                    tableRows.push([
+                        "", // Empty for hierarchy
+                        `  • ${fee.type}`, // Indented bullet
+                        `Rs. ${fee.due.toLocaleString()}`,
+                        `Rs. ${fee.paid.toLocaleString()}`,
+                        `Rs. ${Math.max(0, fee.pending).toLocaleString()}`,
+                        fee.status
+                    ]);
+                }
+            });
         });
 
         autoTable(doc, {
@@ -828,9 +877,27 @@ export default function FeeDashboard() {
             styles: { fontSize: 9, cellPadding: 3 },
             columnStyles: {
                 2: { halign: 'right' },
-                3: { halign: 'right', textColor: [22, 163, 74] }, // Green
-                4: { halign: 'right', textColor: [220, 38, 38], fontStyle: 'bold' } // Red
+                3: { halign: 'right' },
+                4: { halign: 'right' }
             },
+            didParseCell: (data) => {
+                // Identification of sub-rows: Admission No is empty and Type starts with bullet
+                const isSubRow = data.section === 'body' && Array.isArray(data.row.raw) && data.row.raw[0] === "" && String(data.row.raw[1]).includes('•');
+
+                if (isSubRow) {
+                    data.cell.styles.fontSize = 8;
+                    data.cell.styles.textColor = [100, 100, 100];
+                    if (data.column.index === 1) data.cell.styles.fontStyle = 'italic';
+                } else if (data.section === 'body') {
+                    // Styling for main student row
+                    if (data.column.index === 1) data.cell.styles.fontStyle = 'bold';
+                    if (data.column.index === 3) data.cell.styles.textColor = [22, 163, 74]; // Green
+                    if (data.column.index === 4) {
+                        data.cell.styles.textColor = [220, 38, 38]; // Red
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            }
         });
 
         // Summary Footer
@@ -1137,6 +1204,18 @@ export default function FeeDashboard() {
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
                         {/* Filters */}
                         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-4 items-center">
+                            {/* Search Box */}
+                            <div className="relative flex-1 min-w-[200px] max-w-sm">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search student or receipt..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                />
+                            </div>
+
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-slate-600">Class:</label>
                                 <select
@@ -1147,6 +1226,24 @@ export default function FeeDashboard() {
                                     {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
+
+                            {/* Student Filter */}
+                            {filterClass !== 'All' && (
+                                <div className="flex items-center gap-2 animate-in slide-in-from-left-2">
+                                    <label className="text-sm font-medium text-slate-600">Student:</label>
+                                    <select
+                                        value={filterStudentId}
+                                        onChange={(e) => setFilterStudentId(e.target.value)}
+                                        className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none max-w-[200px]"
+                                    >
+                                        <option value="All">All Students</option>
+                                        {studentsInSelectedClass.map(s => (
+                                            <option key={s._id} value={s._id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-slate-600">Date Range:</label>
                                 <input
@@ -1163,10 +1260,16 @@ export default function FeeDashboard() {
                                     className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                 />
                             </div>
-                            {(filterClass !== 'All' || filterDateStart || filterDateEnd) && (
+                            {(filterClass !== 'All' || filterStudentId !== 'All' || searchQuery || filterDateStart || filterDateEnd) && (
                                 <button
-                                    onClick={() => { setFilterClass('All'); setFilterDateStart(''); setFilterDateEnd(''); }}
-                                    className="text-sm text-red-500 hover:text-red-600 font-medium ml-auto"
+                                    onClick={() => {
+                                        setFilterClass('All');
+                                        setFilterStudentId('All');
+                                        setSearchQuery('');
+                                        setFilterDateStart('');
+                                        setFilterDateEnd('');
+                                    }}
+                                    className="text-sm text-red-500 hover:text-red-600 font-medium transition-colors"
                                 >
                                     Clear Filters
                                 </button>

@@ -104,6 +104,9 @@ export default function StudentList() {
             const matchesGender = filters.gender === 'All' || student.gender === filters.gender;
 
             return matchesSearch && matchesClass && matchesStatus && matchesGender;
+        }).sort((a, b) => {
+            // Numeric sort for roll numbers (handles alphanumeric too like A1, A2, 1, 2, 10)
+            return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
         });
     }, [allStudents, searchTerm, selectedClass, filters]);
 
