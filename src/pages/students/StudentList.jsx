@@ -272,8 +272,23 @@ export default function StudentList() {
                                     <tr key={student._id || student.id} className="hover:bg-indigo-50/30 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${student.gender === 'Female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                    {student.name.charAt(0)}
+                                                <div className="relative">
+                                                    {student.photoUrl ? (
+                                                        <img
+                                                            src={student.photoUrl}
+                                                            alt={student.name}
+                                                            className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = '';
+                                                                e.target.classList.add('hidden');
+                                                                e.target.nextSibling.classList.remove('hidden');
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${student.gender === 'Female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'} ${student.photoUrl ? 'hidden' : ''}`}>
+                                                        {student.name.charAt(0)}
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-slate-900">{student.name}</p>

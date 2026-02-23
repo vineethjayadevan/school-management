@@ -50,9 +50,36 @@ export default function StudentDetails() {
         setOpenSection(openSection === section ? null : section);
     };
 
-    const handleDownloadProfile = () => {
+    const handleDownloadProfile = async () => {
         if (!student) return;
         const doc = new jsPDF();
+
+        // Student Photo
+        if (student.photoUrl) {
+            try {
+                const img = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error("Could not load image"));
+                    img.src = student.photoUrl;
+                });
+                // Add photo to top right
+                doc.addImage(img, 'JPEG', 160, 15, 35, 35);
+                // Optional: add a border around the photo
+                doc.setDrawColor(79, 70, 229); // Indigo 600
+                doc.setLineWidth(0.5);
+                doc.rect(160, 15, 35, 35);
+            } catch (error) {
+                console.warn("Skipping photo in PDF:", error);
+                // Placeholder if photo fails
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(160, 15, 35, 35);
+                doc.setFontSize(8);
+                doc.setTextColor(100, 116, 139);
+                doc.text('No Photo', 170, 32);
+            }
+        }
 
         // Brand Colors
         const primaryColor = [79, 70, 229]; // Indigo 600
@@ -71,7 +98,7 @@ export default function StudentDetails() {
         doc.setTextColor(...secondaryColor);
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 38);
 
-        let finalY = 45;
+        let finalY = 55; // Pushed down slightly to accommodate header/photo
 
         const addField = (label, value) => [label, value || '-'];
 
@@ -791,6 +818,10 @@ export default function StudentDetails() {
                 admissionNo: s.admissionNo
             }));
 
+            // Sync photoUrl from documents
+            const photoDoc = finalDocuments.find(d => d.category === 'Student Photo');
+            const photoUrl = photoDoc ? photoDoc.url : '';
+
             const updatedStudent = await storageService.students.update(id, {
                 ...restData,
                 residentialAddress,
@@ -799,6 +830,7 @@ export default function StudentDetails() {
                 transportation,
                 siblings: siblingData,
                 documents: finalDocuments,
+                photoUrl: photoUrl,
                 conveyanceSlab: parseInt(data.conveyanceSlab) // Convert to number
             });
 
@@ -852,6 +884,25 @@ export default function StudentDetails() {
                         >
                             <ArrowLeft size={24} />
                         </button>
+                        {/* Student Photo */}
+                        <div className="relative">
+                            {student.photoUrl ? (
+                                <img
+                                    src={student.photoUrl}
+                                    alt={student.name}
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = '';
+                                        e.target.classList.add('hidden');
+                                        e.target.nextSibling.classList.remove('hidden');
+                                    }}
+                                />
+                            ) : null}
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl ${student.gender === 'Female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'} border-2 border-slate-100 ${student.photoUrl ? 'hidden' : ''}`}>
+                                {student.name?.charAt(0)}
+                            </div>
+                        </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900">{student.name}</h1>
                             <p className="text-slate-500 font-mono">ADM: {student.admissionNo}</p>

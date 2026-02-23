@@ -1,4 +1,15 @@
 const Student = require('../models/Student');
+const { signUrl } = require('./uploadController');
+
+// Helper to sign student photo
+const signStudentPhoto = async (student) => {
+    if (!student) return student;
+    const studentObj = student.toObject ? student.toObject() : student;
+    if (studentObj.photoUrl) {
+        studentObj.photoUrl = await signUrl(studentObj.photoUrl);
+    }
+    return studentObj;
+};
 
 // @desc    Get all students
 // @route   GET /api/students
@@ -15,7 +26,11 @@ const getStudents = async (req, res) => {
             : {};
 
         const students = await Student.find({ ...keyword }).sort({ createdAt: -1 });
-        res.json(students);
+
+        // Sign student photos
+        const signedStudents = await Promise.all(students.map(signStudentPhoto));
+
+        res.json(signedStudents);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -28,7 +43,8 @@ const getStudentById = async (req, res) => {
     try {
         const student = await Student.findById(req.params.id);
         if (student) {
-            res.json(student);
+            const signedStudent = await signStudentPhoto(student);
+            res.json(signedStudent);
         } else {
             res.status(404).json({ message: 'Student not found' });
         }
@@ -55,7 +71,8 @@ const createStudent = async (req, res) => {
         }
 
         const student = await Student.create(req.body);
-        res.status(201).json(student);
+        const signedStudent = await signStudentPhoto(student);
+        res.status(201).json(signedStudent);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -72,7 +89,8 @@ const updateStudent = async (req, res) => {
             const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
             });
-            res.json(updatedStudent);
+            const signedStudent = await signStudentPhoto(updatedStudent);
+            res.json(signedStudent);
         } else {
             res.status(404).json({ message: 'Student not found' });
         }

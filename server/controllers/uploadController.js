@@ -135,6 +135,40 @@ const deleteFile = async (req, res) => {
     }
 };
 
+// Helper to sign a GCS URL
+const signUrl = async (fileName) => {
+    if (!fileName || !fileName.startsWith('https://storage.googleapis.com')) return fileName;
+
+    const storageInstance = getStorage();
+    if (!storageInstance) return fileName;
+
+    const bucket = storageInstance.bucket(bucketName);
+
+    // Derive blob name consistently
+    let blobName = fileName;
+    if (fileName.startsWith('https://')) {
+        const urlParts = fileName.split(`/${bucketName}/`);
+        if (urlParts.length > 1) {
+            blobName = urlParts[1];
+        }
+    }
+
+    const blob = bucket.file(blobName);
+    const [exists] = await blob.exists();
+
+    if (!exists) return fileName;
+
+    // Generate Signed URL
+    const options = {
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 60 * 60 * 1000, // 1 hour for display
+    };
+
+    const [url] = await blob.getSignedUrl(options);
+    return url;
+};
+
 // @desc    Get a signed URL for a file
 // @route   GET /api/upload/signed-url
 // @access  Private
@@ -146,37 +180,11 @@ const getSignedUrl = async (req, res) => {
             return res.status(400).json({ message: 'File name (or URL) is required.' });
         }
 
-        const storageInstance = getStorage();
-        if (!storageInstance) {
-            return res.status(500).json({ message: 'Storage service not initialized.' });
-        }
+        const url = await signUrl(fileName);
 
-        const bucket = storageInstance.bucket(bucketName);
-
-        // Derive blob name consistently
-        let blobName = fileName;
-        if (fileName.startsWith('https://')) {
-            const urlParts = fileName.split(`/${bucketName}/`);
-            if (urlParts.length > 1) {
-                blobName = urlParts[1];
-            }
-        }
-
-        const blob = bucket.file(blobName);
-        const [exists] = await blob.exists();
-
-        if (!exists) {
+        if (url === fileName && fileName.startsWith('https://storage.googleapis.com')) {
             return res.status(404).json({ message: 'File not found.' });
         }
-
-        // Generate Signed URL
-        const options = {
-            version: 'v4',
-            action: 'read',
-            expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-        };
-
-        const [url] = await blob.getSignedUrl(options);
 
         res.status(200).json({ signedUrl: url });
 
@@ -189,5 +197,6 @@ const getSignedUrl = async (req, res) => {
 module.exports = {
     uploadFile,
     deleteFile,
-    getSignedUrl
+    getSignedUrl,
+    signUrl
 };
