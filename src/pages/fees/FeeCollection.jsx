@@ -687,12 +687,19 @@ export default function FeeDashboard() {
     };
 
     // --- History Filters State ---
-    const [historySubTab, setHistorySubTab] = useState('overview'); // 'overview' | 'all'
+    const [historySubTab, setHistorySubTab] = useState('overview'); // 'overview' | 'class_view' | 'all'
     const [filterClass, setFilterClass] = useState('All');
     const [filterStudentId, setFilterStudentId] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDateStart, setFilterDateStart] = useState('');
     const [filterDateEnd, setFilterDateEnd] = useState('');
+
+    // --- Overview Tab State ---
+    const [ovSearchTerm, setOvSearchTerm] = useState('');
+    const [ovFilterClass, setOvFilterClass] = useState('All');
+    const [ovFilterSection, setOvFilterSection] = useState('All');
+    const [ovFilterCategory, setOvFilterCategory] = useState('All');
+    const [ovFilterStatus, setOvFilterStatus] = useState('All');
 
     // Reset student filter when class changes
     useEffect(() => {
@@ -741,6 +748,138 @@ export default function FeeDashboard() {
             return matchesClass && matchesStudent && matchesSearch && matchesDate;
         });
     }, [transactions, filterClass, filterStudentId, searchQuery, filterDateStart, filterDateEnd]);
+
+    // --- Overview Data Logic ---
+    const overviewData = useMemo(() => {
+        return students.map(student => {
+            const cls = student.className || student.class;
+
+            // Get all applicable fee categories for this student based on class/slabs
+            const applicableCategories = allCategories.filter(cat => {
+                if (cat.hasSlabs) {
+                    const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                    return slabCount > 0;
+                }
+                const clsAmount = cat.amounts.find(a => a.className === cls);
+                return clsAmount && clsAmount.amount > 0;
+            });
+
+            // Get all successful transactions for this student
+            const studentPayments = transactions.filter(t => {
+                const tStudentId = t.student?._id || t.student?.id || t.studentId || t.student;
+                const sId = student.id || student._id;
+                return String(tStudentId) === String(sId) && t.status === 'Paid';
+            });
+
+            let totalDue = 0;
+            let totalPaid = 0;
+            let lastPaymentDate = null;
+
+            if (ovFilterCategory !== 'All') {
+                // Calculation for a SPECIFIC Category
+                const targetCat = applicableCategories.find(c => c._id === ovFilterCategory);
+                if (targetCat) {
+                    // Calculate Due
+                    if (targetCat.hasSlabs) {
+                        const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                        if (slabCount > 0) {
+                            totalDue = (targetCat.baseAmount + (slabCount * targetCat.slabMultiplier)) * (targetCat.months || 10);
+                        }
+                    } else {
+                        const classAmount = targetCat.amounts.find(a => a.className === cls);
+                        if (classAmount) totalDue = classAmount.amount;
+                    }
+
+                    // Calculate Paid
+                    studentPayments.forEach(t => {
+                        if (t.breakdown && t.breakdown.length > 0) {
+                            const bItem = t.breakdown.find(b => b.feeType === targetCat.name || b.type === targetCat.name);
+                            if (bItem) {
+                                totalPaid += Number(bItem.amount);
+                                const tDate = new Date(t.paymentDate || t.createdAt);
+                                if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
+                            }
+                        } else if (t.feeType === targetCat.name || t.type === targetCat.name) {
+                            totalPaid += Number(t.amount);
+                            const tDate = new Date(t.paymentDate || t.createdAt);
+                            if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
+                        }
+                    });
+                }
+            } else {
+                // Aggregated Calculation (ALL Categories)
+                applicableCategories.forEach(cat => {
+                    if (cat.hasSlabs) {
+                        const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                        if (slabCount > 0) {
+                            totalDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                        }
+                    } else {
+                        const classAmount = cat.amounts.find(a => a.className === cls);
+                        if (classAmount) totalDue += classAmount.amount;
+                    }
+                });
+
+                studentPayments.forEach(t => {
+                    totalPaid += Number(t.amount);
+                    const tDate = new Date(t.paymentDate || t.createdAt);
+                    if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
+                });
+            }
+
+            const totalPending = Math.max(0, totalDue - totalPaid);
+
+            // Determine Status based strictly on calculated Due vs Paid
+            let status = 'Not Paid';
+            if (totalPaid >= totalDue && totalDue > 0) {
+                status = 'Fully Paid';
+            } else if (totalPaid > 0) {
+                status = 'Partially Paid';
+            } else if (totalDue === 0) {
+                status = 'Fully Paid'; // Technically no fee assigned means they don't owe anything.
+            }
+
+            return {
+                ...student,
+                displayClass: cls,
+                rollNoStr: String(student.rollNo || ''),
+                calcDue: totalDue,
+                calcPaid: totalPaid,
+                calcPending: totalPending,
+                calcStatus: status,
+                lastPaymentDate: lastPaymentDate
+            };
+        }).filter(s => {
+            // Apply Overview Filters
+            const matchesSearch = !ovSearchTerm ||
+                s.name?.toLowerCase().includes(ovSearchTerm.toLowerCase()) ||
+                s.admissionNo?.toLowerCase().includes(ovSearchTerm.toLowerCase());
+
+            const matchesClass = ovFilterClass === 'All' || s.displayClass === ovFilterClass;
+            const matchesSection = ovFilterSection === 'All' || s.section === ovFilterSection;
+            const matchesStatus = ovFilterStatus === 'All' || s.calcStatus === ovFilterStatus;
+
+            return matchesSearch && matchesClass && matchesSection && matchesStatus;
+        }).sort((a, b) => {
+            // Sort by Class (Asc) then Roll No (Asc)
+            const classCompare = (a.displayClass || '').localeCompare(b.displayClass || '');
+            if (classCompare !== 0) return classCompare;
+
+            return a.rollNoStr.localeCompare(b.rollNoStr, undefined, { numeric: true, sensitivity: 'base' });
+        });
+    }, [students, transactions, allCategories, ovFilterClass, ovFilterSection, ovFilterCategory, ovFilterStatus, ovSearchTerm]);
+
+    // Unique Sections for dropdown based on currently selected class
+    const uniqueSections = useMemo(() => {
+        if (ovFilterClass === 'All') return [];
+        const sections = new Set();
+        students.forEach(s => {
+            if ((s.className === ovFilterClass || s.class === ovFilterClass) && s.section) {
+                sections.add(s.section);
+            }
+        });
+        return Array.from(sections).sort();
+    }, [students, ovFilterClass]);
 
     const downloadPDF = () => {
         const doc = new jsPDF();
@@ -806,6 +945,85 @@ export default function FeeDashboard() {
         });
 
         doc.save(`Transactions_${new Date().toISOString().slice(0, 10)}.pdf`);
+    };
+
+    const downloadOverviewPDF = () => {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(18);
+        doc.setTextColor(40, 40, 100);
+        doc.text('STEM Global Public School', 14, 22);
+
+        doc.setFontSize(14);
+        doc.setTextColor(60, 60, 60);
+        doc.text('Student-wise Fee Tracking Report', 14, 32);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 40);
+
+        // Filter Summary
+        let filterParts = [];
+        if (ovFilterClass !== 'All') filterParts.push(`Class: ${ovFilterClass}`);
+        if (ovFilterSection !== 'All') filterParts.push(`Section: ${ovFilterSection}`);
+        if (ovFilterCategory !== 'All') {
+            const cat = allCategories.find(c => c._id === ovFilterCategory);
+            filterParts.push(`Category: ${cat ? cat.name : 'Unknown'}`);
+        }
+        if (ovFilterStatus !== 'All') filterParts.push(`Status: ${ovFilterStatus}`);
+        if (ovSearchTerm) filterParts.push(`Search: "${ovSearchTerm}"`);
+
+        if (filterParts.length > 0) {
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Applied Filters: ${filterParts.join(' | ')}`, 14, 48);
+        }
+
+        const tableColumn = ["Roll No", "Student Name", "Class (Sec)", "Total Due", "Paid", "Pending", "Status"];
+        const tableRows = overviewData.map(s => [
+            s.rollNo || '-',
+            s.name,
+            `${s.displayClass} (${s.section || '-'})`,
+            `Rs. ${s.calcDue.toLocaleString()}`,
+            `Rs. ${s.calcPaid.toLocaleString()}`,
+            `Rs. ${s.calcPending.toLocaleString()}`,
+            s.calcStatus
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: filterParts.length > 0 ? 55 : 45,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 8, cellPadding: 2 },
+            columnStyles: {
+                3: { halign: 'right' },
+                4: { halign: 'right' },
+                5: { halign: 'right' },
+                6: { halign: 'center' }
+            },
+            didDrawPage: (data) => {
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(8);
+                doc.text('Page ' + pageCount, data.settings.margin.left, doc.internal.pageSize.height - 10);
+            }
+        });
+
+        // Add Summary Totals at the end if space permits or on new page
+        const finalY = doc.lastAutoTable.finalY + 10;
+        const totalDue = overviewData.reduce((sum, s) => sum + s.calcDue, 0);
+        const totalPaid = overviewData.reduce((sum, s) => sum + s.calcPaid, 0);
+        const totalPending = overviewData.reduce((sum, s) => sum + s.calcPending, 0);
+
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.text(`Grand Total Due: Rs. ${totalDue.toLocaleString()}`, 14, finalY);
+        doc.text(`Grand Total Paid: Rs. ${totalPaid.toLocaleString()}`, 80, finalY);
+        doc.text(`Grand Total Pending: Rs. ${totalPending.toLocaleString()}`, 140, finalY);
+
+        doc.save(`Fee_Tracking_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
     };
 
     const generateClassReport = (className, studentsInClass) => {
@@ -1016,57 +1234,161 @@ export default function FeeDashboard() {
 
                 {historySubTab === 'overview' && (
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
-                        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                                <History size={18} className="text-indigo-600" />
-                                Recent Activity
-                            </h3>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-500">Last 5 Transactions</span>
-                                <button onClick={() => setHistorySubTab('all')} className="text-xs text-indigo-600 font-medium hover:underline">View All</button>
+                        {/* Filters Header */}
+                        <div className="bg-slate-50 border-b border-slate-200 p-4">
+                            <div className="flex flex-col md:flex-row gap-4 items-end">
+                                <div className="flex-1 w-full relative">
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Search Student</label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Name or Admission No..."
+                                            value={ovSearchTerm}
+                                            onChange={(e) => setOvSearchTerm(e.target.value)}
+                                            className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="w-full md:w-32">
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Class</label>
+                                    <select
+                                        value={ovFilterClass}
+                                        onChange={(e) => {
+                                            setOvFilterClass(e.target.value);
+                                            setOvFilterSection('All'); // Reset section when class changes
+                                        }}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <div className="w-full md:w-24">
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Section</label>
+                                    <select
+                                        value={ovFilterSection}
+                                        onChange={(e) => setOvFilterSection(e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                        disabled={ovFilterClass === 'All'}
+                                    >
+                                        <option value="All">All</option>
+                                        {uniqueSections.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="w-full md:w-48">
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Fee Category</label>
+                                    <select
+                                        value={ovFilterCategory}
+                                        onChange={(e) => setOvFilterCategory(e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        <option value="All">All Categories</option>
+                                        {allCategories.map(cat => (
+                                            <option key={cat._id} value={cat._id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="w-full md:w-40">
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Status</label>
+                                    <select
+                                        value={ovFilterStatus}
+                                        onChange={(e) => setOvFilterStatus(e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        <option value="All">All Status</option>
+                                        <option value="Fully Paid">Fully Paid</option>
+                                        <option value="Partially Paid">Partially Paid</option>
+                                        <option value="Not Paid">Not Paid</option>
+                                    </select>
+                                </div>
+                                <div className="w-full md:w-auto">
+                                    <button
+                                        onClick={downloadOverviewPDF}
+                                        disabled={overviewData.length === 0}
+                                        className="h-10 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                    >
+                                        <Download size={18} />
+                                        Download Report
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
+
+                        {/* Table */}
+                        <div className="overflow-x-auto min-h-[400px]">
                             <table className="w-full text-left border-collapse">
-                                <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase">
+                                <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
                                     <tr>
-                                        <th className="px-6 py-3">Date</th>
-                                        <th className="px-6 py-3">Student</th>
-                                        <th className="px-6 py-3">Class</th>
-                                        <th className="px-6 py-3 text-right">Amount</th>
-                                        <th className="px-6 py-3 text-center">Status</th>
-                                        <th className="px-6 py-3 text-center">Action</th>
+                                        <th className="px-6 py-4 whitespace-nowrap">Roll No</th>
+                                        <th className="px-6 py-4 whitespace-nowrap">Student Name</th>
+                                        <th className="px-6 py-4 whitespace-nowrap">Class (Sec)</th>
+                                        <th className="px-6 py-4 text-right whitespace-nowrap">Total Fee</th>
+                                        <th className="px-6 py-4 text-right whitespace-nowrap">Paid Amount</th>
+                                        <th className="px-6 py-4 text-right whitespace-nowrap">Pending Amount</th>
+                                        <th className="px-6 py-4 text-center whitespace-nowrap">Status</th>
+                                        <th className="px-6 py-4 text-right whitespace-nowrap">Last Payment</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 text-sm">
+                                <tbody className="divide-y divide-slate-100 text-sm bg-white">
                                     {loadingHistory ? (
-                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
-                                    ) : recentTransactions.length === 0 ? (
-                                        <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-500">No transactions found.</td></tr>
+                                        <tr>
+                                            <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                                                    <span>Calculating fees...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : overviewData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                                                No students found matching the selected filters.
+                                            </td>
+                                        </tr>
                                     ) : (
-                                        recentTransactions.map((t) => (
-                                            <tr key={t._id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
-                                                <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
-                                                <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
-                                                <td className="px-6 py-3 text-right font-bold text-slate-700">₹{t.amount?.toLocaleString()}</td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.status}</span>
+                                        overviewData.map(student => (
+                                            <tr key={student._id || student.id} className="hover:bg-slate-50/70 transition-colors group cursor-pointer" onClick={() => setViewingStudent(student)}>
+                                                <td className="px-6 py-4 font-mono text-slate-500 text-xs">{student.rollNo || '-'}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">{student.name}</div>
+                                                    <div className="text-xs text-slate-500 font-mono">{student.admissionNo}</div>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <button
-                                                        onClick={() => setReprintTransaction(t)}
-                                                        className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors"
-                                                        title="Download Receipt"
-                                                    >
-                                                        <Download size={16} />
-                                                    </button>
+                                                <td className="px-6 py-4 text-slate-700">
+                                                    {student.displayClass} <span className="text-slate-400">({student.section || '-'})</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-medium text-slate-700">₹{student.calcDue.toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-emerald-600">₹{student.calcPaid.toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-red-600">
+                                                    {student.calcPending > 0 ? `₹${student.calcPending.toLocaleString()}` : '0'}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap
+                                                        ${student.calcStatus === 'Fully Paid' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                                                            student.calcStatus === 'Partially Paid' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                                                                'bg-red-100 text-red-700 border border-red-200'
+                                                        }`}>
+                                                        {student.calcStatus}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-xs text-slate-500 whitespace-nowrap">
+                                                    {student.lastPaymentDate ? student.lastPaymentDate.toLocaleDateString() : '-'}
                                                 </td>
                                             </tr>
                                         ))
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                        <div className="bg-slate-50 border-t border-slate-200 p-4 text-xs text-slate-500 flex justify-between items-center">
+                            <span>Showing {overviewData.length} records</span>
+                            {overviewData.length > 0 && (
+                                <div className="flex gap-4 font-medium">
+                                    <span className="text-slate-700">Total Due: ₹{overviewData.reduce((sum, s) => sum + s.calcDue, 0).toLocaleString()}</span>
+                                    <span className="text-emerald-600">Total Paid: ₹{overviewData.reduce((sum, s) => sum + s.calcPaid, 0).toLocaleString()}</span>
+                                    <span className="text-red-600">Total Pending: ₹{overviewData.reduce((sum, s) => sum + s.calcPending, 0).toLocaleString()}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

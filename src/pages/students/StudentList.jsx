@@ -26,7 +26,6 @@ export default function StudentList() {
     const [selectedClass, setSelectedClass] = useState('Mont 1');
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
-        status: 'All', // All, Paid, Overdue, Pending
         gender: 'All'  // All, Male, Female
     });
 
@@ -100,10 +99,9 @@ export default function StudentList() {
             const matchesClass = studentClassNormalized === selectedClass;
 
             // 3. Advanced Filters
-            const matchesStatus = filters.status === 'All' || student.feesStatus === filters.status;
             const matchesGender = filters.gender === 'All' || student.gender === filters.gender;
 
-            return matchesSearch && matchesClass && matchesStatus && matchesGender;
+            return matchesSearch && matchesClass && matchesGender;
         }).sort((a, b) => {
             // Numeric sort for roll numbers (handles alphanumeric too like A1, A2, 1, 2, 10)
             return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
@@ -116,7 +114,7 @@ export default function StudentList() {
             return;
         }
 
-        const headers = ["Admission No", "Name", "Class", "Section", "Roll No", "Gender", "Parent", "Phone", "Fee Status"];
+        const headers = ["Admission No", "Name", "Class", "Section", "Roll No", "Gender", "Parent", "Phone"];
         const rows = filteredStudents.map(s => [
             s.admissionNo,
             s.name,
@@ -125,8 +123,7 @@ export default function StudentList() {
             s.rollNo,
             s.gender,
             s.guardian,
-            s.primaryPhone || s.contact,
-            s.feesStatus
+            s.primaryPhone || s.contact
         ]);
 
         const csvContent = [
@@ -194,21 +191,7 @@ export default function StudentList() {
 
                     {/* Filter Panel (Collapsible) */}
                     {showFilters && (
-                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 mb-1">Fee Status</label>
-                                <select
-                                    value={filters.status}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                                    className="w-full p-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-indigo-500"
-                                >
-                                    <option value="All">All Statuses</option>
-                                    <option value="Paid">Paid</option>
-                                    <option value="Partially Paid">Partially Paid</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Overdue">Overdue</option>
-                                </select>
-                            </div>
+                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Gender</label>
                                 <select
@@ -249,21 +232,19 @@ export default function StudentList() {
                                 <th className="px-6 py-4 border-b border-slate-200">Student Identity</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Academic Info</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Contact</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Fee Status</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Conveyance Status of This Month</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
                                         Loading directory...
                                     </td>
                                 </tr>
                             ) : filteredStudents.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
                                         No students found matching your criteria.
                                     </td>
                                 </tr>
@@ -308,37 +289,7 @@ export default function StudentList() {
                                                 <span className="text-xs text-slate-500">{student.primaryPhone || student.contact}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-                                                ${student.feesStatus === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
-                                                ${student.feesStatus === 'Partially Paid' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}
-                                                ${student.feesStatus?.toLowerCase() === 'overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' : ''}
-                                                ${!student.feesStatus || student.feesStatus === 'Pending' ? 'bg-slate-100 text-slate-600 border-slate-200' : ''}
-                                            `}>
-                                                {student.feesStatus || 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {(() => {
-                                                const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                                                if (slab === 0) return <span className="text-slate-400 text-xs">-</span>;
 
-                                                const lastPayment = student.lastConveyancePayment ? new Date(student.lastConveyancePayment) : null;
-                                                const now = new Date();
-                                                const isPaidCurrentMonth = lastPayment &&
-                                                    lastPayment.getMonth() === now.getMonth() &&
-                                                    lastPayment.getFullYear() === now.getFullYear();
-
-                                                return (
-                                                    <div className="flex flex-col">
-                                                        <span className={`text-xs font-semibold ${isPaidCurrentMonth ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                            {isPaidCurrentMonth ? 'Paid' : 'Pending'}
-                                                        </span>
-                                                        <span className="text-[10px] text-slate-400">Slab {slab}</span>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button

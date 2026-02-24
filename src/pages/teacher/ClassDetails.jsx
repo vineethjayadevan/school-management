@@ -81,15 +81,13 @@ export default function ClassDetails() {
                                 <th className="px-6 py-4 border-b border-slate-100">Student Identity</th>
                                 <th className="px-6 py-4 border-b border-slate-100">Academic Info</th>
                                 <th className="px-6 py-4 border-b border-slate-100">Contact Details</th>
-                                <th className="px-6 py-4 border-b border-slate-100">Fee Status</th>
-                                <th className="px-6 py-4 border-b border-slate-100">Conveyance</th>
                                 <th className="px-6 py-4 border-b border-slate-100 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center">
                                             <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
                                             <p className="text-sm">Fetching student records...</p>
@@ -98,7 +96,7 @@ export default function ClassDetails() {
                                 </tr>
                             ) : filteredStudents.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan="4" className="px-6 py-12 text-center text-slate-400 italic">
                                         No students found.
                                     </td>
                                 </tr>
@@ -147,40 +145,7 @@ export default function ClassDetails() {
                                             </div>
                                         </td>
 
-                                        {/* Fee Status */}
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider border
-                                                ${student.feesStatus === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
-                                                ${student.feesStatus === 'Partially Paid' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}
-                                                ${student.feesStatus?.toLowerCase() === 'overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' : ''}
-                                                ${!student.feesStatus || student.feesStatus === 'Pending' ? 'bg-slate-50 text-slate-500 border-slate-200' : ''}
-                                            `}>
-                                                {student.feesStatus || 'Pending'}
-                                            </span>
-                                        </td>
 
-                                        {/* Conveyance */}
-                                        <td className="px-6 py-4">
-                                            {(() => {
-                                                const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                                                if (slab === 0) return <span className="text-slate-300 text-[10px] font-bold">N/A</span>;
-
-                                                const lastPayment = student.lastConveyancePayment ? new Date(student.lastConveyancePayment) : null;
-                                                const now = new Date();
-                                                const isPaidCurrentMonth = lastPayment &&
-                                                    lastPayment.getMonth() === now.getMonth() &&
-                                                    lastPayment.getFullYear() === now.getFullYear();
-
-                                                return (
-                                                    <div className="flex flex-col">
-                                                        <span className={`text-[10px] font-black uppercase ${isPaidCurrentMonth ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                            {isPaidCurrentMonth ? 'Paid' : 'Unpaid'}
-                                                        </span>
-                                                        <span className="text-[9px] font-black text-slate-400">Slab {slab}</span>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </td>
 
                                         {/* Action */}
                                         <td className="px-6 py-4 text-right">
