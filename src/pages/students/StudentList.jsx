@@ -74,13 +74,15 @@ export default function StudentList() {
     };
 
     const uniqueClasses = useMemo(() => {
-        // Get all raw classes
-        const dynamicClasses = allStudents.map(s => s.className || s.class);
-        // Normalize them all to "Grade X" format
-        const normalizedClasses = dynamicClasses.map(c => formatClassLabel(c));
+        // All school classes in order — always shown regardless of enrolment
+        const schoolClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
 
-        // Force include Mont 1 and Mont 2 even if no students
-        const allClasses = [...new Set(['Mont 1', 'Mont 2', ...normalizedClasses])];
+        // Also pick up any classes from student records that aren't in the static list
+        const dynamicClasses = allStudents
+            .map(s => formatClassLabel(s.className || s.class))
+            .filter(c => c && !schoolClasses.includes(c));
+
+        const allClasses = [...new Set([...schoolClasses, ...dynamicClasses])];
         return allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b));
     }, [allStudents]);
 
