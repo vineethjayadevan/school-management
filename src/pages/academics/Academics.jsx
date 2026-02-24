@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Layers, Plus, Edit2, Trash2, X, AlertCircle, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, Layers, Plus, Edit2, Trash2, X, AlertCircle, Save, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
+import AcademicYears from '../admin/AcademicYears';
 
 export default function Academics() {
     const [activeTab, setActiveTab] = useState('classes');
@@ -104,6 +105,16 @@ export default function Academics() {
                 >
                     <BookOpen size={18} />
                     Subjects
+                </button>
+                <button
+                    onClick={() => setActiveTab('academic_years')}
+                    className={`flex items-center gap-2 px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'academic_years'
+                        ? 'border-indigo-600 text-indigo-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    <Calendar size={18} />
+                    Academic Years
                 </button>
             </div>
 
@@ -207,6 +218,12 @@ export default function Academics() {
                                         </table>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'academic_years' && (
+                            <div className="animate-in fade-in duration-300">
+                                <AcademicYears isInline={true} />
                             </div>
                         )}
                     </>

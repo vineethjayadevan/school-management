@@ -157,11 +157,6 @@ function App() {
                     } />
 
                     {/* Restricted to Superuser & Admin */}
-                    <Route path="academic-years" element={
-                        <RequireAuth allowedRoles={['superuser', 'admin']}>
-                            <AcademicYears />
-                        </RequireAuth>
-                    } />
                     <Route path="system-settings" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <SystemSettings />

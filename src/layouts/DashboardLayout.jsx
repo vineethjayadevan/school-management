@@ -84,12 +84,6 @@ export default function DashboardLayout() {
             allowed: ['superuser', 'admin']
         },
         {
-            name: 'Academic Years',
-            href: '/admin/academic-years',
-            icon: Calendar,
-            allowed: ['superuser', 'admin']
-        },
-        {
             name: 'Promote Students',
             href: '/admin/promotion',
             icon: ArrowUpRight,

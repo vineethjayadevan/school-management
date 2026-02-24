@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Edit2, Trash2, Check, X, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
 
-const AcademicYears = () => {
+const AcademicYears = ({ isInline = false }) => {
     const [years, setYears] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -89,19 +89,33 @@ const AcademicYears = () => {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className={isInline ? "" : "p-6 max-w-5xl mx-auto"}>
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Calendar className="text-indigo-600" />
-                        Academic Years
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Manage school terms and academic sessions.
-                    </p>
+            {!isInline && (
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                            <Calendar className="text-indigo-600" />
+                            Academic Years
+                        </h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Manage school terms and academic sessions.
+                        </p>
+                    </div>
+                    {!showForm && (
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
+                        >
+                            <Plus size={18} />
+                            New Academic Year
+                        </button>
+                    )}
                 </div>
-                {!showForm && (
+            )}
+
+            {isInline && !showForm && (
+                <div className="flex justify-end mb-6">
                     <button
                         onClick={() => setShowForm(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
@@ -109,8 +123,8 @@ const AcademicYears = () => {
                         <Plus size={18} />
                         New Academic Year
                     </button>
-                )}
-            </div>
+                </div>
+            )}
 
             {message.text && (
                 <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
@@ -194,7 +208,7 @@ const AcademicYears = () => {
             )}
 
             {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${isInline ? 'mt-4' : ''}`}>
                 {loading ? (
                     <div className="p-8 flex justify-center">
                         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -230,8 +244,8 @@ const AcademicYears = () => {
                                         <button
                                             onClick={() => toggleActive(year._id, year.isActive)}
                                             className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border transition-colors ${year.isActive
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                                                 }`}
                                         >
                                             {year.isActive ? 'Active' : 'Inactive'}
