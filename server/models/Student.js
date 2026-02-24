@@ -6,7 +6,7 @@ const studentSchema = mongoose.Schema({
     rollNo: { type: String },
     className: { type: String, required: true },
     section: { type: String, required: true },
-    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+    gender: { type: String, enum: ['Male', 'Female', 'Other', ''] },
     bloodGroup: { type: String },
     dob: { type: Date },
 
@@ -101,12 +101,12 @@ const studentSchema = mongoose.Schema({
     nationality: { type: String },
     religion: { type: String },
     caste: { type: String },
-    category: { type: String, enum: ['General', 'SC', 'ST', 'OBC', 'Others'] },
+    category: { type: String, enum: ['General', 'SC', 'ST', 'OBC', 'Others', ''] },
     aadharNo: { type: String },
 
     // Previous Schooling
     previousSchool: { type: String },
-    previousClass: { type: String, enum: ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
+    previousClass: { type: String },  // No enum — empty string (no previous school) must be accepted
     mediumOfInstruction: { type: String },
 
     // Conveyance

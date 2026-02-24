@@ -838,8 +838,15 @@ export default function StudentDetails() {
             const photoDoc = finalDocuments.find(d => d.category === 'Student Photo');
             const photoUrl = photoDoc ? photoDoc.url : '';
 
+            // Recalculate the guardian field so the Student List CONTACT column stays in sync.
+            // If a separate guardian is registered, use their name; otherwise use father's name.
+            const updatedGuardian = (restData.isGuardian && restData.guardianName)
+                ? restData.guardianName
+                : (restData.fatherName || restData.motherName || restData.guardian);
+
             const updatedStudent = await storageService.students.update(id, {
                 ...restData,
+                guardian: updatedGuardian,
                 residentialAddress,
                 permanentAddress,
                 emergencyContact,

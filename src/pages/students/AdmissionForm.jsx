@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, X, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -102,32 +102,35 @@ export default function AdmissionForm() {
         }
     }, [sameAsResidential, resHouseNo, resStreet, resLocality, resCity, resState, resPinCode, resCountry, setValue]);
 
-    // Auto-fill Emergency Contact
+    // Refs to track the last value we auto-filled into emergency fields.
+    // This lets us detect if the user manually edited the emergency fields.
+    const lastAutoFilledName = useRef('');
+    const lastAutoFilledPhone = useRef('');
+
+    // Auto-fill Emergency Contact from Father's details.
+    // Keeps syncing as long as the user hasn't manually overridden the emergency fields.
     useEffect(() => {
         const fatherName = watch('fatherName');
         const fatherMobile = watch('fatherMobile');
-
-        // Only auto-fill if the user hasn't started typing (or just always default it? User said "default it to Fathers contact")
-        // Implementation: If emergency fields are empty, keep them in sync.
-        // Let's take a simpler approach: When Father's details change, update Emergency if it matches the OLD father details or is empty.
-        // Actually, "default it" usually means populate it.
-
         const currentEmergencyName = watch('emergencyName');
         const currentEmergencyPhone = watch('emergencyPhone');
 
-        // Simple heuristic: If emergency name is empty or same as (previous) father name, update it.
-        // For now, let's just set it if it's empty.
-        // Better: Let's use a "same as father" state or just do it once? 
-        // User request: "default it to Fathers contact".
-
-        if (fatherName && (!currentEmergencyName || currentEmergencyName === fatherName)) {
-            setValue('emergencyName', fatherName);
-            setValue('emergencyRelation', 'Father');
-        }
-        if (fatherMobile && (!currentEmergencyPhone || currentEmergencyPhone === fatherMobile)) {
-            setValue('emergencyPhone', fatherMobile);
+        // Sync name: update if emergency name is still equal to what we last auto-filled (or empty)
+        if (currentEmergencyName === lastAutoFilledName.current || !currentEmergencyName) {
+            if (fatherName !== undefined) {
+                setValue('emergencyName', fatherName);
+                setValue('emergencyRelation', 'Father');
+                lastAutoFilledName.current = fatherName;
+            }
         }
 
+        // Sync phone: update if emergency phone is still equal to what we last auto-filled (or empty)
+        if (currentEmergencyPhone === lastAutoFilledPhone.current || !currentEmergencyPhone) {
+            if (fatherMobile !== undefined) {
+                setValue('emergencyPhone', fatherMobile);
+                lastAutoFilledPhone.current = fatherMobile;
+            }
+        }
     }, [watch('fatherName'), watch('fatherMobile'), setValue]);
 
     const onSubmit = async (data) => {
@@ -244,8 +247,8 @@ export default function AdmissionForm() {
             // Validate Basic Parent Details
             const fieldsToValidate = ['fatherName', 'motherName', 'fatherMobile', 'motherMobile'];
 
-            // Validate Residential Address
-            fieldsToValidate.push('resHouseNo', 'resStreet', 'resLocality', 'resCity', 'resState', 'resPinCode');
+            // Validate Residential Address (Street and Locality are optional)
+            fieldsToValidate.push('resHouseNo', 'resCity', 'resState', 'resPinCode');
 
             // Validate Permanent Address (if not same as residential)
             if (!watch('sameAsResidential')) {
@@ -437,17 +440,24 @@ export default function AdmissionForm() {
                                     <label className="text-sm font-medium text-slate-700">Nationality</label>
                                     <input
                                         {...register('nationality')}
+                                        defaultValue="Indian"
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                         placeholder="Nationality"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Religion</label>
-                                    <input
+                                    <select
                                         {...register('religion')}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                        placeholder="Religion"
-                                    />
+                                    >
+                                        <option value="">Select Religion</option>
+                                        <option value="Hindu">Hindu</option>
+                                        <option value="Muslim">Muslim</option>
+                                        <option value="Christian">Christian</option>
+                                        <option value="Sikh">Sikh</option>
+                                        <option value="No Religion">No Religion</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Caste/Community</label>
@@ -516,10 +526,12 @@ export default function AdmissionForm() {
                                     <label className="text-sm font-medium text-slate-700">Previous Class</label>
                                     <select
                                         {...register('previousClass')}
+                                        defaultValue=""
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                     >
-                                        <option value="">Select Class</option>
+                                        <option value="">None / Not Applicable</option>
                                         <option value="Mont 1">Mont 1</option>
+
                                         <option value="Mont 2">Mont 2</option>
                                         <option value="Grade 1">Grade 1</option>
                                         <option value="Grade 2">Grade 2</option>
@@ -850,22 +862,20 @@ export default function AdmissionForm() {
                                     {errors.resHouseNo && <p className="text-xs text-red-500 mt-1">Required</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Street <span className="text-red-500">*</span></label>
+                                    <label className="text-sm font-medium text-slate-700">Street</label>
                                     <input
-                                        {...register('resStreet', { required: true })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resStreet ? 'border-red-500' : 'border-slate-300'}`}
+                                        {...register('resStreet')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                         placeholder="Street Name"
                                     />
-                                    {errors.resStreet && <p className="text-xs text-red-500 mt-1">Required</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Locality/Village <span className="text-red-500">*</span></label>
+                                    <label className="text-sm font-medium text-slate-700">Locality/Village</label>
                                     <input
-                                        {...register('resLocality', { required: true })}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.resLocality ? 'border-red-500' : 'border-slate-300'}`}
+                                        {...register('resLocality')}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                         placeholder="Locality"
                                     />
-                                    {errors.resLocality && <p className="text-xs text-red-500 mt-1">Required</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">City/District <span className="text-red-500">*</span></label>
