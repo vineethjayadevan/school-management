@@ -127,20 +127,27 @@ export default function FeeDashboard() {
 
         return students.reduce((acc, student) => {
             const cls = student.className || student.class;
+            const studentDiscounts = student.discounts || [];
 
-            // Calculate dynamic total due from allCategories
+            // Calculate dynamic total due from allCategories (with discount)
             let studentTotalDue = 0;
             allCategories.forEach(cat => {
+                let annualTotal = 0;
                 if (cat.hasSlabs) {
                     const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
                     if (slabCount > 0) {
-                        studentTotalDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                        annualTotal = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
                     }
                 } else {
                     const expectedObj = cat.amounts.find(a => a.className === cls);
-                    if (expectedObj) {
-                        studentTotalDue += expectedObj.amount;
-                    }
+                    if (expectedObj) annualTotal = expectedObj.amount;
+                }
+                if (annualTotal > 0) {
+                    const disc = studentDiscounts.find(d =>
+                        d.categoryId?.toString() === cat._id?.toString() ||
+                        d.categoryName?.toLowerCase() === cat.name.toLowerCase()
+                    );
+                    studentTotalDue += Math.max(0, annualTotal - (disc?.discountAmount || 0));
                 }
             });
 
@@ -193,19 +200,26 @@ export default function FeeDashboard() {
     const getDueAmount = () => {
         if (!selectedStudent) return 0;
         const cls = selectedStudent.className || selectedStudent.class;
+        const studentDiscounts = selectedStudent.discounts || [];
 
         let standardDue = 0;
         availableCategories.forEach(cat => {
+            let annualTotal = 0;
             if (cat.hasSlabs) {
                 const slabCount = selectedStudent.conveyanceSlab ? parseInt(selectedStudent.conveyanceSlab) : 0;
                 if (slabCount > 0) {
-                    standardDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                    annualTotal = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
                 }
             } else {
                 const classAmount = cat.amounts.find(a => a.className === cls);
-                if (classAmount) {
-                    standardDue += classAmount.amount;
-                }
+                if (classAmount) annualTotal = classAmount.amount;
+            }
+            if (annualTotal > 0) {
+                const disc = studentDiscounts.find(d =>
+                    d.categoryId?.toString() === cat._id?.toString() ||
+                    d.categoryName?.toLowerCase() === cat.name.toLowerCase()
+                );
+                standardDue += Math.max(0, annualTotal - (disc?.discountAmount || 0));
             }
         });
 
@@ -525,19 +539,30 @@ export default function FeeDashboard() {
             return clsAmount && clsAmount.amount > 0;
         });
 
+        const studentDiscounts = student.discounts || [];
+
         const categories = applicableCategories.map(cat => {
-            let dueAmount = 0;
+            let grossAmount = 0;
             if (cat.hasSlabs) {
                 const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
                 if (slabCount > 0) {
-                    dueAmount = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                    grossAmount = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
                 }
             } else {
                 const expectedObj = cat.amounts.find(a => a.className === cls);
-                dueAmount = expectedObj ? expectedObj.amount : 0;
+                grossAmount = expectedObj ? expectedObj.amount : 0;
             }
+            // Apply per-category discount
+            const disc = studentDiscounts.find(d =>
+                d.categoryId?.toString() === cat._id?.toString() ||
+                d.categoryName?.toLowerCase() === cat.name.toLowerCase()
+            );
+            const discountAmt = disc?.discountAmount || 0;
+            const dueAmount = Math.max(0, grossAmount - discountAmt);
             return {
                 type: cat.name,
+                grossAmount,
+                discountAmount: discountAmt,
                 due: dueAmount
             };
         });

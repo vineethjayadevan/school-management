@@ -166,9 +166,17 @@ const studentSchema = mongoose.Schema({
         recordedAt: { type: Date, default: Date.now }
     }],
 
+    // Per-category fee discounts
+    discounts: [{
+        categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'FeeCategory' },
+        categoryName: { type: String },      // denormalised for fast display
+        discountAmount: { type: Number, min: 0, default: 0 }
+    }],
+
     // Status
     feesStatus: { type: String, enum: ['Paid', 'Pending', 'Overdue', 'Partially Paid'], default: 'Pending' },
     isActive: { type: Boolean, default: true },
+
 }, {
     timestamps: true,
 });

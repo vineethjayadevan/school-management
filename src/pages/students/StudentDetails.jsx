@@ -34,6 +34,7 @@ export default function StudentDetails() {
     const [documentToDelete, setDocumentToDelete] = useState(null);
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
     const [siblings, setSiblings] = useState([]);
+    const [discounts, setDiscounts] = useState([]); // Per-category fee discounts
 
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
@@ -474,6 +475,8 @@ export default function StudentDetails() {
 
             // Calculate precise pending/total per category
             const currentClassName = data.className || data.class;
+            const studentDiscounts = data.discounts || [];
+
             fetchedCategories.forEach(category => {
                 const normalizedCatName = category.name.trim().toLowerCase();
                 let annualTotal = 0;
@@ -482,29 +485,37 @@ export default function StudentDetails() {
                 if (category.hasSlabs) {
                     // Slab-based (e.g. Conveyance): Only include if student has an active slab
                     if (slab > 0) {
-                        // For slab fees, we use the category's baseAmount as the monthly base
                         const baseMonthly = category.baseAmount || 0;
                         monthlyAmount = baseMonthly + (slab * (category.slabMultiplier || 0));
                         annualTotal = monthlyAmount * (category.months || 10);
                     }
                 } else {
-                    // Regular fee (e.g. Tuition, Admission):
-                    // Use class-specific amount as the annual total directly
+                    // Regular fee: class-specific amount
                     const classSpecific = category.amounts?.find(a => a.className === currentClassName);
                     annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
-                    monthlyAmount = annualTotal / (category.months || 10); // For display preference
+                    monthlyAmount = annualTotal / (category.months || 10);
                 }
 
                 if (annualTotal > 0) {
-                    totalFeeComputed += annualTotal;
+                    // Apply per-category discount if present
+                    const discountEntry = studentDiscounts.find(d =>
+                        d.categoryId?.toString() === category._id?.toString() ||
+                        d.categoryName?.toLowerCase() === normalizedCatName
+                    );
+                    const discountAmt = discountEntry?.discountAmount || 0;
+                    const netTotal = Math.max(0, annualTotal - discountAmt);
+
+                    totalFeeComputed += netTotal;
                     const paidForCat = categoryPaid[normalizedCatName] || 0;
-                    const pendingForCat = Math.max(0, annualTotal - paidForCat);
+                    const pendingForCat = Math.max(0, netTotal - paidForCat);
 
                     feeDetails.breakdown.push({
                         id: category._id,
                         name: category.name,
                         type: category.type,
-                        total: annualTotal,
+                        total: annualTotal,           // gross before discount
+                        discountAmount: discountAmt,  // discount granted
+                        netTotal: netTotal,           // net due after discount
                         paid: paidForCat,
                         pending: pendingForCat,
                         monthly: monthlyAmount,
@@ -512,6 +523,7 @@ export default function StudentDetails() {
                     });
                 }
             });
+
 
             feeDetails.paid = totalPaidComputed;
             feeDetails.totalFee = totalFeeComputed;
@@ -524,8 +536,9 @@ export default function StudentDetails() {
             };
 
             setStudent(studentWithFees);
-            setDocuments(data.documents || []); // Initialize documents state
+            setDocuments(data.documents || []);
             setSiblings(data.siblings || []);
+            setDiscounts(data.discounts || []);  // Initialise discount state from saved student data
             setPendingUploads({});
 
             // Legacy Address Auto-fill Logic
@@ -834,7 +847,8 @@ export default function StudentDetails() {
                 siblings: siblingData,
                 documents: finalDocuments,
                 photoUrl: photoUrl,
-                conveyanceSlab: parseInt(data.conveyanceSlab) // Convert to number
+                conveyanceSlab: parseInt(data.conveyanceSlab), // Convert to number
+                discounts: discounts.filter(d => d.discountAmount > 0) // Only save non-zero discounts
             });
 
             await fetchStudent();
@@ -1918,7 +1932,89 @@ export default function StudentDetails() {
                                     </div>
                                 </Accordion>
 
+                                {/* Fee Discount (Edit Mode) */}
+                                <Accordion
+                                    title="Fee Discount"
+                                    icon={CreditCard}
+                                    isOpen={openSection === 'discount'}
+                                    onToggle={() => toggleSection('discount')}
+                                >
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={discounts.length > 0}
+                                                    onChange={e => {
+                                                        if (!e.target.checked) {
+                                                            setDiscounts([]);
+                                                        } else {
+                                                            const cls = student?.className || student?.class;
+                                                            const preloaded = activeCategories
+                                                                .filter(cat => !cat.hasSlabs && cat.amounts?.find(a => a.className === cls))
+                                                                .map(cat => ({
+                                                                    categoryId: cat._id,
+                                                                    categoryName: cat.name,
+                                                                    discountAmount: 0
+                                                                }));
+                                                            setDiscounts(preloaded);
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 rounded text-amber-600"
+                                                />
+                                                <span className="text-sm font-semibold text-slate-800">Eligible for Fee Discount</span>
+                                            </label>
+                                            {discounts.length > 0 && (
+                                                <span className="text-xs font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                                                    Total: ₹{discounts.reduce((s, d) => s + (Number(d.discountAmount) || 0), 0).toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {discounts.length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-slate-500">Enter the discount amount for each fee category below:</p>
+                                                {discounts.map((disc, i) => {
+                                                    const cat = activeCategories.find(c => c._id === disc.categoryId);
+                                                    const cls = student?.className || student?.class;
+                                                    const fullFee = cat?.amounts?.find(a => a.className === cls)?.amount || 0;
+                                                    return (
+                                                        <div key={disc.categoryId} className="flex items-center gap-3 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-slate-800">{disc.categoryName}</p>
+                                                                <p className="text-xs text-amber-600 font-medium">Full Fee: ₹{fullFee.toLocaleString()}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <span className="text-xs text-slate-500">Discount ₹</span>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max={fullFee}
+                                                                    value={disc.discountAmount || ''}
+                                                                    onChange={e => {
+                                                                        const val = Math.min(Number(e.target.value) || 0, fullFee);
+                                                                        setDiscounts(prev => prev.map((d, idx) =>
+                                                                            idx === i ? { ...d, discountAmount: val } : d
+                                                                        ));
+                                                                    }}
+                                                                    placeholder="0"
+                                                                    className="w-28 px-2 py-1.5 border border-amber-300 rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {discounts.length === 0 && (
+                                            <p className="text-xs text-slate-400 italic">Enable the checkbox above to grant a discount on specific fee categories.</p>
+                                        )}
+                                    </div>
+                                </Accordion>
+
                                 {/* Previous Education (Edit) */}
+
                                 <Accordion
                                     title="Previous Education"
                                     icon={Book}
@@ -2034,19 +2130,29 @@ export default function StudentDetails() {
                                     <div className="space-y-3">
                                         {student?.feeDetails?.breakdown?.map(cat => (
                                             <div key={cat.id} className="group">
-                                                <div className="flex items-center justify-between text-sm mb-1">
+                                                <div className="flex items-center justify-between text-sm mb-0.5">
                                                     <span className="text-slate-700 font-medium group-hover:text-indigo-600 transition-colors">{cat.name}</span>
                                                     <span className="font-bold text-slate-900">₹{cat.total.toLocaleString()}</span>
                                                 </div>
+                                                {/* Discount row — shown only if a discount exists for this category */}
+                                                {cat.discountAmount > 0 && (
+                                                    <div className="flex items-center justify-between text-xs mb-1">
+                                                        <span className="text-amber-600 font-medium flex items-center gap-1">
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+                                                            Discount Applied
+                                                        </span>
+                                                        <span className="font-bold text-amber-600">-₹{cat.discountAmount.toLocaleString()}</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex gap-2 items-center">
                                                         <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
                                                             <div
                                                                 className={`h-full rounded-full ${cat.pending === 0 ? 'bg-emerald-500' : 'bg-indigo-400'}`}
-                                                                style={{ width: `${Math.min((cat.paid / cat.total) * 100, 100)}%` }}
+                                                                style={{ width: `${Math.min((cat.paid / (cat.netTotal || cat.total)) * 100, 100)}%` }}
                                                             ></div>
                                                         </div>
-                                                        <span className="text-[10px] text-slate-400">{Math.round((cat.paid / cat.total) * 100)}%</span>
+                                                        <span className="text-[10px] text-slate-400">{Math.round((cat.paid / (cat.netTotal || cat.total)) * 100)}%</span>
                                                     </div>
                                                     <div className="text-[10px] font-bold">
                                                         {cat.pending > 0 ? (
