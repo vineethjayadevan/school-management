@@ -11,6 +11,8 @@ import StudentSearch from '../../components/students/StudentSearch';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Accordion from '../../components/ui/Accordion';
 import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee } from '../../utils/feeUtils';
+import TCModal from '../../components/students/TCModal';
+import { generateTC } from '../../utils/tcGenerator';
 
 export default function StudentDetails() {
     const { id } = useParams();
@@ -35,6 +37,7 @@ export default function StudentDetails() {
 
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
+    const [isTCModalOpen, setIsTCModalOpen] = useState(false);
 
     // Watch conveyance slab for dynamic updates in Edit mode
     const watchConveyance = watch('conveyanceSlab');
@@ -917,12 +920,22 @@ export default function StudentDetails() {
                                 >
                                     <Download size={16} /> Download Profile
                                 </button>
+                                {student.isActive && (
+                                    <button
+                                        onClick={() => setIsTCModalOpen(true)}
+                                        className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
+                                    >
+                                        <FileText size={16} /> Issue TC
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => {
                                         setMode('edit');
                                         setOpenSection('academic'); // Default to first section in edit mode
                                     }}
-                                    className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium flex items-center gap-2"
+                                    disabled={!student.isActive}
+                                    title={!student.isActive ? 'Student is no longer active' : 'Edit Profile'}
+                                    className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Edit size={16} /> Edit Profile
                                 </button>
@@ -961,6 +974,39 @@ export default function StudentDetails() {
                     </div>
 
                 </div>
+
+                {/* TC Modal */}
+                {isTCModalOpen && (
+                    <TCModal
+                        student={student}
+                        onClose={() => setIsTCModalOpen(false)}
+                        onSuccess={() => {
+                            setIsTCModalOpen(false);
+                            fetchStudent();
+                        }}
+                    />
+                )}
+
+                {/* Relieved / TC Issued Banner */}
+                {!student.isActive && student.promotionStatus === 'Relieved' && (
+                    <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <FileText size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="font-semibold text-amber-800 text-sm">Transfer Certificate Issued</p>
+                            <p className="text-amber-700 text-xs mt-0.5">
+                                TC No: <strong>{student.tcDetails?.tcNo || '—'}</strong> &nbsp;·&nbsp;
+                                Issued on: <strong>{student.tcDetails?.issueDate ? new Date(student.tcDetails.issueDate).toLocaleDateString('en-IN') : '—'}</strong> &nbsp;·&nbsp;
+                                Reason: <strong>{student.tcDetails?.reasonForLeaving || '—'}</strong>
+                            </p>
+                        </div>
+                        <button
+                            onClick={async () => student.tcDetails && await generateTC(student, student.tcDetails)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg transition-colors border border-amber-300"
+                        >
+                            <Download size={13} /> Re-download TC
+                        </button>
+                    </div>
+                )}
 
                 {/* Main Content */}
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
