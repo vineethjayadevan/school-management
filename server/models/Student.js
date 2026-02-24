@@ -130,6 +130,29 @@ const studentSchema = mongoose.Schema({
         category: { type: String } // 'Birth Certificate', 'Transfer Certificate', 'Previous Marksheet', 'Aadhar Card', 'Others'
     }],
 
+    // Academic & Promotion Tracking
+    currentAcademicYear: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'AcademicYear'
+    },
+    promotionStatus: {
+        type: String,
+        enum: ['Active', 'Promoted', 'Detained', 'Graduated', 'On Hold'],
+        default: 'Active'
+    },
+    financialClearance: {
+        type: Boolean,
+        default: true
+    },
+    academicHistory: [{
+        academicYear: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear' },
+        className: { type: String },
+        section: { type: String },
+        promotionStatus: { type: String },
+        remarks: { type: String },
+        recordedAt: { type: Date, default: Date.now }
+    }],
+
     // Status
     feesStatus: { type: String, enum: ['Paid', 'Pending', 'Overdue', 'Partially Paid'], default: 'Pending' },
     isActive: { type: Boolean, default: true },

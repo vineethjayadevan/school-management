@@ -58,6 +58,9 @@ app.use('/api/system', require('./routes/systemRoutes'));
 
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/academic-years', require('./routes/academicYearRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/promotion', require('./routes/promotionRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

@@ -31,6 +31,10 @@ import StaffDirectory from './pages/staff/StaffDirectory';
 import EnquiryList from './pages/office/EnquiryList';
 import ManageEvents from './pages/admin/ManageEvents';
 import Academics from './pages/academics/Academics';
+import AcademicYears from './pages/admin/AcademicYears';
+import SystemSettings from './pages/admin/SystemSettings';
+import PromotionWizard from './pages/admin/PromotionWizard';
+
 import Login from './pages/auth/Login';
 import Home from './pages/Home';
 import UserManagement from './pages/admin/UserManagement';
@@ -153,6 +157,21 @@ function App() {
                     } />
 
                     {/* Restricted to Superuser & Admin */}
+                    <Route path="academic-years" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <AcademicYears />
+                        </RequireAuth>
+                    } />
+                    <Route path="system-settings" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <SystemSettings />
+                        </RequireAuth>
+                    } />
+                    <Route path="promotion" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <PromotionWizard />
+                        </RequireAuth>
+                    } />
                     <Route path="fees" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <FeeCollection />

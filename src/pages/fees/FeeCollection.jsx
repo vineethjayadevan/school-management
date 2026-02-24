@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Search, CreditCard, Banknote, IndianRupee, CheckCircle,
     History, Wallet, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, Info, X, Download, Printer, Settings
@@ -17,6 +17,7 @@ import FeeSettings from '../../components/fees/FeeSettings';
 export default function FeeDashboard() {
     const { addToast } = useToast();
     const location = useLocation();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('history'); // Default to Transactions
 
     useEffect(() => {
@@ -37,7 +38,6 @@ export default function FeeDashboard() {
     const [paymentMode, setPaymentMode] = useState('Cash');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
 
     // Dynamic Categories State
     const [allCategories, setAllCategories] = useState([]);
@@ -1698,16 +1698,14 @@ export default function FeeDashboard() {
                     </div>
 
                     <button
-                        onClick={() => setShowSettings(true)}
-                        title="Fee Settings"
+                        onClick={() => navigate('/admin/system-settings', { state: { tab: 'fees' } })}
+                        title="Fee Configuration"
                         className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm ml-2"
                     >
                         <Settings size={20} />
                     </button>
                 </div>
             </div>
-
-            {showSettings && <FeeSettings onClose={() => { setShowSettings(false); if (selectedStudent) fetchCategoriesForStudent(selectedStudent); }} />}
 
             {showReceipt ? renderReceipt() : (
                 activeTab === 'collect' ? renderCollectionTab() : renderHistoryTab()

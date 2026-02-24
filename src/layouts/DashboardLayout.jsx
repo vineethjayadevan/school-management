@@ -16,7 +16,9 @@ import {
     Briefcase,
     Calendar,
     UserPlus,
-    DollarSign
+    DollarSign,
+    Settings,
+    ArrowUpRight
 } from 'lucide-react';
 import clsx from 'clsx';
 import { authService } from '../services/auth';
@@ -81,6 +83,18 @@ export default function DashboardLayout() {
             icon: GraduationCap,
             allowed: ['superuser', 'admin']
         },
+        {
+            name: 'Academic Years',
+            href: '/admin/academic-years',
+            icon: Calendar,
+            allowed: ['superuser', 'admin']
+        },
+        {
+            name: 'Promote Students',
+            href: '/admin/promotion',
+            icon: ArrowUpRight,
+            allowed: ['superuser', 'admin']
+        },
         // {
         //     name: 'Manage Events',
         //     href: '/admin/events',
@@ -98,6 +112,12 @@ export default function DashboardLayout() {
             href: '/admin/enquiries',
             icon: MessageSquare,
             allowed: ['superuser', 'office_staff']
+        },
+        {
+            name: 'Settings',
+            href: '/admin/system-settings',
+            icon: Settings,
+            allowed: ['superuser', 'admin']
         }
     ];
 
