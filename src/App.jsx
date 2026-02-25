@@ -28,6 +28,8 @@ import StudentDetails from './pages/students/StudentDetails';
 import AdmissionForm from './pages/students/AdmissionForm';
 import FeeCollection from './pages/fees/FeeCollection';
 import StaffDirectory from './pages/staff/StaffDirectory';
+import StaffForm from './pages/staff/StaffForm';
+import SalaryStructure from './pages/staff/SalaryStructure';
 import EnquiryList from './pages/office/EnquiryList';
 import ManageEvents from './pages/admin/ManageEvents';
 import Academics from './pages/academics/Academics';
@@ -176,6 +178,21 @@ function App() {
                     <Route path="staff" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <StaffDirectory />
+                        </RequireAuth>
+                    } />
+                    <Route path="staff/new" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StaffForm />
+                        </RequireAuth>
+                    } />
+                    <Route path="staff/edit/:id" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StaffForm />
+                        </RequireAuth>
+                    } />
+                    <Route path="salary-structure" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <SalaryStructure />
                         </RequireAuth>
                     } />
                     <Route path="salaries" element={

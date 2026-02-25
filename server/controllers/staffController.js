@@ -50,7 +50,14 @@ const addStaff = async (req, res) => {
             subjects: req.body.subjects ? (Array.isArray(req.body.subjects) ? req.body.subjects : [req.body.subjects]) : [],
             salary: req.body.salary || 0,
             category: req.body.category,
-            subcategory: req.body.subcategory
+            subcategory: req.body.subcategory,
+            isMarried: req.body.isMarried || false,
+            spouseName: req.body.spouseName,
+            spousePhone: req.body.spousePhone,
+            spouseEmail: req.body.spouseEmail,
+            address: req.body.address,
+            idCardNumber: req.body.idCardNumber,
+            idCardImage: req.body.idCardImage
         });
 
         res.status(201).json(newStaff);
@@ -82,6 +89,13 @@ const updateStaff = async (req, res) => {
         staff.salary = req.body.salary !== undefined ? req.body.salary : staff.salary;
         staff.paymentMode = req.body.paymentMode || staff.paymentMode;
         staff.status = req.body.status || staff.status;
+        staff.isMarried = req.body.isMarried !== undefined ? req.body.isMarried : staff.isMarried;
+        staff.spouseName = req.body.spouseName !== undefined ? req.body.spouseName : staff.spouseName;
+        staff.spousePhone = req.body.spousePhone !== undefined ? req.body.spousePhone : staff.spousePhone;
+        staff.spouseEmail = req.body.spouseEmail !== undefined ? req.body.spouseEmail : staff.spouseEmail;
+        staff.address = req.body.address !== undefined ? req.body.address : staff.address;
+        staff.idCardNumber = req.body.idCardNumber !== undefined ? req.body.idCardNumber : staff.idCardNumber;
+        staff.idCardImage = req.body.idCardImage !== undefined ? req.body.idCardImage : staff.idCardImage;
 
         // Handle subjects update
         if (req.body.subjects) {
@@ -113,8 +127,25 @@ const deleteStaff = async (req, res) => {
     }
 };
 
+// @desc    Get staff by ID
+// @route   GET /api/staff/:id
+// @access  Private
+const getStaffById = async (req, res) => {
+    try {
+        const staff = await Staff.findById(req.params.id).populate('subjects', 'name code');
+        if (staff) {
+            res.json(staff);
+        } else {
+            res.status(404).json({ message: 'Staff not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getStaff,
+    getStaffById,
     addStaff,
     updateStaff,
     deleteStaff

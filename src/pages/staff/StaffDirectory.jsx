@@ -11,7 +11,8 @@ import {
     Check,
     ChevronDown
 } from 'lucide-react';
-import api from '../../services/api'; // Use real API
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
 export default function StaffDirectory() {
@@ -21,28 +22,10 @@ export default function StaffDirectory() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('');
 
-    // UI States
-    const [showStaffModal, setShowStaffModal] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editingId, setEditingId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const navigate = useNavigate();
     const { addToast } = useToast();
-
-    // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        role: '', // Will be synched with category/subcategory or just free text? Sticking to plan: Role ~ Category/Subcategory
-        category: '',
-        subcategory: '',
-        contact: '',
-        email: '',
-        subjects: [], // Array of IDs
-        qualification: '',
-        fixedSalary: '',
-        paymentMode: 'Cash',
-        status: 'Active'
-    });
 
     useEffect(() => {
         fetchInitialData();
@@ -80,61 +63,12 @@ export default function StaffDirectory() {
         }
     };
 
-    const fetchCategories = async () => {
-        try {
-            const res = await api.get('/staff-categories');
-            setCategories(res.data);
-            // If active tab is no longer valid, switch to first one or empty
-            if (activeTab && !res.data.find(c => c.name === activeTab)) {
-                setActiveTab(res.data.length > 0 ? res.data[0].name : '');
-            } else if (!activeTab && res.data.length > 0) {
-                setActiveTab(res.data[0].name);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     const handleSearch = (e) => {
         setSearchTerm(e.target.value.toLowerCase());
     };
 
-    const resetForm = () => {
-        setFormData({
-            name: '',
-            role: '',
-            category: activeTab || (categories[0]?.name || ''),
-            subcategory: '',
-            contact: '',
-            email: '',
-            subjects: [],
-            qualification: '',
-            fixedSalary: '',
-            paymentMode: 'Cash',
-            status: 'Active'
-        });
-        setIsEditing(false);
-        setEditingId(null);
-        setShowStaffModal(false);
-    };
-
     const handleEdit = (member) => {
-        setFormData({
-            name: member.name,
-            role: member.role || '',
-            category: member.category || '',
-            subcategory: member.subcategory || '',
-            contact: member.phone || '',
-            email: member.email || '',
-            subjects: member.subjects ? member.subjects.map(s => s._id) : [],
-            qualification: member.qualification || '',
-            fixedSalary: member.salary || '',
-            paymentMode: member.paymentMode || 'Cash',
-            status: member.status || 'Active'
-        });
-        setIsEditing(true);
-        setEditingId(member._id);
-        setShowStaffModal(true);
+        navigate(`/admin/staff/edit/${member._id}`);
     };
 
     const handleDelete = async (id) => {
@@ -149,31 +83,6 @@ export default function StaffDirectory() {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const payload = {
-                ...formData,
-                role: formData.category, // Simple mapping for now
-                salary: formData.fixedSalary
-            };
-
-            if (isEditing) {
-                await api.put(`/staff/${editingId}`, payload);
-                addToast("Staff updated successfully", "success");
-            } else {
-                await api.post('/staff', payload);
-                addToast("Staff added successfully", "success");
-            }
-
-            fetchStaff();
-            resetForm();
-        } catch (error) {
-            console.error(error);
-            addToast(error.response?.data?.message || "Operation failed", "error");
-        }
-    };
-
     // Filter Logic
     const filteredStaff = staff.filter(s => {
         const matchesTab = s.category === activeTab;
@@ -183,8 +92,6 @@ export default function StaffDirectory() {
             (s.email && s.email.toLowerCase().includes(search));
         return matchesTab && matchesSearch;
     });
-
-    const activeCategoryData = categories.find(c => c.name === formData.category);
 
     return (
         <div className="space-y-6">
@@ -218,7 +125,7 @@ export default function StaffDirectory() {
                         />
                     </div>
                     <button
-                        onClick={() => { resetForm(); setShowStaffModal(true); }}
+                        onClick={() => navigate('/admin/staff/new')}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap"
                     >
                         <Plus size={20} />
@@ -240,7 +147,6 @@ export default function StaffDirectory() {
                                     <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Category/Role</th>
                                     <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Contact</th>
                                     <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Subjects</th>
-                                    <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Salary</th>
                                     <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Status</th>
                                     <th className="px-6 py-4 font-semibold text-slate-700 text-sm text-right">Actions</th>
                                 </tr>
@@ -298,10 +204,6 @@ export default function StaffDirectory() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm font-medium text-slate-900">₹{member.salary?.toLocaleString()}</div>
-                                                <div className="text-xs text-slate-500">{member.paymentMode}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${member.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                     {member.status}
                                                 </span>
@@ -321,130 +223,6 @@ export default function StaffDirectory() {
                 )}
             </div>
 
-            {/* Add/Edit Staff Modal */}
-            {showStaffModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50">
-                            <h2 className="text-xl font-bold text-slate-900">{isEditing ? 'Edit Staff' : 'Add New Staff'}</h2>
-                            <button onClick={() => setShowStaffModal(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={e => {
-                                            const newCat = categories.find(c => c.name === e.target.value);
-                                            setFormData({
-                                                ...formData,
-                                                category: e.target.value,
-                                                subcategory: '', // Reset subcategory
-                                                subjects: [] // Reset subjects if switching away from teaching? Maybe keep.
-                                            });
-                                        }}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    >
-                                        <option value="">Select Category</option>
-                                        {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Subcategory</label>
-                                    <select
-                                        value={formData.subcategory}
-                                        onChange={e => setFormData({ ...formData, subcategory: e.target.value })}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        disabled={!activeCategoryData || !activeCategoryData.subcategories?.length}
-                                    >
-                                        <option value="">Select Subcategory</option>
-                                        {activeCategoryData?.subcategories?.map((sub, i) => (
-                                            <option key={i} value={sub}>{sub}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Subjects Multi-Select (Only if isTeaching) */}
-                            {activeCategoryData?.isTeaching && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Subjects Handled</label>
-                                    <div className="border border-slate-300 rounded-lg p-3 max-h-40 overflow-y-auto grid grid-cols-2 gap-2">
-                                        {subjects.map(sub => (
-                                            <label key={sub._id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.subjects.includes(sub._id)}
-                                                    onChange={e => {
-                                                        const newSubjects = e.target.checked
-                                                            ? [...formData.subjects, sub._id]
-                                                            : formData.subjects.filter(id => id !== sub._id);
-                                                        setFormData({ ...formData, subjects: newSubjects });
-                                                    }}
-                                                    className="rounded text-indigo-600 focus:ring-indigo-500"
-                                                />
-                                                <span className="text-sm text-slate-700">{sub.name} ({sub.code})</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Salary (₹)</label>
-                                    <input type="number" required min="0" value={formData.fixedSalary} onChange={e => setFormData({ ...formData, fixedSalary: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
-                                    <select value={formData.paymentMode} onChange={e => setFormData({ ...formData, paymentMode: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                        <option value="Cash">Cash</option>
-                                        <option value="Bank Transfer">Bank Transfer</option>
-                                        <option value="UPI">UPI</option>
-                                        <option value="Cheque">Cheque</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                                    <input type="tel" required value={formData.contact} onChange={e => setFormData({ ...formData, contact: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Qualification</label>
-                                    <input value={formData.qualification} onChange={e => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
-                            </div>
-
-                            <div className="flex items-center gap-3 pt-4">
-                                <button type="button" onClick={() => setShowStaffModal(false)} className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">Cancel</button>
-                                <button type="submit" className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">{isEditing ? 'Update Staff' : 'Save Staff'}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

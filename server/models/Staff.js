@@ -32,6 +32,15 @@ const staffSchema = mongoose.Schema({
 
     // For teachers
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
+
+    // New Fields for expanded profile
+    isMarried: { type: Boolean, default: false },
+    spouseName: { type: String },
+    spousePhone: { type: String },
+    spouseEmail: { type: String },
+    address: { type: String },
+    idCardNumber: { type: String },
+    idCardImage: { type: String }, // URL to storage
 }, {
     timestamps: true,
 });

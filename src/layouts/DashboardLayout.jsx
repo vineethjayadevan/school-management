@@ -68,6 +68,7 @@ const NAV_GROUPS = [
         allowed: ['superuser', 'admin'],
         children: [
             { name: 'Staff', href: '/admin/staff', icon: Briefcase, allowed: ['superuser', 'admin'] },
+            { name: 'Salary Structure', href: '/admin/salary-structure', icon: DollarSign, allowed: ['superuser', 'admin'] },
             { name: 'Staff Attendance', href: null, icon: CalendarCheck, allowed: ['superuser', 'admin'], comingSoon: true },
         ],
     },
