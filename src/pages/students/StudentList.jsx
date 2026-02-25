@@ -24,6 +24,7 @@ export default function StudentList() {
     // UI/Filter State
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedClass, setSelectedClass] = useState('Mont 1');
+    const [viewMode, setViewMode] = useState('Active'); // 'Active' or 'Archived'
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
         gender: 'All'  // All, Male, Female
@@ -78,6 +79,7 @@ export default function StudentList() {
 
         // Also pick up any classes from student records that aren't in the static list
         const dynamicClasses = allStudents
+            .filter(s => viewMode === 'Active' ? (!s.studentStatus || s.studentStatus === 'Active') : (s.studentStatus && s.studentStatus !== 'Active'))
             .map(s => formatClassLabel(s.className || s.class))
             .filter(c => c && !schoolClasses.includes(c));
 
@@ -88,8 +90,10 @@ export default function StudentList() {
     // Derived State: Filtered Students
     const filteredStudents = useMemo(() => {
         return allStudents.filter(student => {
-            // 0. Only show active students
-            if (!student.isActive) return false;
+            // 0. Filter by View Mode
+            const isActive = !student.studentStatus || student.studentStatus === 'Active';
+            if (viewMode === 'Active' && !isActive) return false;
+            if (viewMode === 'Archived' && isActive) return false;
 
             // 1. Search (Name, Admission No, Roll No)
             const searchLower = searchTerm.toLowerCase();
@@ -109,7 +113,7 @@ export default function StudentList() {
         }).sort((a, b) => {
             return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
         });
-    }, [allStudents, searchTerm, selectedClass, filters]);
+    }, [allStudents, searchTerm, selectedClass, filters, viewMode]);
 
 
     const handleExportCSV = () => {
@@ -159,6 +163,22 @@ export default function StudentList() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+                {/* View Mode Toggle */}
+                <div className="p-4 border-b border-slate-200 flex gap-2">
+                    <button
+                        onClick={() => setViewMode('Active')}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'Active' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                        Active Students
+                    </button>
+                    <button
+                        onClick={() => setViewMode('Archived')}
+                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'Archived' ? 'bg-amber-50 text-amber-700' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                        Archived / Transferred
+                    </button>
+                </div>
+
                 {/* Top Toolbar */}
                 <div className="p-4 border-b border-slate-200 space-y-4">
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
@@ -276,7 +296,14 @@ export default function StudentList() {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-slate-900">{student.name}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold text-slate-900">{student.name}</p>
+                                                        {viewMode === 'Archived' && (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-amber-100 text-amber-700">
+                                                                {student.studentStatus}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs font-mono text-slate-500">{student.admissionNo}</p>
                                                 </div>
                                             </div>
@@ -303,7 +330,7 @@ export default function StudentList() {
                                                 >
                                                     <Eye size={18} />
                                                 </button>
-                                                {student.isActive && (
+                                                {student.studentStatus === 'Active' && (
                                                     <button
                                                         onClick={() => handleEditStudent(student._id || student.id)}
                                                         className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-amber-600"

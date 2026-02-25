@@ -51,6 +51,10 @@ const getTeacherStats = async (req, res) => {
             const studentCount = await Student.countDocuments({
                 className: item.className,
                 section: item.section,
+                $or: [
+                    { studentStatus: 'Active' },
+                    { studentStatus: { $exists: false } }
+                ],
                 isActive: true
             });
             totalStudents += studentCount;
@@ -133,10 +137,14 @@ const getClassStudents = async (req, res) => {
     try {
         const { className, sectionName } = req.params;
 
-        // Ensure we are fetching active students using isActive: true
+        // Ensure we are fetching active students using studentStatus: 'Active'
         const students = await Student.find({
             className: className,
             section: sectionName,
+            $or: [
+                { studentStatus: 'Active' },
+                { studentStatus: { $exists: false } }
+            ],
             isActive: true
         }).sort({ name: 1 }).lean();
 

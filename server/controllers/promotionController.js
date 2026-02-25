@@ -69,6 +69,10 @@ const getPromotionPreview = async (req, res) => {
 
         const query = {
             className: { $in: activeMappedClasses },
+            $or: [
+                { studentStatus: 'Active' },
+                { studentStatus: { $exists: false } }
+            ],
             isActive: true
         };
 
@@ -87,7 +91,7 @@ const getPromotionPreview = async (req, res) => {
 
         for (const student of eligibleStudents) {
             const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab);
-            const mapping = classMappings[student.className]; // Knowing the mapping that applies
+            const mapping = classMappings[student.className];
 
             let status = 'Ready';
             let remarks = '';
@@ -111,7 +115,9 @@ const getPromotionPreview = async (req, res) => {
                 targetClass: mapping.isGraduating ? 'Graduated' : mapping.toClass,
                 financialClearance: isCleared,
                 status,
-                remarks
+                remarks,
+                // New: Default action is to promote/graduate. UI can change this to 'Detain'
+                action: mapping.isGraduating ? 'Graduate' : 'Promote'
             });
         }
 
@@ -133,17 +139,23 @@ const executePromotion = async (req, res) => {
     try {
         const { currentYearId, nextYearId, classMappings, studentsToProcess } = req.body;
         // classMappings = { "Mont 1": { toClass: "Mont 2", isGraduating: false }, "Grade 3": { isGraduating: true } }
-        // studentsToProcess = array of student IDs that the admin confirmed
+        // studentsToProcess = array of objects: [{ studentId: "...", action: "Promote"|"Detain", remarks: "..." }]
 
-        if (!currentYearId || !nextYearId || !classMappings || !studentsToProcess) {
-            return res.status(400).json({ message: 'Missing required parameters' });
+        if (!currentYearId || !nextYearId || !classMappings || !studentsToProcess || !Array.isArray(studentsToProcess)) {
+            return res.status(400).json({ message: 'Missing required parameters or invalid payload format' });
         }
 
         // Fetch settings
         let settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
         const requiresFullFee = settings ? settings.promotionRequiresFullFee : true;
 
-        const students = await Student.find({ _id: { $in: studentsToProcess } });
+        const studentIds = studentsToProcess.map(s => s.studentId);
+        // CRITICAL FIX: Ensure we only process students whose currentAcademicYear is NOT already the nextYearId
+        // This prevents the "double promotion chain reaction" if classes are processed sequentially
+        const students = await Student.find({
+            _id: { $in: studentIds },
+            currentAcademicYear: { $ne: nextYearId }
+        });
 
         let promotedCount = 0;
         let detainedCount = 0;
@@ -153,23 +165,27 @@ const executePromotion = async (req, res) => {
         // Track stats per class for logging
         const classStats = {};
 
-        // Start processing (Ideally done in a MongoDB Transaction session, but kept simple here)
+        // Start processing
         for (const student of students) {
-            // Defensive check for uninitialized array
+            // Find the granular action data from the payload
+            const actionData = studentsToProcess.find(s => s.studentId.toString() === student._id.toString());
+            if (!actionData) continue; // Should not happen, but defensive
+
             if (!student.academicHistory) student.academicHistory = [];
 
+            // Double security check: Ensure they haven't been processed for the target year
             const alreadyProcessed = student.academicHistory.some(
                 h => h.academicYear && h.academicYear.toString() === nextYearId.toString()
             );
 
             if (alreadyProcessed) {
-                continue; // Skip silently or log it
+                console.warn(`Student ${student.admissionNo} already processed for year ${nextYearId}. Skipping.`);
+                continue;
             }
 
-            // Figure out which mapping applies based on their CURRENT class BEFORE any changes
             const mapping = classMappings[student.className];
             if (!mapping) {
-                console.warn(`No mapping found for student ${student.admissionNo} in class ${student.className}`);
+                console.warn(`No mapping found for student ${student.admissionNo} in class ${student.className}. Skipping.`);
                 continue;
             }
 
@@ -179,55 +195,71 @@ const executePromotion = async (req, res) => {
                     toClass: mapping.isGraduating ? 'Graduated' : mapping.toClass,
                     promotedCount: 0,
                     graduatedCount: 0,
+                    detainedCount: 0,
                     onHoldCount: 0
                 };
             }
 
             const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab);
 
-            // Log history for current state before changing it
+            // Structure the history entry for their current state before transitioning
             const historyEntry = {
                 academicYear: currentYearId,
                 className: student.className,
                 section: student.section,
                 promotionStatus: '',
-                remarks: '',
+                remarks: actionData.remarks || '', // Capture admin's remarks
                 recordedAt: new Date()
             };
 
+            // 1. Check Financial Block
             if (!isCleared && requiresFullFee) {
-                // Blocked
                 student.promotionStatus = 'On Hold';
                 student.financialClearance = false;
                 historyEntry.promotionStatus = 'On Hold';
-                historyEntry.remarks = 'Blocked due to pending fees';
+                // If they provided remarks, prepend them to the system block message
+                historyEntry.remarks = historyEntry.remarks ? `${historyEntry.remarks} (Blocked due to pending fees)` : 'Blocked due to pending fees';
                 onHoldCount++;
                 classStats[student.className].onHoldCount++;
-            } else {
-                // Proceed
-                student.financialClearance = isCleared; // might be false if requiresFullFee is false
 
-                if (mapping.isGraduating || mapping.toClass === 'Graduated') {
-                    student.promotionStatus = 'Graduated';
-                    student.isActive = false; // Alumni
-                    student.currentAcademicYear = nextYearId; // Mark them under the new year as alumni
-                    student.className = 'Graduated';
-                    historyEntry.promotionStatus = 'Graduated';
-                    graduatedCount++;
-                    classStats[student.className].graduatedCount++;
-                } else {
-                    // Normal Promotion
-                    student.className = mapping.toClass;
-                    // We only reset rollNo if they actually change class
-                    if (student.className !== historyEntry.className) {
-                        student.rollNo = '';
-                    }
-                    student.promotionStatus = 'Promoted';
-                    student.currentAcademicYear = nextYearId;
-                    historyEntry.promotionStatus = 'Promoted';
-                    promotedCount++;
-                    classStats[student.className].promotedCount++;
-                }
+                // Even on hold, we record that they were evaluated in currentYearId
+                student.academicHistory.push(historyEntry);
+                await student.save();
+                continue;
+            }
+
+            // 2. Financials Clear (or globally ignored). Execute Action.
+            student.financialClearance = isCleared;
+
+            if (actionData.action === 'Detain') {
+                // Admin actively chose to hold the student back (e.g., failed exams)
+                student.promotionStatus = 'Detained';
+                // They stay in the same class, but their current year advances
+                student.currentAcademicYear = nextYearId;
+                historyEntry.promotionStatus = 'Detained';
+                detainedCount++;
+                classStats[student.className].detainedCount++;
+
+            } else if (mapping.isGraduating || actionData.action === 'Graduate') {
+                // Graduation
+                student.promotionStatus = 'Graduated';
+                student.studentStatus = 'Graduated';
+                student.isActive = false; // Alumni
+                student.currentAcademicYear = nextYearId;
+                student.className = 'Graduated';
+                historyEntry.promotionStatus = 'Graduated';
+                graduatedCount++;
+                classStats[historyEntry.className].graduatedCount++;
+
+            } else {
+                // Normal Promotion (action === 'Promote')
+                student.className = mapping.toClass;
+                student.rollNo = ''; // Reset roll number for a new class
+                student.promotionStatus = 'Promoted';
+                student.currentAcademicYear = nextYearId;
+                historyEntry.promotionStatus = 'Promoted';
+                promotedCount++;
+                classStats[historyEntry.className].promotedCount++;
             }
 
             // Sanitize invalid previousClass values to prevent validation failure
@@ -246,6 +278,9 @@ const executePromotion = async (req, res) => {
 
         // Create log record summarizing the entire bulk action
         // For simplicity, we create one master log. If you want a log per class, you'd iterate `classStats`.
+        // Ensure there's a valid ObjectId for executedBy, falling back to a dummy one for backend testing if needed
+        const executedById = req.user?._id || students[0]?.createdBy || new mongoose.Types.ObjectId();
+
         const log = await PromotionLog.create({
             academicYearFrom: currentYearId,
             academicYearTo: nextYearId,
@@ -256,7 +291,7 @@ const executePromotion = async (req, res) => {
             detainedCount,
             graduatedCount,
             onHoldCount,
-            executedBy: req.user?._id || students[0]?.createdBy // Fallback
+            executedBy: executedById
         });
 
         res.status(200).json({

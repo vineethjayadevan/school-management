@@ -2,9 +2,18 @@ import api from './api';
 
 export const storageService = {
     students: {
-        getAll: async (searchString = '') => {
-            // Pass search param if provided
-            const url = searchString ? `/students?search=${searchString}` : '/students';
+        getAll: async (searchString = '', params = {}) => {
+            // Build query string
+            const queryParams = new URLSearchParams();
+            if (searchString) queryParams.append('search', searchString);
+
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    queryParams.append(key, value);
+                }
+            });
+
+            const url = queryParams.toString() ? `/students?${queryParams.toString()}` : '/students';
             const { data } = await api.get(url);
             return data.map(s => ({ ...s, id: s._id }));
         },

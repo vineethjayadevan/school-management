@@ -1,6 +1,8 @@
 const Student = require('../models/Student');
 const Fee = require('../models/Fee');
 const FeeCategory = require('../models/FeeCategory');
+const TransferCertificate = require('../models/TransferCertificate');
+const AcademicYear = require('../models/AcademicYear');
 const { signUrl } = require('./uploadController');
 
 // Helper to check if a student has cleared all fees (mirrors promotionController logic)
@@ -30,7 +32,12 @@ const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab, 
     });
     const payments = await Fee.find({ student: studentId, status: 'Paid' });
     const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-    return (totalDue === 0 || totalPaid >= totalDue);
+    return {
+        isCleared: (totalDue === 0 || totalPaid >= totalDue),
+        totalDue,
+        totalPaid,
+        pending: Math.max(0, totalDue - totalPaid)
+    };
 };
 
 // Helper to sign student photo
@@ -43,11 +50,11 @@ const signStudentPhoto = async (student) => {
     return studentObj;
 };
 
-// @desc    Get all students
-// @route   GET /api/students
-// @access  Private
 const getStudents = async (req, res) => {
     try {
+        const statusFilter = req.query.status;
+        const isActiveFilter = req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : null;
+
         const keyword = req.query.search
             ? {
                 $or: [
@@ -57,7 +64,31 @@ const getStudents = async (req, res) => {
             }
             : {};
 
-        const students = await Student.find({ ...keyword }).sort({ createdAt: -1 });
+        // Combine with status filters
+        const query = { ...keyword };
+
+        if (statusFilter) {
+            if (statusFilter === 'Active') {
+                query.$or = [
+                    ...(query.$or || []),
+                    {
+                        $or: [
+                            { studentStatus: 'Active' },
+                            { studentStatus: { $exists: false } }
+                        ]
+                    }
+                ];
+                query.isActive = true;
+            } else {
+                query.studentStatus = statusFilter;
+            }
+        }
+
+        if (isActiveFilter !== null) {
+            query.isActive = isActiveFilter;
+        }
+
+        const students = await Student.find(query).sort({ createdAt: -1 });
 
         // Sign student photos
         const signedStudents = await Promise.all(students.map(signStudentPhoto));
@@ -170,25 +201,48 @@ const issueTC = async (req, res) => {
             reasonForLeaving,
             conduct,
             isTCPromoted,
-            remarks
+            remarks,
+            resultStatus,      // New
+            lastStudiedClass   // New 
         } = req.body;
 
         if (!reasonForLeaving) {
             return res.status(400).json({ message: 'Reason for leaving is required.' });
         }
 
-        // ── FINANCIAL CLEARANCE CHECK ─────────────────────────────
-        const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
-        if (!isCleared) {
+        // ── FINANCIAL CLEARANCE CHECK & SNAPSHOT ─────────────────────────────
+        const financialData = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
+        if (!financialData.isCleared) {
             return res.status(400).json({
                 message: 'Cannot issue TC: This student has pending fee dues. Please clear all dues before issuing a Transfer Certificate.'
             });
         }
 
-        // Auto-generate TC number if not provided
-        const finalTcNo = tcNo || `TC-${new Date().getFullYear()}-${student.admissionNo}`;
+        // Get Active Academic Year
+        const activeYear = await AcademicYear.findOne({ isActive: true });
+        const academicYearName = activeYear ? activeYear.name : `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
-        // Save TC details
+        // Auto-generate TC number if not provided sequentially
+        let finalTcNo = tcNo;
+        if (!finalTcNo) {
+            const currentYearStart = activeYear ? activeYear.name.split('-')[0] : new Date().getFullYear().toString();
+            const yearPrefix = `TC-${currentYearStart}-`;
+            // Find highest TC number for this year
+            const lastTC = await TransferCertificate.findOne({
+                tcNo: new RegExp(`^${yearPrefix}`)
+            }).sort({ createdAt: -1 });
+
+            let nextNum = 1;
+            if (lastTC && lastTC.tcNo) {
+                const parts = lastTC.tcNo.split('-');
+                if (parts.length === 3 && !isNaN(parts[2])) {
+                    nextNum = parseInt(parts[2]) + 1;
+                }
+            }
+            finalTcNo = `${yearPrefix}${nextNum.toString().padStart(4, '0')}`;
+        }
+
+        // Save TC details snapshot to Student
         student.tcDetails = {
             tcNo: finalTcNo,
             applicationDate,
@@ -198,7 +252,11 @@ const issueTC = async (req, res) => {
             conduct: conduct || 'Good',
             isTCPromoted: isTCPromoted || false,
             remarks,
-            issuedBy: req.user ? req.user._id : undefined
+            issuedBy: req.user ? req.user._id : undefined,
+            totalPaidAtTC: financialData.totalPaid,
+            pendingAtTC: financialData.pending,
+            isFinancialCleared: financialData.isCleared,
+            academicYearName: academicYearName
         };
 
         // Record final status in academic history
@@ -212,9 +270,34 @@ const issueTC = async (req, res) => {
             recordedAt: new Date()
         });
 
-        // Mark student as inactive
+        // Mark student as inactive and Transferred
         student.promotionStatus = 'Relieved';
+        student.studentStatus = 'Transferred';
         student.isActive = false;
+
+        // Create Professional TC Record
+        await TransferCertificate.create({
+            studentId: student._id,
+            admissionNo: student.admissionNo,
+            studentName: student.name,
+            tcNo: finalTcNo,
+            issueDate: issueDate || new Date(),
+            academicYear: academicYearName,
+            exitDetails: {
+                dateOfLeaving: lastDateAttended,
+                reasonForLeaving: reasonForLeaving,
+                lastStudiedClass: lastStudiedClass || student.className,
+                resultStatus: resultStatus || (isTCPromoted ? 'Pass' : 'Not Applicable'),
+                conduct: conduct || 'Good',
+                remarks: remarks
+            },
+            financialSnapshot: {
+                totalFeesPaid: financialData.totalPaid,
+                pendingAtTC: financialData.pending,
+                isCleared: financialData.isCleared
+            },
+            issuedBy: req.user ? req.user._id : undefined
+        });
 
         // Sanitize previousClass enum — empty strings fail Mongoose validation
         const validPreviousClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
@@ -241,8 +324,8 @@ const checkTCEligibility = async (req, res) => {
         const student = await Student.findById(req.params.id);
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
-        const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
-        res.status(200).json({ isCleared, isActive: student.isActive });
+        const financialData = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
+        res.status(200).json({ isCleared: financialData.isCleared, isActive: student.isActive });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

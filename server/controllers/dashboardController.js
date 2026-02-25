@@ -12,7 +12,14 @@ const getDashboardStats = async (req, res) => {
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
         // 1. Basic Counts
-        const studentCount = await Student.countDocuments({ isActive: true });
+        // Use a more inclusive query for the transition period: Active or status not yet set
+        const studentCount = await Student.countDocuments({
+            $or: [
+                { studentStatus: 'Active' },
+                { studentStatus: { $exists: false } }
+            ],
+            isActive: true
+        });
         const staffCount = await Staff.countDocuments({ status: 'Active' });
 
         // 2. Financials (This Month)

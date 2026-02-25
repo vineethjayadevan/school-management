@@ -3,8 +3,10 @@ import {
     Search, FileText, CheckCircle2, XCircle,
     Printer, X, AlertTriangle, Loader2,
     ClipboardList, UserCheck, ArrowRight, Calendar,
-    Shield, BookOpen, RefreshCw
+    Shield, BookOpen, RefreshCw, Download
 } from 'lucide-react';
+import { calculateDetailedFeeBreakdown } from '../../utils/feeUtils';
+import { generateStudentProfilePDF } from '../../utils/studentPdfGenerator';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
@@ -37,6 +39,8 @@ export default function TransferCertificates() {
         reasonForLeaving: '',
         conduct: 'Good',
         isTCPromoted: false,
+        resultStatus: 'Not Applicable',
+        lastStudiedClass: '',
         remarks: '',
     });
 
@@ -96,13 +100,48 @@ export default function TransferCertificates() {
             addToast('Transfer Certificate issued successfully', 'success');
             setSelectedStudent(null);
             setEligibility(null);
-            setForm({ tcNo: '', applicationDate: todayInput(), issueDate: todayInput(), lastDateAttended: todayInput(), reasonForLeaving: '', conduct: 'Good', isTCPromoted: false, remarks: '' });
+            setForm({ tcNo: '', applicationDate: todayInput(), issueDate: todayInput(), lastDateAttended: todayInput(), reasonForLeaving: '', conduct: 'Good', isTCPromoted: false, resultStatus: 'Not Applicable', lastStudiedClass: '', remarks: '' });
             await fetchStudents();
             setActiveTab('issued');
         } catch (err) {
             addToast(err.response?.data?.message || 'Failed to issue TC', 'error');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const [downloadingProfile, setDownloadingProfile] = useState(null); // Track ID of student being downloaded
+
+    const handleDownloadFullProfile = async (targetStudent) => {
+        setDownloadingProfile(targetStudent._id);
+        try {
+            // Parallel fetch: Student Profile, Fee History, and Active Categories
+            const [dataRes, feeHistoryRes, categoriesRes] = await Promise.all([
+                api.get(`/students/${targetStudent._id}`),
+                api.get(`/fees/student/${targetStudent._id}`),
+                api.get('/fee-categories')
+            ]);
+
+            const fullStudent = dataRes.data;
+            const feeHistory = feeHistoryRes.data || [];
+            const activeCategories = categoriesRes.data || [];
+
+            // Calculate dynamic fee stats breakdown
+            const feeDetails = calculateDetailedFeeBreakdown(fullStudent, feeHistory, activeCategories);
+
+            const studentWithFees = {
+                ...fullStudent,
+                feeDetails: feeDetails,
+                feeHistory: feeHistory
+            };
+
+            await generateStudentProfilePDF(studentWithFees);
+            addToast('Profile downloaded successfully', 'success');
+        } catch (error) {
+            console.error("Profile download failed:", error);
+            addToast('Failed to download profile', 'error');
+        } finally {
+            setDownloadingProfile(null);
         }
     };
 
@@ -361,6 +400,30 @@ export default function TransferCertificates() {
                                         </div>
                                     </div>
 
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 mb-1">Result Status</label>
+                                            <select
+                                                value={form.resultStatus}
+                                                onChange={e => setForm(p => ({ ...p, resultStatus: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <option value="Not Applicable">Not Applicable</option>
+                                                <option value="Pass">Pass</option>
+                                                <option value="Fail">Fail</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 mb-1">Last Studied Class (If changed)</label>
+                                            <input
+                                                value={form.lastStudiedClass}
+                                                onChange={e => setForm(p => ({ ...p, lastStudiedClass: e.target.value }))}
+                                                placeholder={selectedStudent.className}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 mb-1">Remarks</label>
                                         <textarea
@@ -422,6 +485,7 @@ export default function TransferCertificates() {
                                         <th className="px-5 py-3 text-left">Reason</th>
                                         <th className="px-5 py-3 text-left">Conduct</th>
                                         <th className="px-5 py-3 text-center">Print</th>
+                                        <th className="px-5 py-3 text-center">Profile</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -437,9 +501,9 @@ export default function TransferCertificates() {
                                             <td className="px-5 py-4 text-slate-600 max-w-[180px] truncate">{s.tcDetails?.reasonForLeaving || '—'}</td>
                                             <td className="px-5 py-4">
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${s.tcDetails?.conduct === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                                        s.tcDetails?.conduct === 'Good' ? 'bg-blue-100 text-blue-700' :
-                                                            s.tcDetails?.conduct === 'Satisfactory' ? 'bg-amber-100 text-amber-700' :
-                                                                'bg-red-100 text-red-700'
+                                                    s.tcDetails?.conduct === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                                        s.tcDetails?.conduct === 'Satisfactory' ? 'bg-amber-100 text-amber-700' :
+                                                            'bg-red-100 text-red-700'
                                                     }`}>
                                                     {s.tcDetails?.conduct || 'Good'}
                                                 </span>
@@ -449,7 +513,17 @@ export default function TransferCertificates() {
                                                     onClick={() => setPrintStudent(s)}
                                                     className="flex items-center gap-1 mx-auto px-3 py-1.5 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 text-xs font-medium rounded-lg transition-colors"
                                                 >
-                                                    <Printer size={13} /> Print TC
+                                                    <Printer size={13} /> Print
+                                                </button>
+                                            </td>
+                                            <td className="px-5 py-4 text-center">
+                                                <button
+                                                    onClick={() => handleDownloadFullProfile(s)}
+                                                    disabled={downloadingProfile === s._id}
+                                                    className="flex items-center gap-1 mx-auto px-3 py-1.5 border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:bg-slate-100 text-xs font-medium rounded-lg transition-colors"
+                                                >
+                                                    {downloadingProfile === s._id ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                                                    Profile
                                                 </button>
                                             </td>
                                         </tr>

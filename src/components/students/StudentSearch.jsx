@@ -32,7 +32,7 @@ export default function StudentSearch({ onSelect, excludeIds = [] }) {
             setLoading(true);
             try {
                 // Using the existing getAll with search param
-                const data = await storageService.students.getAll(query);
+                const data = await storageService.students.getAll(query, { status: 'Active' });
 
                 // Filter out excluded IDs (e.g. self or already selected siblings)
                 const filtered = data.filter(s => !excludeIds.includes(s.id));

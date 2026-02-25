@@ -169,7 +169,7 @@ export default function FeeDashboard() {
         setSearchTerm(term);
         if (term.length > 2) {
             try {
-                const results = await storageService.students.getAll(term);
+                const results = await storageService.students.getAll(term, { status: 'Active' });
                 if (results.length > 0) {
                     setSelectedStudent(results[0]);
                 } else {

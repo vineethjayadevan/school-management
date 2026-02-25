@@ -7,7 +7,9 @@ import {
     AlertCircle,
     Info,
     Search,
-    RefreshCw
+    RefreshCw,
+    X,
+    MessageSquare
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -74,12 +76,12 @@ const PromotionWizard = () => {
                 setTermSelections(prev => ({ ...prev, currentYearId: activeYear._id }));
             }
 
-            // Initialize default class mappings with smart auto-selection based on order
+            // Initialize default class mappings to empty. 
+            // We previously auto-suggested paths here, but it caused users to accidentally 
+            // promote the entire school if they didn't explicitly clear the other classes.
             const initialMappings = {};
-            sortedClasses.forEach((cls, idx) => {
-                // Auto-suggest next class if available, else blank
-                const nextClass = idx + 1 < CLASS_ORDER.length ? CLASS_ORDER[idx + 1] : '';
-                initialMappings[cls] = { toClass: nextClass, isGraduating: !nextClass };
+            sortedClasses.forEach(cls => {
+                initialMappings[cls] = { toClass: '', isGraduating: false };
             });
             setClassMappings(initialMappings);
 
@@ -128,7 +130,7 @@ const PromotionWizard = () => {
                 classMappings
             });
 
-            // Only show students who haven't been promoted yet
+            // The backend now provides an initial 'action' (Promote/Graduate) based on the mapping
             setPreviewData(data.students);
             setRequiresFullFee(data.requiresFullFee);
         } catch (error) {
@@ -139,10 +141,40 @@ const PromotionWizard = () => {
         }
     };
 
+    const handleActionChange = (studentId, newAction) => {
+        setPreviewData(prevData =>
+            prevData.map(student => {
+                if (student.studentId === studentId) {
+                    // Provide a default remark if detaining and none exists
+                    const newRemarks = newAction === 'Detain' && !student.remarks
+                        ? 'Student held back'
+                        : student.remarks;
+                    return { ...student, action: newAction, remarks: newRemarks };
+                }
+                return student;
+            })
+        );
+    };
+
+    const handleRemarksChange = (studentId, newRemarks) => {
+        setPreviewData(prevData =>
+            prevData.map(student =>
+                student.studentId === studentId ? { ...student, remarks: newRemarks } : student
+            )
+        );
+    };
+
     const executePromotion = async () => {
         setExecuting(true);
         try {
-            const studentsToProcess = previewData.map(s => s.studentId);
+            // Filter out 'Skip' actions. Only send those we are actually processing (Promote/Graduate or Detain)
+            const studentsToProcess = previewData
+                .filter(s => s.action !== 'Skip')
+                .map(s => ({
+                    studentId: s.studentId,
+                    action: s.action,
+                    remarks: s.remarks || ''
+                }));
 
             if (studentsToProcess.length === 0) {
                 setExecuting(false);
@@ -405,32 +437,72 @@ const PromotionWizard = () => {
                                                 <th className="px-4 py-3 font-semibold">Current Class</th>
                                                 <th className="px-4 py-3 font-semibold">Target Class</th>
                                                 <th className="px-4 py-3 font-semibold text-center">Fee Cleared</th>
-                                                <th className="px-4 py-3 font-semibold">Eligibility Status</th>
-                                                <th className="px-4 py-3 font-semibold">Remarks</th>
+                                                <th className="px-4 py-3 font-semibold">Status</th>
+                                                <th className="px-4 py-3 font-semibold bg-indigo-50/50">Action (Override)</th>
+                                                <th className="px-4 py-3 font-semibold bg-indigo-50/50">Remarks (Record Reason)</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 text-sm">
-                                            {previewData.map((student) => (
-                                                <tr key={student.studentId} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-4 py-3 text-slate-600 font-medium">#{student.admissionNo}</td>
-                                                    <td className="px-4 py-3 text-slate-800 font-semibold">{student.name}</td>
-                                                    <td className="px-4 py-3 text-slate-600 font-medium">{student.currentClass}</td>
-                                                    <td className="px-4 py-3 text-indigo-600 font-medium">{student.targetClass}</td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        {student.financialClearance ? (
-                                                            <CheckCircle2 size={18} className="text-emerald-500 mx-auto" />
-                                                        ) : (
-                                                            <AlertCircle size={18} className="text-red-500 mx-auto" />
-                                                        )}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <StatusBadge status={student.status} />
-                                                    </td>
-                                                    <td className="px-4 py-3 text-slate-500 text-xs">
-                                                        {student.remarks || <span className="text-slate-300">-</span>}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {previewData.map((student) => {
+                                                const processingEnabled = student.action !== 'Skip';
+
+                                                return (
+                                                    <tr key={student.studentId} className={`transition-colors ${!processingEnabled ? 'bg-slate-50/50' : 'hover:bg-slate-50'}`}>
+                                                        <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' : 'text-slate-600'}`}>#{student.admissionNo}</td>
+                                                        <td className={`px-4 py-3 font-semibold ${!processingEnabled ? 'text-slate-500' : 'text-slate-800'}`}>{student.name}</td>
+                                                        <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' : 'text-slate-600'}`}>{student.currentClass}</td>
+                                                        <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' :
+                                                            student.action === 'Detain' ? 'text-red-500 line-through' : 'text-indigo-600'
+                                                            }`}>
+                                                            {student.targetClass}
+                                                        </td>
+                                                        <td className={`px-4 py-3 text-center ${!processingEnabled ? 'opacity-50' : ''}`}>
+                                                            {student.financialClearance ? (
+                                                                <CheckCircle2 size={18} className="text-emerald-500 mx-auto" />
+                                                            ) : (
+                                                                <AlertCircle size={18} className="text-red-500 mx-auto" />
+                                                            )}
+                                                        </td>
+                                                        <td className={`px-4 py-3 ${!processingEnabled ? 'opacity-50' : ''}`}>
+                                                            <StatusBadge status={student.status} />
+                                                        </td>
+                                                        <td className="px-4 py-3 bg-indigo-50/30">
+                                                            <select
+                                                                value={student.action}
+                                                                onChange={(e) => handleActionChange(student.studentId, e.target.value)}
+                                                                className={`px-3 py-1.5 text-xs font-semibold rounded-md border outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${student.action === 'Detain' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                    student.action === 'Skip' ? 'bg-slate-100 text-slate-500 border-slate-300' :
+                                                                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                    }`}
+                                                            >
+                                                                <option value="Promote">Promote</option>
+                                                                {student.targetClass === 'Graduated' && <option value="Graduate">Graduate</option>}
+                                                                <option value="Detain">Detain (Hold Back)</option>
+                                                                <option value="Skip">Skip / Ignore</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-4 py-3 bg-indigo-50/30 min-w-[200px]">
+                                                            {processingEnabled ? (
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={student.remarks || ''}
+                                                                        onChange={(e) => handleRemarksChange(student.studentId, e.target.value)}
+                                                                        placeholder={student.action === 'Detain' ? "Required: Reason for detaining" : "Optional remarks"}
+                                                                        className={`w-full pl-8 pr-3 py-1.5 text-xs border rounded-md outline-none focus:ring-2 transition-colors ${student.action === 'Detain' && !student.remarks
+                                                                            ? 'border-red-300 focus:ring-red-500 bg-red-50/50'
+                                                                            : 'border-slate-300 focus:ring-indigo-500 bg-white'
+                                                                            }`}
+                                                                    />
+                                                                    <MessageSquare size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs italic">Skipped</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -461,16 +533,29 @@ const PromotionWizard = () => {
                                     <span className="font-bold text-slate-800">{Object.keys(classMappings).filter(k => classMappings[k].toClass || classMappings[k].isGraduating).length}</span>
                                 </li>
                                 <li className="flex justify-between items-center pb-2 border-b border-slate-200">
-                                    <span className="font-medium">Total Students:</span>
+                                    <span className="font-medium">Total Eligible Evaluated:</span>
                                     <span className="font-bold text-slate-800">{previewData.length}</span>
                                 </li>
-                                <li className="flex justify-between items-center pb-2 border-b border-slate-200">
-                                    <span className="font-medium">Eligible (Ready):</span>
-                                    <span className="font-bold text-emerald-600">{previewData.filter(s => s.status === 'Ready' || s.status === 'Warning').length}</span>
+                                <li className="flex justify-between items-center mb-1">
+                                    <span className="font-semibold text-slate-800">Final Action Breakdown:</span>
                                 </li>
-                                <li className="flex justify-between items-center">
-                                    <span className="font-medium">Blocked:</span>
-                                    <span className="font-bold text-red-600">{previewData.filter(s => s.status === 'Blocked').length}</span>
+                                <div className="pl-4 space-y-1.5 border-l-2 border-indigo-100 mb-2">
+                                    <li className="flex justify-between items-center text-xs">
+                                        <span className="font-medium flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Promoting / Graduating:</span>
+                                        <span className="font-bold text-emerald-600">{previewData.filter(s => s.action === 'Promote' || s.action === 'Graduate').length}</span>
+                                    </li>
+                                    <li className="flex justify-between items-center text-xs">
+                                        <span className="font-medium flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>Detaining (Holding Back):</span>
+                                        <span className="font-bold text-red-600">{previewData.filter(s => s.action === 'Detain').length}</span>
+                                    </li>
+                                    <li className="flex justify-between items-center text-xs">
+                                        <span className="font-medium flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>Skipping (Ignoring for now):</span>
+                                        <span className="font-bold text-slate-500">{previewData.filter(s => s.action === 'Skip').length}</span>
+                                    </li>
+                                </div>
+                                <li className="flex justify-between items-center pt-2 border-t border-slate-200 mt-2">
+                                    <span className="font-medium">Expected Financial Blocks (On Hold):</span>
+                                    <span className="font-bold text-amber-600">{previewData.filter(s => s.action !== 'Skip' && s.status === 'Blocked').length}</span>
                                 </li>
                             </ul>
                         </div>

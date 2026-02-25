@@ -140,8 +140,14 @@ const studentSchema = mongoose.Schema({
         enum: ['Active', 'Promoted', 'Detained', 'Graduated', 'On Hold', 'Relieved'],
         default: 'Active'
     },
+    studentStatus: {
+        type: String,
+        enum: ['Active', 'Transferred', 'Graduated', 'Detained', 'Inactive'],
+        default: 'Active'
+    },
 
     // Transfer Certificate Details
+
     tcDetails: {
         tcNo: { type: String },
         applicationDate: { type: Date },
@@ -151,7 +157,12 @@ const studentSchema = mongoose.Schema({
         conduct: { type: String, default: 'Good' },
         isTCPromoted: { type: Boolean },
         remarks: { type: String },
-        issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+        issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        // Financial Snapshots
+        totalPaidAtTC: { type: Number, default: 0 },
+        pendingAtTC: { type: Number, default: 0 },
+        isFinancialCleared: { type: Boolean, default: false },
+        academicYearName: { type: String }
     },
     financialClearance: {
         type: Boolean,
