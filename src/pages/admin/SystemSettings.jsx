@@ -3,6 +3,7 @@ import { Settings, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import FeeSettings from '../../components/fees/FeeSettings';
+import StaffCategorySettings from '../../components/staff/StaffCategorySettings';
 
 const SystemSettings = () => {
     const [settings, setSettings] = useState({
@@ -88,6 +89,12 @@ const SystemSettings = () => {
                 >
                     Fee Configuration
                 </button>
+                <button
+                    onClick={() => setActiveTab('staffCategories')}
+                    className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'staffCategories' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Staff Categories
+                </button>
             </div>
 
             {message.text && (
@@ -139,9 +146,17 @@ const SystemSettings = () => {
                         </button>
                     </div>
                 </div>
-            ) : (
+            ) : activeTab === 'fees' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-[600px]">
                     <FeeSettings isInline={true} />
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="p-6 border-b border-slate-200">
+                        <h2 className="text-lg font-semibold text-slate-800">Staff Category Configuration</h2>
+                        <p className="text-sm text-slate-500 mt-1">Manage staff categories and subcategories used across the Staff module.</p>
+                    </div>
+                    <StaffCategorySettings />
                 </div>
             )}
         </div>

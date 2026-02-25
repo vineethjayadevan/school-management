@@ -7,7 +7,6 @@ import {
     Edit2,
     Trash2,
     X,
-    Settings,
     Save,
     Check,
     ChevronDown
@@ -24,7 +23,6 @@ export default function StaffDirectory() {
 
     // UI States
     const [showStaffModal, setShowStaffModal] = useState(false);
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -219,13 +217,6 @@ export default function StaffDirectory() {
                             className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
-                    <button
-                        onClick={() => setShowCategoryModal(true)}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap"
-                        title="Configure Categories"
-                    >
-                        <Settings size={20} />
-                    </button>
                     <button
                         onClick={() => { resetForm(); setShowStaffModal(true); }}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors whitespace-nowrap"
@@ -454,149 +445,8 @@ export default function StaffDirectory() {
                     </div>
                 </div>
             )}
-
-            {/* Manage Category Modal */}
-            <ManageCategoryModal
-                isOpen={showCategoryModal}
-                onClose={() => { setShowCategoryModal(false); fetchCategories(); }}
-            />
         </div>
     );
 }
 
-function ManageCategoryModal({ isOpen, onClose }) {
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const { addToast } = useToast();
 
-    // New Category Form
-    const [newCatName, setNewCatName] = useState('');
-    const [isTeaching, setIsTeaching] = useState(false);
-    const [subcats, setSubcats] = useState(''); // Comma separated
-
-    useEffect(() => {
-        if (isOpen) fetchCats();
-    }, [isOpen]);
-
-    const fetchCats = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/staff-categories');
-            setCategories(res.data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAdd = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/staff-categories', {
-                name: newCatName,
-                isTeaching,
-                subcategories: subcats.split(',').map(s => s.trim()).filter(Boolean)
-            });
-            addToast("Category added", "success");
-            setNewCatName('');
-            setSubcats('');
-            setIsTeaching(false);
-            fetchCats();
-        } catch (error) {
-            addToast("Failed to add category", "error");
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!confirm("Delete category?")) return;
-        try {
-            await api.delete(`/staff-categories/${id}`);
-            addToast("Category deleted", "success");
-            fetchCats();
-        } catch (error) {
-            addToast("Failed to delete", "error");
-        }
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[210] p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-6 border-b border-slate-200">
-                    <h2 className="text-xl font-bold text-slate-900">Manage Staff Categories</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                </div>
-
-                <div className="p-6 overflow-y-auto flex-1 space-y-8">
-                    {/* Add Form */}
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                        <h3 className="font-semibold text-slate-800 mb-3">Add New Category</h3>
-                        <form onSubmit={handleAdd} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-500 mb-1">Category Name</label>
-                                    <input
-                                        value={newCatName}
-                                        onChange={e => setNewCatName(e.target.value)}
-                                        placeholder="e.g. Lab Assistant"
-                                        required
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-indigo-500 text-sm"
-                                    />
-                                </div>
-                                <div className="flex items-center pt-6">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={isTeaching}
-                                            onChange={e => setIsTeaching(e.target.checked)}
-                                            className="rounded text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">Is Teaching Staff?</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Subcategories (comma separated)</label>
-                                <input
-                                    value={subcats}
-                                    onChange={e => setSubcats(e.target.value)}
-                                    placeholder="e.g. Junior, Senior, Head"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-1 focus:ring-indigo-500 text-sm"
-                                />
-                                <p className="text-xs text-slate-400 mt-1">These will appear in the subcategory dropdown</p>
-                            </div>
-                            <div className="flex justify-end">
-                                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">Add Category</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* List */}
-                    <div>
-                        <h3 className="font-semibold text-slate-800 mb-3">Existing Categories</h3>
-                        {loading ? <p>Loading...</p> : (
-                            <div className="space-y-3">
-                                {categories.map(cat => (
-                                    <div key={cat._id} className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-medium text-slate-900">{cat.name}</h4>
-                                                {cat.isTeaching && <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">Teaching</span>}
-                                            </div>
-                                            <p className="text-sm text-slate-500 mt-1">
-                                                Subcategories: {cat.subcategories.join(', ') || 'None'}
-                                            </p>
-                                        </div>
-                                        <button onClick={() => handleDelete(cat._id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={16} /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}

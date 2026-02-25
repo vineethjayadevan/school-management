@@ -11,8 +11,6 @@ import StudentSearch from '../../components/students/StudentSearch';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Accordion from '../../components/ui/Accordion';
 import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee } from '../../utils/feeUtils';
-import TCModal from '../../components/students/TCModal';
-import { generateTC } from '../../utils/tcGenerator';
 
 export default function StudentDetails() {
     const { id } = useParams();
@@ -38,7 +36,6 @@ export default function StudentDetails() {
 
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
-    const [isTCModalOpen, setIsTCModalOpen] = useState(false);
 
     // Watch conveyance slab for dynamic updates in Edit mode
     const watchConveyance = watch('conveyanceSlab');
@@ -934,14 +931,6 @@ export default function StudentDetails() {
                                 >
                                     <Download size={16} /> Download Profile
                                 </button>
-                                {student.isActive && (
-                                    <button
-                                        onClick={() => setIsTCModalOpen(true)}
-                                        className="px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
-                                    >
-                                        <FileText size={16} /> Issue TC
-                                    </button>
-                                )}
                                 <button
                                     onClick={() => {
                                         setMode('edit');
@@ -990,16 +979,7 @@ export default function StudentDetails() {
                 </div>
 
                 {/* TC Modal */}
-                {isTCModalOpen && (
-                    <TCModal
-                        student={student}
-                        onClose={() => setIsTCModalOpen(false)}
-                        onSuccess={() => {
-                            setIsTCModalOpen(false);
-                            fetchStudent();
-                        }}
-                    />
-                )}
+
 
                 {/* Relieved / TC Issued Banner */}
                 {!student.isActive && student.promotionStatus === 'Relieved' && (
