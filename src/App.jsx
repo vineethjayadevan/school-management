@@ -40,6 +40,7 @@ import Home from './pages/Home';
 import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
 import SalaryManager from './pages/admin/SalaryManager';
+import TransferCertificates from './pages/admin/TransferCertificates';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
 import { useAuth } from './context/AuthContext';
@@ -185,6 +186,16 @@ function App() {
                     <Route path="events" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <ManageEvents />
+                        </RequireAuth>
+                    } />
+                    <Route path="academic-years" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <AcademicYears />
+                        </RequireAuth>
+                    } />
+                    <Route path="transfer-certificates" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <TransferCertificates />
                         </RequireAuth>
                     } />
                 </Route>
