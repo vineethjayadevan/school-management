@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus, Trash2, ExternalLink, Upload, File, Download, CreditCard, ChevronDown, ChevronUp, Printer } from 'lucide-react';
+import { ArrowLeft, Edit, Save, User, Phone, MapPin, Calendar, Book, FileText, Ban, Bus, Trash2, ExternalLink, Upload, File, Download, CreditCard, ChevronDown, ChevronUp, Printer, GraduationCap } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
 import api from '../../services/api';
@@ -915,6 +915,93 @@ export default function StudentDetails() {
                                             </div>
                                         )}
                                     </div>
+                                </Accordion>
+
+                                {/* Academic History - ACCORDION */}
+                                <Accordion
+                                    title="Academic History"
+                                    icon={GraduationCap}
+                                    isOpen={openSection === 'academicHistory'}
+                                    onToggle={() => toggleSection('academicHistory')}
+                                >
+                                    {student.academicHistory && student.academicHistory.length > 0 ? (
+                                        <div className="relative">
+                                            {/* Timeline line */}
+                                            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-200" />
+
+                                            <div className="space-y-4">
+                                                {[...student.academicHistory].reverse().map((entry, idx) => {
+                                                    const isPass = entry.resultStatus === 'Pass';
+                                                    const isFail = entry.resultStatus === 'Fail';
+                                                    const statusColors = isPass
+                                                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                                        : isFail
+                                                            ? 'bg-red-100 text-red-700 border-red-200'
+                                                            : 'bg-slate-100 text-slate-500 border-slate-200';
+                                                    const promotionColors = entry.promotionStatus === 'Promoted'
+                                                        ? 'text-indigo-600'
+                                                        : entry.promotionStatus === 'Graduated'
+                                                            ? 'text-violet-600'
+                                                            : entry.promotionStatus === 'Detained'
+                                                                ? 'text-red-500'
+                                                                : 'text-slate-500';
+
+                                                    return (
+                                                        <div key={idx} className="relative flex items-start gap-4 pl-12">
+                                                            {/* Timeline dot */}
+                                                            <div className={`absolute left-3.5 top-3.5 w-3 h-3 rounded-full border-2 border-white shadow ${isPass ? 'bg-emerald-400' : isFail ? 'bg-red-400' : 'bg-slate-300'}`} />
+
+                                                            <div className="flex-1 bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                                <div className="flex items-start justify-between gap-4 flex-wrap">
+                                                                    <div>
+                                                                        <p className="font-bold text-slate-800 text-sm">
+                                                                            {entry.className || '—'}
+                                                                            {entry.section && <span className="text-slate-400 font-normal"> · Section {entry.section}</span>}
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-500 mt-0.5">
+                                                                            {entry.academicYear?.name || (typeof entry.academicYear === 'string' ? entry.academicYear : 'Unknown Year')}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        {/* Result badge */}
+                                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors}`}>
+                                                                            {entry.resultStatus || 'N/A'}
+                                                                        </span>
+                                                                        {/* Promotion outcome */}
+                                                                        <span className={`text-xs font-semibold ${promotionColors}`}>
+                                                                            {entry.promotionStatus || '—'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mt-3 flex items-center justify-between gap-2 flex-wrap text-xs text-slate-500">
+                                                                    {entry.promotedAt && (
+                                                                        <span className="flex items-center gap-1">
+                                                                            <span>📅</span>
+                                                                            {new Date(entry.promotedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                        </span>
+                                                                    )}
+                                                                    {entry.remarks && (
+                                                                        <span className="italic text-slate-400 truncate max-w-xs" title={entry.remarks}>
+                                                                            "{entry.remarks}"
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10 text-slate-400">
+                                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <GraduationCap size={24} className="text-slate-300" />
+                                            </div>
+                                            <p className="font-medium text-sm">No academic history yet</p>
+                                            <p className="text-xs mt-1">Promotion records will appear here after the first promotion cycle.</p>
+                                        </div>
+                                    )}
                                 </Accordion>
 
                                 {/* Previous Education - ACCORDION */}

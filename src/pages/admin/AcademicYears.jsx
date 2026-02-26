@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Edit2, Trash2, Check, X, AlertCircle } from 'lucide-react';
+import { Calendar, Plus, Edit2, Trash2, Check, X, AlertCircle, Lock, RotateCcw } from 'lucide-react';
 import api from '../../services/api';
 
 const AcademicYears = ({ isInline = false }) => {
@@ -62,7 +62,18 @@ const AcademicYears = ({ isInline = false }) => {
             fetchYears();
             showMessage('success', `Academic year marked as ${!currentStatus ? 'Active' : 'Inactive'}`);
         } catch (error) {
-            showMessage('error', 'Failed to update status');
+            showMessage('error', error.response?.data?.message || 'Failed to update status');
+        }
+    };
+
+    const reopenYear = async (id, name) => {
+        if (!window.confirm(`Are you sure you want to reopen "${name}"? This will set it back to Active and allow new promotions from it.`)) return;
+        try {
+            await api.put(`/academic-years/${id}`, { status: 'Active' });
+            fetchYears();
+            showMessage('success', `${name} has been reopened and set to Active.`);
+        } catch (error) {
+            showMessage('error', error.response?.data?.message || 'Failed to reopen academic year');
         }
     };
 
@@ -241,22 +252,45 @@ const AcademicYears = ({ isInline = false }) => {
                                         {new Date(year.endDate).toLocaleDateString()}
                                     </td>
                                     <td className="p-4">
-                                        <button
-                                            onClick={() => toggleActive(year._id, year.isActive)}
-                                            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border transition-colors ${year.isActive
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                                                }`}
-                                        >
-                                            {year.isActive ? 'Active' : 'Inactive'}
-                                        </button>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {/* Active/Inactive toggle */}
+                                            <button
+                                                onClick={() => toggleActive(year._id, year.isActive)}
+                                                disabled={year.status === 'Closed'}
+                                                className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border transition-colors disabled:cursor-not-allowed ${year.isActive
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-50'
+                                                    }`}
+                                            >
+                                                {year.isActive ? 'Active' : 'Inactive'}
+                                            </button>
+                                            {/* Status badge (Active / Closed) */}
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${year.status === 'Closed'
+                                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                }`}>
+                                                {year.status === 'Closed' && <Lock size={10} />}
+                                                {year.status || 'Active'}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {/* Reopen closed year */}
+                                            {year.status === 'Closed' && (
+                                                <button
+                                                    onClick={() => reopenYear(year._id, year.name)}
+                                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                                    title="Reopen this year"
+                                                >
+                                                    <RotateCcw size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleEdit(year)}
-                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                                title="Edit"
+                                                disabled={year.isLocked}
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors disabled:opacity-30"
+                                                title={year.isLocked ? 'Locked — cannot edit core details' : 'Edit'}
                                             >
                                                 <Edit2 size={16} />
                                             </button>
@@ -264,7 +298,7 @@ const AcademicYears = ({ isInline = false }) => {
                                                 onClick={() => handleDelete(year._id)}
                                                 disabled={year.isLocked}
                                                 className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                                                title={year.isLocked ? "Cannot delete locked year" : "Delete"}
+                                                title={year.isLocked ? 'Cannot delete locked year' : 'Delete'}
                                             >
                                                 <Trash2 size={16} />
                                             </button>

@@ -148,15 +148,25 @@ const updateStudent = async (req, res) => {
     try {
         const student = await Student.findById(req.params.id);
 
-        if (student) {
-            const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, {
-                new: true,
-            });
-            const signedStudent = await signStudentPhoto(updatedStudent);
-            res.json(signedStudent);
-        } else {
-            res.status(404).json({ message: 'Student not found' });
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
         }
+
+        // ── Promotion Lock: Prevent direct class/section editing after promotion ──
+        const lockedStatuses = ['Promoted', 'Graduated'];
+        if (lockedStatuses.includes(student.promotionStatus)) {
+            if (req.body.className !== undefined || req.body.section !== undefined) {
+                return res.status(400).json({
+                    message: `Class/section cannot be changed manually after promotion. This student's promotion status is "${student.promotionStatus}". Please use the Promotion Wizard to make class changes.`
+                });
+            }
+        }
+
+        const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+        });
+        const signedStudent = await signStudentPhoto(updatedStudent);
+        res.json(signedStudent);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

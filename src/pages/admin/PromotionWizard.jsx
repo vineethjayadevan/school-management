@@ -9,7 +9,8 @@ import {
     Search,
     RefreshCw,
     X,
-    MessageSquare
+    MessageSquare,
+    Lock
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -23,9 +24,10 @@ const PromotionWizard = () => {
 
     // Step 1 State
     const [termSelections, setTermSelections] = useState({ currentYearId: '', nextYearId: '' });
+    const [fromYearStatus, setFromYearStatus] = useState(''); // Track if selected From Year is Closed
 
     // Step 2 State
-    const [classes, setClasses] = useState([]);
+    const [classes, setClasses] = useState([]);         // 'From' classes — only those with enrolled students
     const [classMappings, setClassMappings] = useState({}); // { fromClass: { toClass: 'Grade 1', isGraduating: false } }
 
     // Step 3 State
@@ -36,6 +38,8 @@ const PromotionWizard = () => {
     // Step 4 State
     const [executing, setExecuting] = useState(false);
     const [executionLog, setExecutionLog] = useState(null);
+    const [closeFromYear, setCloseFromYear] = useState(false); // Admin opt-in to close year
+    const [yearClosed, setYearClosed] = useState(false);       // Track if year was closed
 
     // Define strict progression order
     const CLASS_ORDER = [
@@ -55,32 +59,32 @@ const PromotionWizard = () => {
             const { data: years } = await api.get('/academic-years');
             setAcademicYears(years);
 
-            // Fetch Classes (Use the predefined order, but only show those that exist in our system)
-            // In a robust system this comes from a Class model, here we extract unique active classes
+            // ── From Classes ──────────────────────────────────────────────────
+            // Only show classes that currently have enrolled active students.
+            // These appear as the "Current:" cards in Step 2.
             const { data: students } = await api.get('/students');
             const activeClassesSet = new Set(students.filter(s => s.isActive).map(s => s.className));
 
-            // Sort them based on our predefined order
-            const sortedClasses = CLASS_ORDER.filter(cls => activeClassesSet.has(cls));
+            // Sort by predefined order
+            const sortedActiveClasses = CLASS_ORDER.filter(cls => activeClassesSet.has(cls));
 
-            // If there are any classes not in our predefined list, append them to the end
+            // Append any custom classes not in CLASS_ORDER
             activeClassesSet.forEach(cls => {
-                if (cls && !CLASS_ORDER.includes(cls)) sortedClasses.push(cls);
+                if (cls && !CLASS_ORDER.includes(cls)) sortedActiveClasses.push(cls);
             });
 
-            setClasses(sortedClasses);
+            setClasses(sortedActiveClasses);
 
             // Auto-select active year as current
             const activeYear = years.find(y => y.isActive);
             if (activeYear) {
                 setTermSelections(prev => ({ ...prev, currentYearId: activeYear._id }));
+                setFromYearStatus(activeYear.status || '');
             }
 
-            // Initialize default class mappings to empty. 
-            // We previously auto-suggested paths here, but it caused users to accidentally 
-            // promote the entire school if they didn't explicitly clear the other classes.
+            // Initialize default class mappings (all blank — admin must choose explicitly)
             const initialMappings = {};
-            sortedClasses.forEach(cls => {
+            sortedActiveClasses.forEach(cls => {
                 initialMappings[cls] = { toClass: '', isGraduating: false };
             });
             setClassMappings(initialMappings);
@@ -98,6 +102,14 @@ const PromotionWizard = () => {
         setTimeout(() => setMessage({ type: '', text: '' }), 4000);
     };
 
+    const handleFromYearChange = (e) => {
+        const selectedId = e.target.value;
+        setTermSelections(prev => ({ ...prev, currentYearId: selectedId }));
+        // Track the status of the selected From Year
+        const year = academicYears.find(y => y._id === selectedId);
+        setFromYearStatus(year?.status || '');
+    };
+
     const handleNext = () => {
         if (currentStep === 0) {
             if (!termSelections.currentYearId || !termSelections.nextYearId) {
@@ -105,6 +117,9 @@ const PromotionWizard = () => {
             }
             if (termSelections.currentYearId === termSelections.nextYearId) {
                 return showMessage('error', 'Current and Next term cannot be the same.');
+            }
+            if (fromYearStatus === 'Closed') {
+                return showMessage('error', 'The selected "From" academic year is already Closed. You cannot promote from a closed year.');
             }
         }
         if (currentStep === 1) {
@@ -185,12 +200,14 @@ const PromotionWizard = () => {
                 currentYearId: termSelections.currentYearId,
                 nextYearId: termSelections.nextYearId,
                 classMappings,
-                studentsToProcess
+                studentsToProcess,
+                closeFromYear // Pass admin's choice to backend
             });
 
-            setExecutionLog(data.log); // Overall log
+            setExecutionLog(data.log);
+            setYearClosed(closeFromYear && data.fromYearClosed !== false);
             showMessage('success', 'Bulk promotion executed successfully!');
-            setCurrentStep(4); // Move to completion view
+            setCurrentStep(4);
 
         } catch (error) {
             console.error('Execution error:', error);
@@ -282,18 +299,25 @@ const PromotionWizard = () => {
                                 <select
                                     className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                     value={termSelections.currentYearId}
-                                    onChange={(e) => setTermSelections(prev => ({ ...prev, currentYearId: e.target.value }))}
+                                    onChange={handleFromYearChange}
                                 >
                                     <option value="" disabled>Select Current Year...</option>
                                     {academicYears.map(y => (
                                         <option key={y._id} value={y._id}>
-                                            {y.name} {y.isActive ? '(Active)' : ''}
+                                            {y.name} {y.isActive ? '(Active)' : ''} {y.status === 'Closed' ? '🔒 Closed' : ''}
                                         </option>
                                     ))}
                                 </select>
                                 <p className="text-xs text-slate-500 mt-2">
                                     The term students are currently enrolled in.
                                 </p>
+                                {/* Warning banner when From Year is Closed */}
+                                {fromYearStatus === 'Closed' && (
+                                    <div className="mt-3 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
+                                        <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+                                        <span><strong>Locked Year:</strong> This academic year was already closed after a promotion cycle. You cannot promote from it. Use the Academic Years page to reopen it if needed.</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col items-center justify-center md:hidden">
@@ -374,18 +398,23 @@ const PromotionWizard = () => {
                                                     className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                                                 >
                                                     <option value="">Do not promote</option>
-                                                    {classes.filter(c => {
+                                                    {/* Use CLASS_ORDER (not just enrolled classes) so any future class is a valid target */}
+                                                    {CLASS_ORDER.filter(c => {
                                                         const currentIndex = CLASS_ORDER.indexOf(cls);
                                                         const targetIndex = CLASS_ORDER.indexOf(c);
-                                                        // If both are in the known order, only allow higher classes
-                                                        // If either is unknown (e.g., custom class), just don't show the same class
-                                                        if (currentIndex !== -1 && targetIndex !== -1) {
-                                                            return targetIndex > currentIndex;
-                                                        }
-                                                        return c !== cls;
+                                                        // Only show classes strictly higher in the order
+                                                        return targetIndex > currentIndex;
                                                     }).map(c => (
                                                         <option key={c} value={c}>{c}</option>
                                                     ))}
+                                                    {/* Also include any custom classes not in CLASS_ORDER */}
+                                                    {classes
+                                                        .filter(c => !CLASS_ORDER.includes(c) && c !== cls)
+                                                        .map(c => (
+                                                            <option key={c} value={c}>{c}</option>
+                                                        ))
+                                                    }
+
                                                 </select>
                                             </div>
                                         )}
@@ -435,6 +464,7 @@ const PromotionWizard = () => {
                                                 <th className="px-4 py-3 font-semibold">Adm No</th>
                                                 <th className="px-4 py-3 font-semibold">Student Name</th>
                                                 <th className="px-4 py-3 font-semibold">Current Class</th>
+                                                <th className="px-4 py-3 font-semibold">Section</th>
                                                 <th className="px-4 py-3 font-semibold">Target Class</th>
                                                 <th className="px-4 py-3 font-semibold text-center">Fee Cleared</th>
                                                 <th className="px-4 py-3 font-semibold">Status</th>
@@ -451,6 +481,7 @@ const PromotionWizard = () => {
                                                         <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' : 'text-slate-600'}`}>#{student.admissionNo}</td>
                                                         <td className={`px-4 py-3 font-semibold ${!processingEnabled ? 'text-slate-500' : 'text-slate-800'}`}>{student.name}</td>
                                                         <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' : 'text-slate-600'}`}>{student.currentClass}</td>
+                                                        <td className={`px-4 py-3 font-medium text-slate-500`}>{student.section}</td>
                                                         <td className={`px-4 py-3 font-medium ${!processingEnabled ? 'text-slate-400' :
                                                             student.action === 'Detain' ? 'text-red-500 line-through' : 'text-indigo-600'
                                                             }`}>
@@ -560,6 +591,23 @@ const PromotionWizard = () => {
                             </ul>
                         </div>
 
+                        {/* Opt-in: Close Academic Year — NOT automatic */}
+                        <div className="w-full max-w-md mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={closeFromYear}
+                                    onChange={(e) => setCloseFromYear(e.target.checked)}
+                                    className="w-4 h-4 mt-0.5 text-red-600 border-slate-300 rounded focus:ring-red-500"
+                                />
+                                <span className="text-sm text-slate-700">
+                                    <strong className="text-slate-900">Close the "From" Academic Year after execution</strong>
+                                    <br />
+                                    <span className="text-xs text-slate-500">Check this ONLY when you have finished promoting ALL classes for this year. Once closed, no further promotions can run from it (admin can reopen if needed).</span>
+                                </span>
+                            </label>
+                        </div>
+
                         <button
                             onClick={executePromotion}
                             disabled={executing || previewData.length === 0}
@@ -609,17 +657,34 @@ const PromotionWizard = () => {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex gap-4">
-                            <button
-                                onClick={() => {
-                                    setCurrentStep(1); // Go back to mapping to select another class
-                                    setExecutionLog(null);
-                                    // re-fetch preview for next mapped class
-                                }}
-                                className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors"
-                            >
-                                Process Another Class
-                            </button>
+                        {/* Year was closed indicator */}
+                        {yearClosed && (
+                            <div className="w-full mb-6 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-sm">
+                                <Lock size={16} className="flex-shrink-0" />
+                                <span><strong>Academic year has been closed and locked.</strong> No further promotions can run from it.</span>
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex flex-wrap gap-3 justify-center">
+                            {/* Process another class — fully resets the wizard */}
+                            {!yearClosed && (
+                                <button
+                                    onClick={async () => {
+                                        // Reset mapping state for a fresh run
+                                        setExecutionLog(null);
+                                        setPreviewData([]);
+                                        setCloseFromYear(false);
+                                        setYearClosed(false);
+                                        // Re-fetch so new class list reflects recently promoted students
+                                        await fetchInitialData();
+                                        setCurrentStep(1); // Go to Map Classes (year is same)
+                                    }}
+                                    className="px-6 py-3 bg-white border-2 border-indigo-200 text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-colors"
+                                >
+                                    Promote Another Class (Same Year)
+                                </button>
+                            )}
+                            {/* Go to students */}
                             <button
                                 onClick={() => window.location.href = '/admin/students'}
                                 className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-colors"
@@ -632,27 +697,29 @@ const PromotionWizard = () => {
             </div>
 
             {/* Footer Navigation */}
-            {currentStep < 4 && (
-                <div className="mt-6 flex justify-between items-center">
-                    <button
-                        onClick={handleBack}
-                        disabled={currentStep === 0 || executing}
-                        className="px-6 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
-                    >
-                        Back
-                    </button>
-                    {currentStep < 3 && (
+            {
+                currentStep < 4 && (
+                    <div className="mt-6 flex justify-between items-center">
                         <button
-                            onClick={handleNext}
-                            className="flex items-center gap-2 px-8 py-2.5 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+                            onClick={handleBack}
+                            disabled={currentStep === 0 || executing}
+                            className="px-6 py-2.5 font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
                         >
-                            {currentStep === 0 ? "Map Classes" : currentStep === 1 ? "Start Validation" : "Continue"}
-                            <ArrowRight size={18} />
+                            Back
                         </button>
-                    )}
-                </div>
-            )}
-        </div>
+                        {currentStep < 3 && (
+                            <button
+                                onClick={handleNext}
+                                className="flex items-center gap-2 px-8 py-2.5 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+                            >
+                                {currentStep === 0 ? "Map Classes" : currentStep === 1 ? "Start Validation" : "Continue"}
+                                <ArrowRight size={18} />
+                            </button>
+                        )}
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -5,12 +5,10 @@ const GlobalSettings = require('../models/GlobalSettings');
 const Fee = require('../models/Fee');
 const FeeCategory = require('../models/FeeCategory');
 
-// Helper function to calculate if fees are fully paid for a student in a specific year
-const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab) => {
-    // Note: In a fully robust system, you'd filter transactions strictly by the `academicYear`. 
-    // Since we are transitioning, we look at all successful payments mapped to their current active slabs/class.
-
-    // 1. Get all applicable fee categories for the student's current class
+// ─── Helper: Year-Scoped Financial Clearance ─────────────────────────────────
+// Checks whether a student has cleared all dues for a SPECIFIC academic year.
+const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab, academicYearId) => {
+    // 1. Calculate total annual dues for the student's class
     const allCategories = await FeeCategory.find({ isActive: true });
 
     let totalDue = 0;
@@ -26,33 +24,66 @@ const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab) 
         }
     });
 
-    // 2. Get all exact payments for this student
-    const payments = await Fee.find({
+    // 2. Sum ONLY payments for this specific academic year (year-scoped)
+    const paymentQuery = {
         student: studentId,
         status: 'Paid',
-        // If academicYear was strictly enforced on transactions, we'd add it here
-    });
+    };
+
+    // If academicYearId is provided, filter by it. Fee.academicYear is stored as a String (year name)
+    // so we need to resolve the year name first.
+    if (academicYearId) {
+        const yearDoc = await AcademicYear.findById(academicYearId).select('name');
+        if (yearDoc) {
+            paymentQuery.academicYear = yearDoc.name;
+        }
+    }
+
+    const payments = await Fee.find(paymentQuery);
 
     let totalPaid = 0;
     payments.forEach(p => {
         totalPaid += Number(p.amount);
     });
 
-    // Clearance logic:
-    // If due is 0, they are clear. If paid >= due, they are clear.
-    return (totalDue === 0 || totalPaid >= totalDue);
+    // 3. Return result
+    return {
+        isCleared: (totalDue === 0 || totalPaid >= totalDue),
+        totalDue,
+        totalPaid,
+        pending: Math.max(0, totalDue - totalPaid)
+    };
 };
 
+// ─── Helper: Resolve resultStatus from action ─────────────────────────────────
+const resolveResultStatus = (action) => {
+    if (action === 'Promote' || action === 'Graduate') return 'Pass';
+    if (action === 'Detain') return 'Fail';
+    return 'N/A';
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // @desc    Get Promotion Eligibility Preview
 // @route   POST /api/promotion/preview
 // @access  Private (Admin)
+// ─────────────────────────────────────────────────────────────────────────────
 const getPromotionPreview = async (req, res) => {
     try {
         const { currentYearId, nextYearId, classMappings } = req.body;
-        // classMappings = { "Mont 1": { toClass: "Mont 2", isGraduating: false }, "Grade 3": { isGraduating: true } }
 
         if (!currentYearId || !nextYearId || !classMappings) {
             return res.status(400).json({ message: 'Missing required parameters' });
+        }
+
+        // ── Safety Rule 1: Prevent promotion if From Year is Closed ──
+        const currentYear = await AcademicYear.findById(currentYearId);
+        if (!currentYear) {
+            return res.status(404).json({ message: 'Selected "From" academic year not found.' });
+        }
+        if (currentYear.status === 'Closed' || currentYear.isLocked) {
+            return res.status(400).json({
+                message: `Cannot promote from "${currentYear.name}" — this academic year is already Closed/Locked.`
+            });
         }
 
         const activeMappedClasses = Object.keys(classMappings).filter(
@@ -67,8 +98,10 @@ const getPromotionPreview = async (req, res) => {
         let settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
         const requiresFullFee = settings ? settings.promotionRequiresFullFee : true;
 
+        // ── Safety Rule: Query only students whose currentAcademicYear === from year ──
         const query = {
             className: { $in: activeMappedClasses },
+            currentAcademicYear: currentYearId,
             $or: [
                 { studentStatus: 'Active' },
                 { studentStatus: { $exists: false } }
@@ -76,21 +109,27 @@ const getPromotionPreview = async (req, res) => {
             isActive: true
         };
 
-        const students = await Student.find(query).select('name admissionNo rollNo className section conveyanceSlab financialClearance promotionStatus academicHistory');
+        const students = await Student.find(query).select(
+            'name admissionNo rollNo className section conveyanceSlab financialClearance promotionStatus academicHistory currentAcademicYear'
+        );
 
-        // Filter out students who already have an entry for the target year
+        // ── Safety Rule: Filter out students already processed for the target year ──
         const eligibleStudents = students.filter(student => {
             const alreadyProcessed = student.academicHistory?.some(
                 h => h.academicYear && h.academicYear.toString() === nextYearId.toString()
             );
-            return !alreadyProcessed;
+            // Also skip if already in the next year (double-promo protection)
+            const alreadyInNextYear = student.currentAcademicYear?.toString() === nextYearId.toString();
+            return !alreadyProcessed && !alreadyInNextYear;
         });
 
-        // Check eligibility
+        // Check eligibility for each student
         const previewData = [];
 
         for (const student of eligibleStudents) {
-            const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab);
+            const { isCleared, totalDue, totalPaid, pending } = await checkFinancialClearance(
+                student._id, student.className, student.conveyanceSlab, currentYearId
+            );
             const mapping = classMappings[student.className];
 
             let status = 'Ready';
@@ -99,10 +138,10 @@ const getPromotionPreview = async (req, res) => {
             if (!isCleared) {
                 if (requiresFullFee) {
                     status = 'Blocked';
-                    remarks = 'Pending fee balance blocks promotion.';
+                    remarks = `Pending fee balance: ₹${pending.toLocaleString('en-IN')} blocks promotion.`;
                 } else {
                     status = 'Warning';
-                    remarks = 'Pending fee balance (Promotion allowed per settings).';
+                    remarks = `Pending fee: ₹${pending.toLocaleString('en-IN')} (promotion allowed per global setting).`;
                 }
             }
 
@@ -112,17 +151,19 @@ const getPromotionPreview = async (req, res) => {
                 admissionNo: student.admissionNo,
                 rollNo: student.rollNo,
                 currentClass: student.className,
+                section: student.section || '—',
                 targetClass: mapping.isGraduating ? 'Graduated' : mapping.toClass,
                 financialClearance: isCleared,
+                pendingAmount: pending,
                 status,
                 remarks,
-                // New: Default action is to promote/graduate. UI can change this to 'Detain'
                 action: mapping.isGraduating ? 'Graduate' : 'Promote'
             });
         }
 
         res.status(200).json({
             requiresFullFee,
+            fromYear: { id: currentYear._id, name: currentYear.name, status: currentYear.status },
             students: previewData
         });
 
@@ -132,17 +173,28 @@ const getPromotionPreview = async (req, res) => {
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 // @desc    Execute Bulk Promotion
 // @route   POST /api/promotion/execute
 // @access  Private (Admin)
+// ─────────────────────────────────────────────────────────────────────────────
 const executePromotion = async (req, res) => {
     try {
         const { currentYearId, nextYearId, classMappings, studentsToProcess } = req.body;
-        // classMappings = { "Mont 1": { toClass: "Mont 2", isGraduating: false }, "Grade 3": { isGraduating: true } }
-        // studentsToProcess = array of objects: [{ studentId: "...", action: "Promote"|"Detain", remarks: "..." }]
 
         if (!currentYearId || !nextYearId || !classMappings || !studentsToProcess || !Array.isArray(studentsToProcess)) {
             return res.status(400).json({ message: 'Missing required parameters or invalid payload format' });
+        }
+
+        // ── Safety Rule 1: Prevent execution if From Year is Closed ──
+        const currentYear = await AcademicYear.findById(currentYearId);
+        if (!currentYear) {
+            return res.status(404).json({ message: 'Selected "From" academic year not found.' });
+        }
+        if (currentYear.status === 'Closed' || currentYear.isLocked) {
+            return res.status(400).json({
+                message: `Cannot promote from "${currentYear.name}" — this academic year is already Closed/Locked.`
+            });
         }
 
         // Fetch settings
@@ -150,8 +202,8 @@ const executePromotion = async (req, res) => {
         const requiresFullFee = settings ? settings.promotionRequiresFullFee : true;
 
         const studentIds = studentsToProcess.map(s => s.studentId);
-        // CRITICAL FIX: Ensure we only process students whose currentAcademicYear is NOT already the nextYearId
-        // This prevents the "double promotion chain reaction" if classes are processed sequentially
+
+        // CRITICAL: Only process students who are NOT already in the next year
         const students = await Student.find({
             _id: { $in: studentIds },
             currentAcademicYear: { $ne: nextYearId }
@@ -162,18 +214,15 @@ const executePromotion = async (req, res) => {
         let graduatedCount = 0;
         let onHoldCount = 0;
 
-        // Track stats per class for logging
         const classStats = {};
 
-        // Start processing
         for (const student of students) {
-            // Find the granular action data from the payload
             const actionData = studentsToProcess.find(s => s.studentId.toString() === student._id.toString());
-            if (!actionData) continue; // Should not happen, but defensive
+            if (!actionData) continue;
 
             if (!student.academicHistory) student.academicHistory = [];
 
-            // Double security check: Ensure they haven't been processed for the target year
+            // Double security: Check for duplicate processing
             const alreadyProcessed = student.academicHistory.some(
                 h => h.academicYear && h.academicYear.toString() === nextYearId.toString()
             );
@@ -185,7 +234,7 @@ const executePromotion = async (req, res) => {
 
             const mapping = classMappings[student.className];
             if (!mapping) {
-                console.warn(`No mapping found for student ${student.admissionNo} in class ${student.className}. Skipping.`);
+                console.warn(`No mapping found for ${student.admissionNo} in class ${student.className}. Skipping.`);
                 continue;
             }
 
@@ -200,104 +249,115 @@ const executePromotion = async (req, res) => {
                 };
             }
 
-            const isCleared = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab);
+            // Year-scoped financial clearance check
+            const { isCleared, pending } = await checkFinancialClearance(
+                student._id, student.className, student.conveyanceSlab, currentYearId
+            );
 
-            // Structure the history entry for their current state before transitioning
+            // Build history entry for their CURRENT state before transitioning
             const historyEntry = {
                 academicYear: currentYearId,
                 className: student.className,
                 section: student.section,
                 promotionStatus: '',
-                remarks: actionData.remarks || '', // Capture admin's remarks
+                resultStatus: resolveResultStatus(actionData.action),
+                remarks: actionData.remarks || '',
+                promotedAt: new Date(),
                 recordedAt: new Date()
             };
 
-            // 1. Check Financial Block
+            // 1. Financial Block (only if global setting requires full fee)
             if (!isCleared && requiresFullFee) {
                 student.promotionStatus = 'On Hold';
                 student.financialClearance = false;
                 historyEntry.promotionStatus = 'On Hold';
-                // If they provided remarks, prepend them to the system block message
-                historyEntry.remarks = historyEntry.remarks ? `${historyEntry.remarks} (Blocked due to pending fees)` : 'Blocked due to pending fees';
+                historyEntry.resultStatus = 'N/A';
+                historyEntry.remarks = historyEntry.remarks
+                    ? `${historyEntry.remarks} (Blocked: ₹${pending.toLocaleString('en-IN')} fee pending)`
+                    : `Blocked: ₹${pending.toLocaleString('en-IN')} fee pending`;
                 onHoldCount++;
                 classStats[student.className].onHoldCount++;
 
-                // Even on hold, we record that they were evaluated in currentYearId
                 student.academicHistory.push(historyEntry);
                 await student.save();
                 continue;
             }
 
-            // 2. Financials Clear (or globally ignored). Execute Action.
+            // 2. Financials clear (or globally ignored). Execute action.
             student.financialClearance = isCleared;
 
             if (actionData.action === 'Detain') {
-                // Admin actively chose to hold the student back (e.g., failed exams)
+                // Admin chose to hold back — student stays in same class, year advances
                 student.promotionStatus = 'Detained';
-                // They stay in the same class, but their current year advances
                 student.currentAcademicYear = nextYearId;
                 historyEntry.promotionStatus = 'Detained';
+                historyEntry.resultStatus = 'Fail';
                 detainedCount++;
                 classStats[student.className].detainedCount++;
 
             } else if (mapping.isGraduating || actionData.action === 'Graduate') {
-                // Graduation
+                // Graduation — student leaves the school
                 student.promotionStatus = 'Graduated';
                 student.studentStatus = 'Graduated';
-                student.isActive = false; // Alumni
+                student.isActive = false;
                 student.currentAcademicYear = nextYearId;
                 student.className = 'Graduated';
                 historyEntry.promotionStatus = 'Graduated';
+                historyEntry.resultStatus = 'Pass';
                 graduatedCount++;
                 classStats[historyEntry.className].graduatedCount++;
 
             } else {
-                // Normal Promotion (action === 'Promote')
+                // Normal Promotion
                 student.className = mapping.toClass;
-                student.rollNo = ''; // Reset roll number for a new class
+                student.rollNo = ''; // Reset roll number for new class
                 student.promotionStatus = 'Promoted';
                 student.currentAcademicYear = nextYearId;
                 historyEntry.promotionStatus = 'Promoted';
+                historyEntry.resultStatus = 'Pass';
                 promotedCount++;
                 classStats[historyEntry.className].promotedCount++;
             }
 
-            // Sanitize invalid previousClass values to prevent validation failure
-            const validPreviousClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
-            if (student.previousClass && !validPreviousClasses.includes(student.previousClass)) {
-                student.previousClass = undefined;
-            } else if (student.previousClass === '') {
-                // Ensure empty strings are also set to undefined to bypass enum validation
+            // Sanitize previousClass — empty strings fail Mongoose enum validation
+            if (!student.previousClass || student.previousClass === '') {
                 student.previousClass = undefined;
             }
 
-            // Save history
             student.academicHistory.push(historyEntry);
             await student.save();
         }
 
-        // Create log record summarizing the entire bulk action
-        // For simplicity, we create one master log. If you want a log per class, you'd iterate `classStats`.
-        // Ensure there's a valid ObjectId for executedBy, falling back to a dummy one for backend testing if needed
-        const executedById = req.user?._id || students[0]?.createdBy || new mongoose.Types.ObjectId();
+        // ── Optional: Close From Year — only when admin explicitly requests it ──
+        // This happens via the "Close This Year" button on the success screen.
+        // Do NOT auto-lock on every run — admin may need to run multiple class batches.
+        const shouldCloseYear = req.body.closeFromYear === true;
+        if (shouldCloseYear) {
+            currentYear.status = 'Closed';
+            currentYear.isLocked = true;
+            currentYear.isActive = false;
+            await currentYear.save();
+        }
 
+        // Write promotion log
         const log = await PromotionLog.create({
             academicYearFrom: currentYearId,
             academicYearTo: nextYearId,
-            fromClass: 'Bulk Process', // Since it spans multiple
+            fromClass: 'Bulk Process',
             toClass: 'Multiple',
-            totalStudentsProcessed: studentsToProcess.length,
+            totalStudentsProcessed: studentsToProcess.filter(s => s.action !== 'Skip').length,
             promotedCount,
             detainedCount,
             graduatedCount,
             onHoldCount,
-            executedBy: executedById
+            executedBy: req.user?._id
         });
 
         res.status(200).json({
             message: 'Bulk promotion executed successfully',
             log,
-            classStats // optionally return this for UI breakdown
+            classStats,
+            fromYearClosed: true
         });
 
     } catch (error) {

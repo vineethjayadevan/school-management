@@ -24,6 +24,11 @@ const academicYearSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    status: {
+        type: String,
+        enum: ['Active', 'Closed'],
+        default: 'Active'
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -35,10 +40,13 @@ const academicYearSchema = mongoose.Schema({
 // Pre-save middleware to ensure only one active year
 academicYearSchema.pre('save', async function (next) {
     if (this.isModified('isActive') && this.isActive) {
+        // Deactivate all other years
         await mongoose.model('AcademicYear').updateMany(
             { _id: { $ne: this._id } },
             { $set: { isActive: false } }
         );
+        // Sync status with isActive
+        this.status = 'Active';
     }
     next();
 });

@@ -173,7 +173,9 @@ const studentSchema = mongoose.Schema({
         className: { type: String },
         section: { type: String },
         promotionStatus: { type: String },
+        resultStatus: { type: String, enum: ['Pass', 'Fail', 'N/A'], default: 'N/A' },
         remarks: { type: String },
+        promotedAt: { type: Date },
         recordedAt: { type: Date, default: Date.now }
     }],
 

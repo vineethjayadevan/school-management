@@ -50,16 +50,34 @@ const createAcademicYear = async (req, res) => {
 // @access  Private (Admin)
 const updateAcademicYear = async (req, res) => {
     try {
-        const { name, startDate, endDate, isActive, isLocked } = req.body;
+        const { name, startDate, endDate, isActive, isLocked, status } = req.body;
         const year = await AcademicYear.findById(req.params.id);
 
         if (!year) {
             return res.status(404).json({ message: 'Academic year not found' });
         }
 
+        // Prevent editing a locked year's dates/name (status can still be changed by admin)
+        if (year.isLocked && (name || startDate || endDate)) {
+            return res.status(400).json({
+                message: `"${year.name}" is locked after a promotion cycle. Core details cannot be edited. You can still update its status.`
+            });
+        }
+
         if (name) year.name = name;
         if (startDate) year.startDate = startDate;
         if (endDate) year.endDate = endDate;
+
+        // Handle status field
+        if (status !== undefined) {
+            year.status = status;
+            // If admin manually marks as Active, sync isActive
+            if (status === 'Active') {
+                year.isActive = true;
+                year.isLocked = false; // un-lock if re-activating
+            }
+        }
+
         if (isActive !== undefined) year.isActive = isActive;
         if (isLocked !== undefined) year.isLocked = isLocked;
 
