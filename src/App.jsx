@@ -36,6 +36,7 @@ import Academics from './pages/academics/Academics';
 import AcademicYears from './pages/admin/AcademicYears';
 import SystemSettings from './pages/admin/SystemSettings';
 import PromotionWizard from './pages/admin/PromotionWizard';
+import TimetablePage from './pages/admin/timetable/TimetablePage';
 
 import Login from './pages/auth/Login';
 import Home from './pages/Home';
@@ -170,6 +171,12 @@ function App() {
                             <PromotionWizard />
                         </RequireAuth>
                     } />
+                    <Route path="timetable" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <TimetablePage />
+                        </RequireAuth>
+                    } />
+
                     <Route path="fees" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <FeeCollection />

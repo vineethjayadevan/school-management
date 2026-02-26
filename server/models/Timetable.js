@@ -1,26 +1,31 @@
 const mongoose = require('mongoose');
 
-const timetableSchema = mongoose.Schema({
-    className: { type: String, required: true }, // e.g., 'Class 10'
-    section: { type: String, required: true }, // e.g., 'A'
-    dayOfWeek: {
+const slotEntrySchema = new mongoose.Schema({
+    slotNumber: { type: Number, required: true },
+    subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', default: null },
+    teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
+    note: { type: String, default: '' }
+}, { _id: false });
+
+const dayScheduleSchema = new mongoose.Schema({
+    day: {
         type: String,
         required: true,
         enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     },
-    periods: [{
-        startTime: { type: String, required: true }, // e.g., "09:00"
-        endTime: { type: String, required: true },   // e.g., "09:45"
-        subject: { type: String, required: true },
-        teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' }
-    }]
-}, {
-    timestamps: true,
-});
+    slots: [slotEntrySchema]
+}, { _id: false });
 
-// Compound index to prevent duplicate schedules for same class/day
-timetableSchema.index({ className: 1, section: 1, dayOfWeek: 1 }, { unique: true });
+const timetableSchema = new mongoose.Schema({
+    academicYear: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
+    className: { type: String, required: true },
+    section: { type: String, required: true },
+    periodTemplate: { type: mongoose.Schema.Types.ObjectId, ref: 'PeriodTemplate', required: true },
+    schedule: [dayScheduleSchema]
+}, { timestamps: true });
+
+// Unique timetable per class + section + academic year
+timetableSchema.index({ academicYear: 1, className: 1, section: 1 }, { unique: true });
 
 const Timetable = mongoose.model('Timetable', timetableSchema);
-
 module.exports = Timetable;

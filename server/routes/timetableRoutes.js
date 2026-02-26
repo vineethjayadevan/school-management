@@ -1,9 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { getTeacherSchedule, getStudentSchedule } = require('../controllers/timetableController');
-const { protect } = require('../middleware/authMiddleware');
+const {
+    saveTimetable,
+    getTimetable,
+    getAllTimetables,
+    deleteTimetable,
+    getStudentTimetable,
+    getTeacherSchedule
+} = require('../controllers/timetableController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-router.get('/teacher', protect, getTeacherSchedule);
-router.get('/student', protect, getStudentSchedule);
+router.get('/all', protect, getAllTimetables);
+router.get('/student/:studentId', protect, getStudentTimetable);
+router.get('/teacher/:staffId', protect, getTeacherSchedule);
+router.get('/', protect, getTimetable);
+router.post('/', protect, admin, saveTimetable);
+router.delete('/:id', protect, admin, deleteTimetable);
 
 module.exports = router;

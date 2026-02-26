@@ -79,7 +79,7 @@ const NAV_GROUPS = [
         allowed: ['superuser', 'admin'],
         children: [
             { name: 'Classes & Subjects', href: '/admin/academics', icon: BookOpen, allowed: ['superuser', 'admin'] },
-            { name: 'Timetable', href: null, icon: Clock, allowed: ['superuser', 'admin'], comingSoon: true },
+            { name: 'Timetable', href: '/admin/timetable', icon: Clock, allowed: ['superuser', 'admin'] },
             { name: 'Student Attendance', href: null, icon: ClipboardList, allowed: ['superuser', 'admin'], comingSoon: true },
             { name: 'Exams', href: null, icon: FlaskConical, allowed: ['superuser', 'admin'], comingSoon: true },
         ],
