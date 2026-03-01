@@ -13,12 +13,38 @@ const createUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        const user = await User.create({
+        const userData = {
             name,
             email,
             password,
             role,
-        });
+        };
+
+        // Automatic Profile Linking for Students
+        if (role === 'student') {
+            const Student = require('../models/Student');
+            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+
+            let student = null;
+            // 1. Try Email Match
+            if (email) {
+                student = await Student.findOne({ email: email.toLowerCase() });
+            }
+
+            // 2. Try Normalized Name Match
+            if (!student) {
+                const normalizedSearchName = normalize(name);
+                const allStudents = await Student.find({});
+                student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
+            }
+
+            if (student) {
+                userData.profileId = student._id;
+                console.log(`Automatic Link (User API): User ${email} -> Student ${student.name} (${student.admissionNo})`);
+            }
+        }
+
+        const user = await User.create(userData);
 
         if (user) {
             res.status(201).json({

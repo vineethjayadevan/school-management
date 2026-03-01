@@ -85,7 +85,7 @@ const createUser = async (req, res) => {
             }
         }
 
-        const user = await User.create({
+        const userData = {
             name,
             username,
             email: email || undefined,
@@ -93,7 +93,41 @@ const createUser = async (req, res) => {
             role,
             createdBy: req.user._id,
             isActive: true
-        });
+        };
+
+        // Automatic Profile Linking for Students
+        if (role === 'student') {
+            const Student = require('../models/Student');
+            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+
+            let student = null;
+            // 1. Try Email Match
+            if (email) {
+                student = await Student.findOne({ email: email.toLowerCase() });
+            }
+
+            // 2. Try Admission No Match from username (e.g. UN-2025-001)
+            if (!student && username) {
+                const admissionMatch = username.match(/UN-\d{4}-\d+/i);
+                if (admissionMatch) {
+                    student = await Student.findOne({ admissionNo: admissionMatch[0].toUpperCase() });
+                }
+            }
+
+            // 3. Try Normalized Name Match
+            if (!student) {
+                const normalizedSearchName = normalize(name);
+                const allStudents = await Student.find({});
+                student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
+            }
+
+            if (student) {
+                userData.profileId = student._id;
+                console.log(`Automatic Link: User ${username} -> Student ${student.name} (${student.admissionNo})`);
+            }
+        }
+
+        const user = await User.create(userData);
 
         if (user) {
             res.status(201).json({
