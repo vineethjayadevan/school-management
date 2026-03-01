@@ -23,7 +23,9 @@ import {
     Instagram,
     Download,
     FileText,
-    Lock
+    Lock,
+    Clock,
+    MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import api from '../services/api';
@@ -1661,12 +1663,450 @@ const Footer = () => (
     </footer>
 );
 
+const SummerVacationPopup = ({ onClose, onEnquiry }) => {
+    const courses = [
+        {
+            name: "Communicative English Training",
+            duration: "15 Days",
+            icon: "🗣️",
+            for: "School Students, Youth & Homemakers",
+            highlights: ["Improve speaking", "Build confidence"]
+        },
+        {
+            name: "Public Speaking Course",
+            duration: "1 Week",
+            icon: "🎤",
+            for: "Students & Youth",
+            highlights: ["Stage confidence", "Voice modulation", "Presentation skills"]
+        },
+        {
+            name: "English & Maths Tuitions",
+            duration: "30 Days",
+            icon: "📚",
+            for: "LP & UP Students",
+            highlights: ["Strong basics", "Exam preparation", "Individual attention"]
+        },
+        {
+            name: "Self Defence Classes",
+            duration: "15 Days",
+            icon: "🥋",
+            for: "All (Students & Elders)",
+            highlights: ["Safety techniques", "Confidence building", "Fitness training"]
+        },
+        {
+            name: "Yoga for Seniors",
+            duration: "Age 20-40",
+            icon: "🧘‍♂️",
+            for: "All (Students & Elders)",
+            highlights: ["Stress relief", "Flexibility", "Healthy lifestyle"]
+        },
+        {
+            name: "Art & Craft Training",
+            duration: "Ongoing",
+            icon: "🎨",
+            for: "Students, Ladies",
+            highlights: ["Eco-friendly crafts", "Fun learning", "Using Waste Materials"]
+        }
+    ];
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden z-20 flex flex-col max-h-[90vh]"
+            >
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-3 right-3 md:top-4 md:right-4 w-8 h-8 md:w-10 md:h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors z-30"
+                >
+                    <X size={18} className="md:size-5" />
+                </button>
+
+                {/* Banner Top */}
+                <div className="bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-400 p-5 pt-6 relative overflow-hidden shrink-0">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-20 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
+
+                    <div className="flex items-center gap-4 mb-3 pr-10 md:pr-0">
+                        <span className="text-4xl md:text-5xl drop-shadow-lg">🌞</span>
+                        <div className="text-left">
+                            <h2 className="text-xl md:text-2xl font-extrabold text-white leading-tight drop-shadow-md">
+                                Summer Vacation <br />Crash Courses 2026
+                            </h2>
+                            <p className="text-orange-50 font-bold tracking-wide text-[10px] md:text-xs drop-shadow-sm">April & May | STEM GPS Campus</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-4 py-1.5 text-white text-[10px] md:text-xs font-bold w-fit">
+                        <Clock size={14} />
+                        <span>9:00 AM – 11:00 AM & 3:00 PM – 5:00 PM</span>
+                    </div>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 pt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        {courses.map((course, idx) => (
+                            <div key={idx} className="flex flex-col gap-3 p-5 bg-orange-50/50 rounded-[2rem] border border-orange-100 hover:bg-orange-50 transition-all group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform shrinking-0">
+                                        {course.icon}
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-extrabold text-slate-800 text-sm leading-tight">{course.name}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <Clock size={10} /> {course.duration}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-left space-y-2">
+                                    <p className="inline-block text-[10px] font-bold text-orange-700 bg-orange-100/50 uppercase tracking-wider px-2 py-0.5 rounded-md">For: {course.for}</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {course.highlights.map((h, i) => (
+                                            <span key={i} className="text-[10px] font-medium text-slate-600 bg-white border border-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1 shrink-0">
+                                                <CheckCircle size={10} className="text-green-500" /> {h}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-slate-50 rounded-3xl p-5 md:p-6 border border-slate-100 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-white text-orange-500 rounded-full flex items-center justify-center shadow-sm shrink-0">
+                                        <MapPin size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Venue</p>
+                                        <p className="text-xs font-bold text-slate-700">STEM GPS Campus</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <a
+                                    href="tel:+919544547511"
+                                    className="flex items-center gap-3 group/phone hover:bg-white p-1 rounded-xl transition-colors"
+                                >
+                                    <div className="w-8 h-8 bg-white text-orange-500 rounded-full flex items-center justify-center shadow-sm shrink-0 group-hover/phone:bg-orange-500 group-hover/phone:text-white transition-colors">
+                                        <Phone size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400">Contact</p>
+                                        <p className="text-xs font-bold text-slate-700 group-hover/phone:text-orange-600">+91 9544547511</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                            onClick={() => {
+                                onClose();
+                                onEnquiry();
+                            }}
+                            className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-bold text-lg hover:from-orange-600 hover:to-amber-600 transition-all shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2"
+                        >
+                            Enquiry <MessageCircle size={20} />
+                        </button>
+                        <a
+                            href="/documents/vacation-brochure.pdf"
+                            download="Vacation_Brochure_2026.pdf"
+                            className="flex-1 py-4 bg-white text-orange-600 border-2 border-orange-200 rounded-2xl font-bold text-lg hover:bg-orange-50 transition-all shadow-sm flex items-center justify-center gap-2"
+                        >
+                            <Download size={20} /> Download Brochure
+                        </a>
+                    </div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
+const SummerVacationFloatButton = ({ onClick }) => {
+    return (
+        <motion.button
+            initial={{ opacity: 0, x: -100 }}
+            animate={{
+                opacity: 1,
+                x: 0,
+                boxShadow: [
+                    "0 10px 15px -3px rgba(249, 115, 22, 0.4), 0 4px 6px -4px rgba(249, 115, 22, 0.4)",
+                    "0 20px 25px -5px rgba(249, 115, 22, 0.6), 0 8px 10px -6px rgba(249, 115, 22, 0.6)",
+                    "0 10px 15px -3px rgba(249, 115, 22, 0.4), 0 4px 6px -4px rgba(249, 115, 22, 0.4)"
+                ]
+            }}
+            transition={{
+                boxShadow: {
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onClick}
+            className="fixed right-4 bottom-24 md:right-6 md:bottom-24 z-[50] group flex items-center gap-2 md:gap-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white p-1 pr-4 md:pr-5 rounded-full shadow-2xl transition-all duration-300 scale-90 md:scale-100 overflow-hidden"
+        >
+            <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-inner relative z-10"
+            >
+                ☀️
+            </motion.div>
+            <div className="text-left relative z-10">
+                <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest leading-none opacity-80">Summer 2026</p>
+                <p className="font-extrabold text-xs md:text-sm leading-none mt-1">Vacation Classes</p>
+            </div>
+
+            {/* Shimmer Effect */}
+            <motion.div
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 pointer-events-none"
+            />
+
+            <div className="ml-0.5 md:ml-1 w-5 h-5 md:w-6 md:h-6 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/40 transition-colors relative z-10">
+                <ArrowRight size={12} className="md:size-14 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+        </motion.button>
+    );
+};
+
+const SummerEnquiryModal = ({ isOpen, onClose, onSuccess }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        age: '',
+        occupation: 'Student',
+        interestedCourses: [],
+        email: '',
+        phoneNumber: '',
+        message: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { addToast } = useToast();
+
+    const courses = [
+        "Communicative English",
+        "Public Speaking",
+        "English & Maths Tuition",
+        "Self Defence Classes",
+        "Yoga for Seniors",
+        "Art & Craft Training"
+    ];
+
+    const toggleCourse = (course) => {
+        setFormData(prev => ({
+            ...prev,
+            interestedCourses: prev.interestedCourses.includes(course)
+                ? prev.interestedCourses.filter(c => c !== course)
+                : [...prev.interestedCourses, course]
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await api.post('/enquiries/summer', formData);
+            onSuccess();
+            onClose();
+            setFormData({ name: '', age: '', occupation: 'Student', interestedCourses: [], email: '', phoneNumber: '', message: '' });
+        } catch (error) {
+            addToast(error.response?.data?.message || 'Failed to submit enquiry.', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden z-20 flex flex-col max-h-[95vh]"
+                    >
+                        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-5 md:p-8 text-white relative shrink-0">
+                            <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <X size={20} />
+                            </button>
+                            <h3 className="text-xl md:text-2xl font-bold">Summer Course Enquiry</h3>
+                            <p className="text-orange-50 text-xs md:text-sm opacity-90">Fill in the details and we'll get back to you soon.</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-5 md:p-8 space-y-5 overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Name *</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm md:text-base"
+                                        placeholder="Your Full Name"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Phone *</label>
+                                    <input
+                                        required
+                                        type="tel"
+                                        value={formData.phoneNumber}
+                                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm md:text-base"
+                                        placeholder="Phone Number"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Age</label>
+                                    <input
+                                        type="text"
+                                        value={formData.age}
+                                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                                        placeholder="Age"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                        {['Student', 'Working'].map((status) => (
+                                            <button
+                                                key={status}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, occupation: status })}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.occupation === status
+                                                    ? 'bg-white text-orange-600 shadow-sm'
+                                                    : 'text-slate-400 hover:text-slate-600'
+                                                    }`}
+                                            >
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email (Student/Working)</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                                    placeholder="Email ID"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Courses Interested In</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {courses.map((course) => (
+                                        <label
+                                            key={course}
+                                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${formData.interestedCourses.includes(course)
+                                                ? 'bg-orange-50 border-orange-200 text-orange-700'
+                                                : 'bg-white border-slate-100 text-slate-600 hover:border-orange-100 hover:bg-orange-50/30'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={formData.interestedCourses.includes(course)}
+                                                onChange={() => toggleCourse(course)}
+                                            />
+                                            <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${formData.interestedCourses.includes(course)
+                                                ? 'bg-orange-500 text-white'
+                                                : 'bg-slate-100 text-transparent'
+                                                }`}>
+                                                <Check size={14} strokeWidth={4} />
+                                            </div>
+                                            <span className="text-sm font-bold">{course}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Your Query</label>
+                                <textarea
+                                    value={formData.message}
+                                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all h-24 resize-none"
+                                    placeholder="Any additional questions?"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50"
+                            >
+                                {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 export default function Home() {
+    const [isSummerPopupOpen, setIsSummerPopupOpen] = useState(false);
+    const [isSummerEnquiryOpen, setIsSummerEnquiryOpen] = useState(false);
     const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
     const [isAdmissionsContactOpen, setIsAdmissionsContactOpen] = useState(false);
     const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
     const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+    const [isSummerSuccessOpen, setIsSummerSuccessOpen] = useState(false);
     const { addToast } = useToast();
+
+    // Control from admin panel later - true by default for now
+    const showSummerPopup = true;
+
+    useEffect(() => {
+        if (showSummerPopup) {
+            const hasSeenPopup = sessionStorage.getItem('hasSeenSummerPopup');
+            if (!hasSeenPopup) {
+                const timer = setTimeout(() => {
+                    setIsSummerPopupOpen(true);
+                    sessionStorage.setItem('hasSeenSummerPopup', 'true');
+                }, 1500);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [showSummerPopup]);
 
     const initialFormState = {
         studentFirstName: '',
@@ -1724,6 +2164,56 @@ export default function Home() {
             <Gallery />
             <Board />
             <Footer />
+
+            <AnimatePresence>
+                {isSummerPopupOpen && (
+                    <SummerVacationPopup
+                        onClose={() => setIsSummerPopupOpen(false)}
+                        onEnquiry={() => setIsSummerEnquiryOpen(true)}
+                    />
+                )}
+            </AnimatePresence>
+
+            <SummerEnquiryModal
+                isOpen={isSummerEnquiryOpen}
+                onClose={() => setIsSummerEnquiryOpen(false)}
+                onSuccess={() => setIsSummerSuccessOpen(true)}
+            />
+
+            {/* Summer Success Modal */}
+            <AnimatePresence>
+                {isSummerSuccessOpen && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSummerSuccessOpen(false)}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden z-20 p-8 text-center"
+                        >
+                            <div className="w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <div className="text-4xl">✨</div>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Query Submitted!</h3>
+                            <p className="text-slate-500 mb-8">
+                                Thank you for your interest. We have received your enquiry and will contact you soon.
+                            </p>
+                            <button
+                                onClick={() => setIsSummerSuccessOpen(false)}
+                                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+                            >
+                                Got it
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Fee Structure Modal */}
             <AnimatePresence>
@@ -1833,7 +2323,7 @@ export default function Home() {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Global Modals lifted to Home */}
 
@@ -2135,14 +2625,13 @@ export default function Home() {
                                     </button>
                                 </form>
                             </div>
-                        </motion.div >
-                    </div >
-                )
-                }
-            </AnimatePresence >
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Success Modal */}
-            < AnimatePresence >
+            <AnimatePresence>
                 {isSuccessOpen && (
                     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
                         <motion.div
@@ -2173,9 +2662,10 @@ export default function Home() {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence >
+            </AnimatePresence>
             <WhatsAppButton />
-        </div >
+            <SummerVacationFloatButton onClick={() => setIsSummerPopupOpen(true)} />
+        </div>
     );
 }
 

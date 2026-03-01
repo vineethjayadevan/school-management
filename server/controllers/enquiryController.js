@@ -1,4 +1,5 @@
 const Enquiry = require('../models/Enquiry');
+const SummerEnquiry = require('../models/SummerEnquiry');
 
 const { Resend } = require('resend');
 
@@ -126,8 +127,78 @@ const updateEnquiryStatus = async (req, res) => {
     }
 };
 
+// @desc    Create a new summer enquiry
+// @route   POST /api/enquiries/summer
+// @access  Public
+const createSummerEnquiry = async (req, res) => {
+    try {
+        const { name, age, occupation, interestedCourses, email, phoneNumber, message } = req.body;
+
+        const summerEnquiry = await SummerEnquiry.create({
+            name,
+            age,
+            occupation,
+            interestedCourses,
+            email,
+            phoneNumber,
+            message
+        });
+
+        // Send immediate response
+        res.status(201).json(summerEnquiry);
+
+        // --- Notification Logic ---
+        if (process.env.RESEND_API_KEY) {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+
+            resend.emails.send({
+                from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+                to: process.env.EMAIL_RECEIVER,
+                subject: "New Summer Vacation Enquiry",
+                html: `
+                        <h2>New Summer Vacation Enquiry Received</h2>
+                        <p><strong>Date:</strong> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                        <hr />
+                        <h3>Enquiry Details</h3>
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Age:</strong> ${age}</p>
+                        <p><strong>Occupation:</strong> ${occupation}</p>
+                        <p><strong>Interested Courses:</strong> ${interestedCourses && interestedCourses.length > 0 ? interestedCourses.join(', ') : 'None selected'}</p>
+                        <p><strong>Email/Working ID:</strong> ${email}</p>
+                        <p><strong>Phone Number:</strong> ${phoneNumber}</p>
+                        
+                        <h3>Message/Query</h3>
+                        <p>${message}</p>
+                    `,
+            })
+                .then(({ data, error }) => {
+                    if (error) console.error("Resend API Error (Summer):", error);
+                })
+                .catch(emailError => {
+                    console.error("Failed to send summer notification email:", emailError.message);
+                });
+        }
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// @desc    Get all summer enquiries
+// @route   GET /api/enquiries/summer
+// @access  Private (Admin/Office)
+const getSummerEnquiries = async (req, res) => {
+    try {
+        const enquiries = await SummerEnquiry.find({}).sort({ createdAt: -1 });
+        res.json(enquiries);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     createEnquiry,
     getEnquiries,
-    updateEnquiryStatus
+    updateEnquiryStatus,
+    createSummerEnquiry,
+    getSummerEnquiries
 };
