@@ -11,6 +11,7 @@ const {
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.get('/all', protect, getAllTimetables);
+router.get('/student', protect, getStudentTimetable);
 router.get('/student/:studentId', protect, getStudentTimetable);
 router.get('/teacher/:staffId', protect, getTeacherSchedule);
 router.get('/', protect, getTimetable);

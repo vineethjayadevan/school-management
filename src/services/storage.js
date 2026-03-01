@@ -170,5 +170,47 @@ export const storageService = {
             const { data } = await api.get(`/attendance/student/${studentId}${params}`);
             return data;
         }
+    },
+    student: {
+        getSchedule: async () => {
+            const { data } = await api.get('/timetable/student');
+            // Backend returns Timetable object, dashboard expects array of sessions?
+            // Actually StudentDashboard.jsx (ll. 98-110) expects an array of sessions with periods.
+            // Let's check the Timetable model. 
+            // The model has 'schedule' which is an array of { day, slots: [{ slotNumber, subject, teacher, note }] }
+            // The dashboard expects: [{ periods: { startTime, subject, teacher: { name } }, dayOfWeek }]
+
+            if (!data || !data.schedule || !data.periodTemplate) return [];
+
+            const sessions = [];
+            data.schedule.forEach(dayEntry => {
+                dayEntry.slots.forEach(slot => {
+                    if (slot.subject) {
+                        const templatePeriod = data.periodTemplate.periods.find(p => p.slotNumber === slot.slotNumber);
+                        sessions.push({
+                            periods: {
+                                startTime: templatePeriod ? templatePeriod.startTime : `Slot ${slot.slotNumber}`,
+                                subject: slot.subject.name,
+                                teacher: slot.teacher
+                            },
+                            dayOfWeek: dayEntry.day
+                        });
+                    }
+                });
+            });
+            return sessions;
+        },
+        getAssignments: async () => {
+            const { data } = await api.get('/assignments/student');
+            return data;
+        },
+        getFees: async () => {
+            const { data } = await api.get('/fees/student');
+            return data;
+        },
+        getProfile: async () => {
+            const { data } = await api.get('/students/me');
+            return data;
+        }
     }
 };

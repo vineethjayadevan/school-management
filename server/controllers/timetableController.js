@@ -79,7 +79,7 @@ const deleteTimetable = async (req, res) => {
 // @route GET /api/timetable/student/:studentId
 const getStudentTimetable = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        const studentId = req.params.studentId || req.user.profileId;
         const { academicYear } = req.query;
 
         const student = await Student.findById(studentId);

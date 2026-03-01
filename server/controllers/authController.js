@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Student = require('../models/Student');
+const Staff = require('../models/Staff');
+const { signUrl } = require('./uploadController');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -14,7 +17,12 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            $or: [
+                { email: email.toLowerCase() },
+                { username: email.toLowerCase() }
+            ]
+        });
 
         if (user && (await user.matchPassword(password))) {
             const token = generateToken(user._id);
@@ -27,13 +35,22 @@ const loginUser = async (req, res) => {
                 maxAge: 24 * 60 * 60 * 1000, // 1 day
             });
 
+            let avatar = user.avatar;
+            if (user.role === 'student' && user.profileId) {
+                const student = await Student.findById(user.profileId);
+                if (student && student.photoUrl) avatar = await signUrl(student.photoUrl);
+            } else if (['teacher', 'admin', 'office_staff', 'officestaff'].includes(user.role) && user.profileId) {
+                const staff = await Staff.findById(user.profileId);
+                if (staff && staff.avatar) avatar = await signUrl(staff.avatar);
+            }
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
                 profileId: user.profileId,
-                avatar: user.avatar,
+                avatar: avatar,
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
@@ -62,13 +79,22 @@ const logoutUser = (req, res) => {
 const getMe = async (req, res) => {
     const user = await User.findById(req.user._id).select('-password');
     if (user) {
+        let avatar = user.avatar;
+        if (user.role === 'student' && user.profileId) {
+            const student = await Student.findById(user.profileId);
+            if (student && student.photoUrl) avatar = await signUrl(student.photoUrl);
+        } else if (['teacher', 'admin', 'office_staff', 'officestaff'].includes(user.role) && user.profileId) {
+            const staff = await Staff.findById(user.profileId);
+            if (staff && staff.avatar) avatar = await signUrl(staff.avatar);
+        }
+
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
             profileId: user.profileId,
-            avatar: user.avatar,
+            avatar: avatar,
         });
     } else {
         res.status(404).json({ message: 'User not found' });

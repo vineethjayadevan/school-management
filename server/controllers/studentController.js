@@ -116,6 +116,23 @@ const getStudentById = async (req, res) => {
     }
 };
 
+// @desc    Get logged in student profile
+// @route   GET /api/students/me
+// @access  Private
+const getStudentProfile = async (req, res) => {
+    try {
+        const student = await Student.findById(req.user.profileId);
+        if (student) {
+            const signedStudent = await signStudentPhoto(student);
+            res.json(signedStudent);
+        } else {
+            res.status(404).json({ message: 'Student profile not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register new student
 // @route   POST /api/students
 // @access  Private/Admin
@@ -349,4 +366,5 @@ module.exports = {
     deleteStudent,
     issueTC,
     checkTCEligibility,
+    getStudentProfile,
 };

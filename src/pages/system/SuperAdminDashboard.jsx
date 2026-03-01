@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { systemService } from '../../services/systemApi';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2, Search, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SuperAdminDashboard = () => {
@@ -11,6 +11,10 @@ const SuperAdminDashboard = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+
+    // List and filter states
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('');
 
     // Form states
     const [newUserForm, setNewUserForm] = useState({ name: '', username: '', email: '', password: '', role: 'admin' });
@@ -71,6 +75,18 @@ const SuperAdminDashboard = () => {
         setShowResetModal(true);
     };
 
+    // Filtering logic
+    const filteredUsers = usersList.filter(u => {
+        const matchesSearch =
+            u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesRole = roleFilter === '' || u.role === roleFilter;
+
+        return matchesSearch && matchesRole;
+    });
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Top Navigation */}
@@ -122,14 +138,58 @@ const SuperAdminDashboard = () => {
 
                 {/* Table Section */}
                 <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <Users className="w-4 h-4 text-slate-500" />
-                            Registered Users
-                        </h3>
-                        <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-md border border-slate-200">
-                            Total: {usersList.length}
-                        </span>
+                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/50 gap-4">
+                        <div className="flex items-center gap-4">
+                            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-slate-500" />
+                                Registered Users
+                            </h3>
+                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-md border border-slate-200">
+                                Total: {filteredUsers.length} / {usersList.length}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2 flex-grow max-w-2xl justify-end">
+                            {/* Search Box */}
+                            <div className="relative flex-grow max-w-sm">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="h-4 w-4 text-slate-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Search name, username or email..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                                />
+                            </div>
+
+                            {/* Role Filter */}
+                            <div className="relative min-w-[160px]">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Filter className="h-4 w-4 text-slate-400" />
+                                </div>
+                                <select
+                                    value={roleFilter}
+                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                    className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">All Roles</option>
+                                    <option value="superadmin">Super Admin</option>
+                                    <option value="superuser">Super User</option>
+                                    <option value="admin">Administrator</option>
+                                    <option value="board_member">Board Member</option>
+                                    <option value="officestaff">Office Staff</option>
+                                    <option value="teacher">Teacher</option>
+                                    <option value="student">Student</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -162,7 +222,7 @@ const SuperAdminDashboard = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    usersList.map((u) => (
+                                    filteredUsers.map((u) => (
                                         <tr key={u._id} className="hover:bg-slate-50/80 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
@@ -187,11 +247,11 @@ const SuperAdminDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${u.role === 'superadmin' ? 'bg-purple-100 text-purple-700' :
-                                                        u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
-                                                            u.role === 'office_staff' || u.role === 'officestaff' ? 'bg-amber-100 text-amber-700' :
-                                                                u.role === 'teacher' ? 'bg-emerald-100 text-emerald-700' :
-                                                                    u.role === 'board_member' ? 'bg-pink-100 text-pink-700' :
-                                                                        'bg-slate-100 text-slate-700'
+                                                    u.role === 'admin' ? 'bg-blue-100 text-blue-700' :
+                                                        u.role === 'office_staff' || u.role === 'officestaff' ? 'bg-amber-100 text-amber-700' :
+                                                            u.role === 'teacher' ? 'bg-emerald-100 text-emerald-700' :
+                                                                u.role === 'board_member' ? 'bg-pink-100 text-pink-700' :
+                                                                    'bg-slate-100 text-slate-700'
                                                     }`}>
                                                     {u.role.replace('_', ' ').toUpperCase()}
                                                 </span>

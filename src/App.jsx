@@ -54,6 +54,7 @@ import TeacherProfile from './pages/teacher/TeacherProfile';
 import AttendanceMarking from './pages/teacher/AttendanceMarking';
 import TeacherSchedule from './pages/teacher/TeacherSchedule';
 import StudentDashboard from './pages/student/StudentDashboard';
+import StudentProfile from './pages/student/StudentProfile';
 import StudentFees from './pages/student/StudentFees';
 
 import SystemLogin from './pages/system/SystemLogin';
@@ -246,6 +247,7 @@ function App() {
                     </RequireAuth>
                 }>
                     <Route path="dashboard" element={<StudentDashboard />} />
+                    <Route path="profile" element={<StudentProfile />} />
                     <Route path="schedule" element={<div>My Schedule Placeholder</div>} />
                     <Route path="assignments" element={<div>My Assignments Placeholder</div>} />
                     <Route path="fees" element={<StudentFees />} />
