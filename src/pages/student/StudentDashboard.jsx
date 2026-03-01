@@ -95,36 +95,60 @@ export default function StudentDashboard() {
                         </div>
                     </div>
 
-                    <div className="hidden lg:block relative">
-                        <div className="w-48 h-48 rounded-3xl overflow-hidden border-4 border-white/10 shadow-2xl rotate-3 bg-slate-800 flex items-center justify-center">
-                            {user?.avatar ? (
-                                <img
-                                    src={user.avatar}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = '';
-                                        e.target.classList.add('hidden');
-                                        e.target.nextSibling.classList.remove('hidden');
-                                    }}
-                                />
-                            ) : null}
-                            <div className={clsx(
-                                "w-full h-full flex items-center justify-center font-black text-6xl text-white",
-                                user?.gender === 'Female' ? 'bg-pink-500' : 'bg-indigo-500',
-                                user?.avatar ? 'hidden' : ''
-                            )}>
-                                {user?.name?.charAt(0)}
+                    <div className="hidden lg:block relative group">
+                        <div className="w-52 h-52 rounded-[2.5rem] overflow-hidden border-4 border-white/10 shadow-2xl rotate-3 bg-slate-900/40 backdrop-blur-xl flex flex-col items-center justify-center p-4 transition-all duration-500 hover:rotate-0 hover:scale-105">
+                            <div className="relative w-32 h-32 flex items-center justify-center">
+                                {/* Academic Progress Ring */}
+                                <svg className="w-full h-full -rotate-90 filter drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">
+                                    <circle cx="64" cy="64" r="58" className="fill-none stroke-white/5 stroke-[8]" />
+                                    <circle
+                                        cx="64" cy="64" r="58"
+                                        className="fill-none stroke-indigo-500 stroke-[8]"
+                                        strokeDasharray="364.4"
+                                        strokeDashoffset={364.4 * (1 - 0.942)}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                <div className="absolute inset-2.5 flex items-center justify-center rounded-full overflow-hidden border-4 border-slate-900 bg-slate-800 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                    {user?.avatar ? (
+                                        <img
+                                            src={user.avatar}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = '';
+                                                e.target.classList.add('hidden');
+                                                e.target.nextSibling.classList.remove('hidden');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className={clsx(
+                                        "w-full h-full flex items-center justify-center font-black text-4xl text-white",
+                                        user?.gender === 'Female' ? 'bg-pink-500' : 'bg-indigo-500',
+                                        user?.avatar ? 'hidden' : ''
+                                    )}>
+                                        {user?.name?.charAt(0)}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Excellence Badge */}
+                            <div className="mt-4 bg-emerald-500/20 border border-emerald-500/30 px-4 py-1.5 rounded-2xl flex items-center gap-2 shadow-lg shadow-emerald-500/10 animate-bounce-slow">
+                                <Sparkles size={14} className="text-emerald-400" />
+                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Star Student</span>
                             </div>
                         </div>
-                        <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl p-4 shadow-xl -rotate-6 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
-                                <TrendingUp className="text-white" size={20} />
+                        {/* Attendance Overlay Card */}
+                        <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl p-4 shadow-2xl -rotate-6 flex items-center gap-4 border border-slate-100 group-hover:rotate-0 transition-all duration-500 z-10">
+                            <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shadow-inner">
+                                <TrendingUp className="text-indigo-600" size={24} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attendance</p>
-                                <p className="text-sm font-black text-slate-900">94.2%</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Term Attendance</p>
+                                <div className="flex items-baseline gap-1">
+                                    <p className="text-lg font-black text-slate-900 leading-none">94.2%</p>
+                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide">Excellent</span>
+                                </div>
                             </div>
                         </div>
                     </div>
