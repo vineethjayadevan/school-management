@@ -166,9 +166,63 @@ const resetUserPassword = async (req, res) => {
     }
 };
 
+// @desc    Update a user
+// @route   PATCH /api/system/users/:id
+// @access  Private/SuperAdmin
+const updateUser = async (req, res) => {
+    try {
+        const { name, role, email } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (name) user.name = name;
+        if (role) user.role = role;
+        if (email) user.email = email;
+
+        // If role changed to teacher, attempt automatic linking if not already linked
+        if (role === 'teacher' && !user.profileId) {
+            const Staff = require('../models/Staff');
+            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+
+            let staff = null;
+            const searchEmail = email || user.email;
+            if (searchEmail) {
+                staff = await Staff.findOne({ email: searchEmail.toLowerCase() });
+            }
+
+            if (!staff) {
+                const normalizedSearchName = normalize(name || user.name);
+                const allStaff = await Staff.find({ role: 'Teacher' });
+                staff = allStaff.find(s => normalize(s.name) === normalizedSearchName);
+            }
+
+            if (staff) {
+                user.profileId = staff._id;
+                console.log(`Automatic Link (Update): User ${user.username} -> Teacher ${staff.name}`);
+            }
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            username: updatedUser.username,
+            role: updatedUser.role,
+            email: updatedUser.email
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     loginSuperAdmin,
     getUsers,
     createUser,
-    resetUserPassword
+    resetUserPassword,
+    updateUser
 };

@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { userService } from '../../services/userService';
 import { useToast } from '../../components/ui/Toast';
-import { Users, Plus, Loader2 } from 'lucide-react';
+import { Users, Plus, Loader2, Edit2 } from 'lucide-react';
 
 const userSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: z.string().optional().or(z.string().min(6, 'Password must be at least 6 characters')),
     role: z.enum(['admin', 'office_staff', 'teacher'], {
         errorMap: () => ({ message: 'Please select a valid role' }),
     }),
@@ -19,9 +19,10 @@ export default function UserManagement() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
     const { addToast } = useToast();
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
         resolver: zodResolver(userSchema),
     });
 
@@ -40,15 +41,40 @@ export default function UserManagement() {
         }
     };
 
+    const handleEdit = (user) => {
+        setEditingUser(user);
+        setValue('name', user.name);
+        setValue('email', user.email);
+        setValue('role', user.role);
+        // Password is not required for edit but schema might need it. 
+        // Let's refine schema to make password optional for edit.
+    };
+
+    const handleCancelEdit = () => {
+        setEditingUser(null);
+        reset({
+            name: '',
+            email: '',
+            password: '',
+            role: ''
+        });
+    };
+
     const onSubmit = async (data) => {
         setIsCreating(true);
         try {
-            await userService.createUser(data);
-            addToast('User created successfully', 'success');
+            if (editingUser) {
+                await userService.updateUser(editingUser._id, data);
+                addToast('User updated successfully', 'success');
+                setEditingUser(null);
+            } else {
+                await userService.createUser(data);
+                addToast('User created successfully', 'success');
+            }
             reset();
             fetchUsers();
         } catch (error) {
-            addToast(error.response?.data?.message || 'Failed to create user', 'error');
+            addToast(error.response?.data?.message || 'Operation failed', 'error');
         } finally {
             setIsCreating(false);
         }
@@ -69,8 +95,17 @@ export default function UserManagement() {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-5 border-b border-gray-100 bg-gray-50/50">
                             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                                <Plus className="w-4 h-4" />
-                                Add New User
+                                {editingUser ? (
+                                    <>
+                                        <Edit2 className="w-4 h-4" />
+                                        Edit User
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus className="w-4 h-4" />
+                                        Add New User
+                                    </>
+                                )}
                             </h2>
                         </div>
                         <div className="p-5">
@@ -103,9 +138,10 @@ export default function UserManagement() {
                                         type="password"
                                         {...register('password')}
                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                                        placeholder="••••••••"
+                                        placeholder={editingUser ? "Leave blank to keep current" : "••••••••"}
+                                        disabled={!!editingUser} // Disable password change for now as backend doesn't handle it in updateUser
                                     />
-                                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+                                    {!editingUser && errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                                 </div>
 
                                 <div>
@@ -122,20 +158,31 @@ export default function UserManagement() {
                                     {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={isCreating}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {isCreating ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Creating...
-                                        </>
-                                    ) : (
-                                        'Create User'
+                                <div className="flex gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={isCreating}
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {isCreating ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            editingUser ? 'Update User' : 'Create User'
+                                        )}
+                                    </button>
+                                    {editingUser && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelEdit}
+                                            className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
                                     )}
-                                </button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -179,6 +226,13 @@ export default function UserManagement() {
                                             }`}>
                                             {user.role}
                                         </span>
+                                        <button
+                                            onClick={() => handleEdit(user)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit Role"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
                                     </div>
                                 ))}
                             </div>

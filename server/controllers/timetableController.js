@@ -107,7 +107,7 @@ const getStudentTimetable = async (req, res) => {
 // @route GET /api/timetable/teacher/:staffId
 const getTeacherSchedule = async (req, res) => {
     try {
-        const { staffId } = req.params;
+        const staffId = req.params.staffId || req.user.profileId;
         const { academicYear } = req.query;
 
         const filter = academicYear ? { academicYear } : {};

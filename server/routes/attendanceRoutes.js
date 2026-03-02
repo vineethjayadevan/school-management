@@ -4,7 +4,8 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const {
     markAttendance,
     getAttendanceByClass,
-    getStudentAttendance
+    getStudentAttendance,
+    getClassAttendanceSummary
 } = require('../controllers/attendanceController');
 
 // All attendance routes are protected
@@ -12,6 +13,7 @@ router.use(protect);
 
 // Teachers can mark and view class attendance
 router.post('/mark', authorize('teacher', 'admin', 'superuser'), markAttendance);
+router.get('/report/:className/:section', authorize('teacher', 'admin', 'superuser'), getClassAttendanceSummary);
 router.get('/:className/:section/:date', authorize('teacher', 'admin', 'superuser'), getAttendanceByClass);
 
 // Students and teachers can view student-specific attendance

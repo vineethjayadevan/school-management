@@ -20,7 +20,11 @@ const getSalariesByMonth = async (req, res) => {
         const existingSalaries = await Salary.find({ month }).populate('staff');
 
         // 3. Identify missing staff (who are active but have no salary record for this month)
-        const salaryStaffIds = new Set(existingSalaries.map(s => s.staff._id.toString()));
+        const salaryStaffIds = new Set(
+            existingSalaries
+                .filter(s => s.staff)
+                .map(s => s.staff._id.toString())
+        );
         const missingStaff = activeStaff.filter(s => !salaryStaffIds.has(s._id.toString()));
 
         // 4. Create pending salary records for missing staff
@@ -44,9 +48,21 @@ const getSalariesByMonth = async (req, res) => {
         // 5. Fetch updated list
         const salaries = await Salary.find({ month })
             .populate('staff', 'name role department category')
-            .sort({ 'staff.name': 1 }); // Sorting might need manual handling if populate doesn't sort deeply easily, but this is fine for now
+            .lean();
 
-        res.json(salaries);
+        // Sort in memory as mongoose sort on populated fields can be unreliable
+        salaries.sort((a, b) => {
+            const nameA = a.staff?.name || '';
+            const nameB = b.staff?.name || '';
+            return nameA.localeCompare(nameB);
+        });
+
+        // Optional: Filter out records with missing staff for the final response
+        // Or keep them and let the frontend handle it. Usually better to filter them out 
+        // to avoid UI crashes.
+        const filteredSalaries = salaries.filter(s => s.staff);
+
+        res.json(filteredSalaries);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });

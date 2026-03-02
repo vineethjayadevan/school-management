@@ -9,5 +9,10 @@ export const userService = {
     getUsers: async () => {
         const { data } = await api.get('/users');
         return data;
+    },
+
+    updateUser: async (id, userData) => {
+        const { data } = await api.patch(`/users/${id}`, userData);
+        return data;
     }
 };

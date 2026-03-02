@@ -39,7 +39,11 @@ router.post('/classes', protect, admin, async (req, res) => {
 
         const newClass = await Class.create({
             name,
-            sections: sections || [],
+            sections: (sections || []).map(sec => ({
+                ...sec,
+                classTeacher: sec.classTeacher === "" ? null : sec.classTeacher,
+                nanny: sec.nanny === "" ? null : sec.nanny
+            })),
             subjects: subjects || []
         });
 
@@ -59,7 +63,14 @@ router.put('/classes/:id', protect, admin, async (req, res) => {
 
         if (cls) {
             cls.name = name || cls.name;
-            if (sections) cls.sections = sections;
+            if (sections) {
+                // Sanitize sections: empty strings for IDs should be null
+                cls.sections = sections.map(sec => ({
+                    ...sec,
+                    classTeacher: sec.classTeacher === "" ? null : sec.classTeacher,
+                    nanny: sec.nanny === "" ? null : sec.nanny
+                }));
+            }
             if (subjects) cls.subjects = subjects;
 
             const updatedClass = await cls.save();

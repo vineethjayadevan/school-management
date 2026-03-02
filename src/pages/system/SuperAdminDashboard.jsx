@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { systemService } from '../../services/systemApi';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2, Search, Filter } from 'lucide-react';
+import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2, Search, Filter, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SuperAdminDashboard = () => {
@@ -10,6 +10,7 @@ const SuperAdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
 
     // List and filter states
@@ -18,6 +19,7 @@ const SuperAdminDashboard = () => {
 
     // Form states
     const [newUserForm, setNewUserForm] = useState({ name: '', username: '', email: '', password: '', role: 'admin' });
+    const [editUserForm, setEditUserForm] = useState({ name: '', role: '', email: '' });
     const [resetForm, setResetForm] = useState({ newPassword: '' });
     const [submitting, setSubmitting] = useState(false);
 
@@ -73,6 +75,32 @@ const SuperAdminDashboard = () => {
     const openResetModal = (userToReset) => {
         setSelectedUser(userToReset);
         setShowResetModal(true);
+    };
+
+    const openEditModal = (userToEdit) => {
+        setSelectedUser(userToEdit);
+        setEditUserForm({
+            name: userToEdit.name,
+            role: userToEdit.role,
+            email: userToEdit.email || ''
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await systemService.updateUser(selectedUser._id, editUserForm);
+            toast.success('User updated successfully');
+            setShowEditModal(false);
+            setSelectedUser(null);
+            fetchUsers();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update user');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     // Filtering logic
@@ -278,13 +306,23 @@ const SuperAdminDashboard = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    onClick={() => openResetModal(u)}
-                                                    className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 inline-flex"
-                                                >
-                                                    <KeyRound className="w-3.5 h-3.5" />
-                                                    Reset Pass
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => openEditModal(u)}
+                                                        className="text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 inline-flex"
+                                                        title="Edit User"
+                                                    >
+                                                        <Edit className="w-3.5 h-3.5" />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openResetModal(u)}
+                                                        className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 inline-flex"
+                                                    >
+                                                        <KeyRound className="w-3.5 h-3.5" />
+                                                        Reset Pass
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -393,7 +431,74 @@ const SuperAdminDashboard = () => {
                 </div>
             )}
 
-            {/* Reset Password Modal */}
+            {/* Edit User Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="border-b border-slate-100 px-6 py-4">
+                            <h3 className="text-lg font-bold text-slate-900">Edit User Details</h3>
+                            <p className="text-sm text-slate-500">Update role or details for {selectedUser?.username}.</p>
+                        </div>
+                        <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editUserForm.name}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={editUserForm.email}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">System Role</label>
+                                <select
+                                    value={editUserForm.role}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm bg-white"
+                                >
+                                    <option value="superadmin">Super Admin</option>
+                                    <option value="superuser">Super User</option>
+                                    <option value="admin">Administrator</option>
+                                    <option value="board_member">Board Member</option>
+                                    <option value="officestaff">Office Staff</option>
+                                    <option value="teacher">Teacher</option>
+                                    <option value="student">Student</option>
+                                </select>
+                            </div>
+
+                            <div className="pt-4 mt-2 flex justify-end gap-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all flex items-center justify-center min-w-[100px]"
+                                >
+                                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
             {showResetModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowResetModal(false)}></div>

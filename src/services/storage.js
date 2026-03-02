@@ -169,6 +169,11 @@ export const storageService = {
             const params = month && year ? `?month=${month}&year=${year}` : '';
             const { data } = await api.get(`/attendance/student/${studentId}${params}`);
             return data;
+        },
+        getReport: async (className, section, params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            const { data } = await api.get(`/attendance/report/${className}/${section}?${queryParams}`);
+            return data;
         }
     },
     student: {

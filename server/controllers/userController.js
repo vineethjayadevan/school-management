@@ -44,6 +44,30 @@ const createUser = async (req, res) => {
             }
         }
 
+        // Automatic Profile Linking for Teachers
+        if (role === 'teacher') {
+            const Staff = require('../models/Staff');
+            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+
+            let staff = null;
+            // 1. Try Email Match
+            if (email) {
+                staff = await Staff.findOne({ email: email.toLowerCase() });
+            }
+
+            // 2. Try Name Match (Fuzzy/Normalized)
+            if (!staff) {
+                const normalizedSearchName = normalize(name);
+                const allStaff = await Staff.find({ role: 'Teacher' }); // Only match with teachers
+                staff = allStaff.find(s => normalize(s.name) === normalizedSearchName);
+            }
+
+            if (staff) {
+                userData.profileId = staff._id;
+                console.log(`Automatic Link (User API): User ${email} -> Teacher ${staff.name} (${staff._id})`);
+            }
+        }
+
         const user = await User.create(userData);
 
         if (user) {
@@ -92,8 +116,40 @@ const getUsersList = async (req, res) => {
     }
 };
 
+// @desc    Update a user (Superuser only)
+// @route   PATCH /api/users/:id
+// @access  Private/Superuser
+const updateUser = async (req, res) => {
+    try {
+        const { name, role } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (name) user.name = name;
+        if (role) user.role = role;
+
+        // If role changed to student or teacher, we might want to re-evaluate profileId
+        // but for now let's just update the basics.
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getUsers,
-    getUsersList
+    getUsersList,
+    updateUser
 };

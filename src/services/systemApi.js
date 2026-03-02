@@ -16,5 +16,9 @@ export const systemService = {
     resetPassword: async (userId, newPassword) => {
         const { data } = await api.put(`/system/users/${userId}/reset-password`, { newPassword });
         return data;
+    },
+    updateUser: async (userId, userData) => {
+        const { data } = await api.patch(`/system/users/${userId}`, userData);
+        return data;
     }
 };

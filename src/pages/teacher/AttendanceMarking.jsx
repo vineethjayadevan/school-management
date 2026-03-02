@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
 import { storageService } from '../../services/storage';
 import { useToast } from '../../components/ui/Toast';
-import { CheckCircle, XCircle, Clock, Save, Calendar as CalendarIcon, Users, ChevronRight, Loader2, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Save, Calendar as CalendarIcon, Users, ChevronRight, Loader2, User, FileText, Download } from 'lucide-react';
 import clsx from 'clsx';
+import { downloadAttendanceCSV } from '../../utils/AttendanceReportGenerator';
+import { downloadAttendancePDF } from '../../utils/AttendancePdfGenerator';
 
 export default function AttendanceMarking() {
     const { addToast } = useToast();
     const [classes, setClasses] = useState([]);
     const [selectedClass, setSelectedClass] = useState(null);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const getTodayLocal = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const [date, setDate] = useState(getTodayLocal());
     const [students, setStudents] = useState([]);
     const [attendance, setAttendance] = useState({}); // { studentId: { status, remarks } }
     const [loading, setLoading] = useState(true);
     const [marking, setMarking] = useState(false);
+    const [reporting, setReporting] = useState(false);
+    const [reportType, setReportType] = useState('monthly'); // 'daily', 'monthly', 'yearly'
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -79,6 +87,94 @@ export default function AttendanceMarking() {
         }));
     };
 
+    const handleMarkAll = (status) => {
+        const newAttendance = {};
+        students.forEach(student => {
+            const sId = student.id || student._id;
+            newAttendance[sId] = {
+                ...attendance[sId],
+                status: status
+            };
+        });
+        setAttendance(newAttendance);
+        addToast(`Marked all as ${status}`, "success");
+    };
+
+    const handleDownloadReport = async () => {
+        if (!selectedClass) return;
+        setReporting(true);
+        try {
+            const now = new Date(date);
+            const params = {};
+
+            if (reportType === 'daily') {
+                params.startDate = date;
+                params.endDate = date;
+            } else if (reportType === 'monthly') {
+                params.month = now.getMonth() + 1;
+                params.year = now.getFullYear();
+            } else if (reportType === 'yearly') {
+                params.startDate = `${now.getFullYear()}-01-01`;
+                params.endDate = `${now.getFullYear()}-12-31`;
+            }
+
+            const reportData = await storageService.attendance.getReport(
+                selectedClass.name,
+                selectedClass.section,
+                params
+            );
+
+            downloadAttendanceCSV(
+                reportData,
+                `Attendance_${selectedClass.name}_${selectedClass.section}_${reportType}_${date}`
+            );
+            addToast("CSV Report downloaded successfully", "success");
+        } catch (error) {
+            console.error("Failed to generate report", error);
+            addToast("Failed to generate report", "error");
+        } finally {
+            setReporting(false);
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!selectedClass) return;
+        setReporting(true);
+        try {
+            const now = new Date(date);
+            const params = {};
+
+            if (reportType === 'daily') {
+                params.startDate = date;
+                params.endDate = date;
+            } else if (reportType === 'monthly') {
+                params.month = now.getMonth() + 1;
+                params.year = now.getFullYear();
+            } else if (reportType === 'yearly') {
+                params.startDate = `${now.getFullYear()}-01-01`;
+                params.endDate = `${now.getFullYear()}-12-31`;
+            }
+
+            const reportData = await storageService.attendance.getReport(
+                selectedClass.name,
+                selectedClass.section,
+                params
+            );
+
+            downloadAttendancePDF(
+                reportData,
+                `Attendance_${selectedClass.name}_${selectedClass.section}_${reportType}_${date}`,
+                `Attendance Report: ${selectedClass.name} - ${selectedClass.section} (${reportType.toUpperCase()})`
+            );
+            addToast("PDF Report downloaded successfully", "success");
+        } catch (error) {
+            console.error("Failed to generate PDF report", error);
+            addToast("Failed to generate PDF report", "error");
+        } finally {
+            setReporting(false);
+        }
+    };
+
     const handleSave = async () => {
         setMarking(true);
         try {
@@ -121,13 +217,45 @@ export default function AttendanceMarking() {
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3">
+                    <div className="flex bg-white border border-slate-200 rounded-xl p-1">
+                        {['daily', 'monthly', 'yearly'].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setReportType(type)}
+                                className={clsx(
+                                    "px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all",
+                                    reportType === type ? "bg-slate-100 text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={handleDownloadReport}
+                        disabled={reporting || !selectedClass}
+                        className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm group"
+                        title="Download CSV"
+                    >
+                        {reporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} className="group-hover:translate-y-0.5 transition-transform" />}
+                        <span className="hidden sm:inline">CSV</span>
+                    </button>
+                    <button
+                        onClick={handleDownloadPDF}
+                        disabled={reporting || !selectedClass}
+                        className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm group"
+                        title="Download PDF"
+                    >
+                        {reporting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} className="group-hover:scale-110 transition-transform" />}
+                        <span className="hidden sm:inline">PDF</span>
+                    </button>
                     <div className="relative flex-1 md:flex-none">
                         <CalendarIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            max={new Date().toISOString().split('T')[0]}
+                            max={getTodayLocal()}
                             className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
@@ -151,6 +279,27 @@ export default function AttendanceMarking() {
                     </button>
                 ))}
             </div>
+
+            {/* Bulk Actions */}
+            {!loading && students.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-full md:w-auto mb-1 md:mb-0">Quick Actions:</span>
+                    <button
+                        onClick={() => handleMarkAll('Present')}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100 px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 hover:text-white transition-all"
+                    >
+                        <CheckCircle size={14} />
+                        All Present
+                    </button>
+                    <button
+                        onClick={() => handleMarkAll('Absent')}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 border border-rose-100 px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-500 hover:text-white transition-all"
+                    >
+                        <XCircle size={14} />
+                        All Absent
+                    </button>
+                </div>
+            )}
 
             {/* Student List Container */}
             <div className="space-y-4">
