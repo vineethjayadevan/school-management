@@ -53,6 +53,7 @@ const signStudentPhoto = async (student) => {
 const getStudents = async (req, res) => {
     try {
         const statusFilter = req.query.status;
+        const classNameFilter = req.query.className;
         const isActiveFilter = req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : null;
 
         const keyword = req.query.search
@@ -64,8 +65,12 @@ const getStudents = async (req, res) => {
             }
             : {};
 
-        // Combine with status filters
+        // Combine filters
         const query = { ...keyword };
+
+        if (classNameFilter && classNameFilter !== 'All') {
+            query.className = classNameFilter;
+        }
 
         if (statusFilter) {
             if (statusFilter === 'Active') {

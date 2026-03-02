@@ -35,9 +35,13 @@ export const downloadAttendancePDF = (data, reportName = 'Attendance_Report', ti
         ...dates.map(date => student.attendance[date] || '-')
     ]);
 
+    const markedByHeader = dates.map(d => data.markedBy?.[d]?.split(' ')[0] || '-');
+    const headerRow = ['Roll No', 'Name', ...dates.map(d => d.split('-').slice(1).join('/'))];
+    const subHeaderRow = ['', 'Marked By:', ...markedByHeader];
+
     autoTable(doc, {
         startY: 35,
-        head: headers,
+        head: [headerRow, subHeaderRow],
         body: rows,
         theme: 'grid',
         styles: { fontSize: 7, cellPadding: 1.5 },

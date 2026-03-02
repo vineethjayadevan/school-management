@@ -69,7 +69,8 @@ const NAV_GROUPS = [
         children: [
             { name: 'Staff', href: '/admin/staff', icon: Briefcase, allowed: ['superuser', 'admin'] },
             { name: 'Salary Structure', href: '/admin/salary-structure', icon: DollarSign, allowed: ['superuser', 'admin'] },
-            { name: 'Staff Attendance', href: null, icon: CalendarCheck, allowed: ['superuser', 'admin'], comingSoon: true },
+            { name: 'Staff Attendance', href: '/admin/staff-attendance', icon: CalendarCheck, allowed: ['superuser', 'admin'] },
+            { name: 'Attendance Report', href: '/admin/staff-attendance-report', icon: ClipboardList, allowed: ['superuser', 'admin'] },
         ],
     },
     {
@@ -80,7 +81,7 @@ const NAV_GROUPS = [
         children: [
             { name: 'Classes & Subjects', href: '/admin/academics', icon: BookOpen, allowed: ['superuser', 'admin'] },
             { name: 'Timetable', href: '/admin/timetable', icon: Clock, allowed: ['superuser', 'admin'] },
-            { name: 'Student Attendance', href: null, icon: ClipboardList, allowed: ['superuser', 'admin'], comingSoon: true },
+            { name: 'Student Attendance', href: '/admin/attendance', icon: ClipboardList, allowed: ['superuser', 'admin'] },
             { name: 'Exams', href: null, icon: FlaskConical, allowed: ['superuser', 'admin'], comingSoon: true },
         ],
     },

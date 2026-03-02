@@ -157,6 +157,10 @@ const FeeReceipt = ({ transaction, student, onNext, isPreview, onConfirm }) => {
                     <div>
                         <p className="text-xs text-slate-400 uppercase font-semibold">Receipt No</p>
                         <p className="text-lg font-mono font-bold text-slate-900">{transaction.receiptNo || 'PENDING'}</p>
+                        <div className={`mt-1 border px-2 py-1 rounded ${transaction.manualReceiptNo ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
+                            <p className={`text-[10px] uppercase font-bold tracking-tight ${transaction.manualReceiptNo ? 'text-amber-600' : 'text-slate-400'}`}>Manual Receipt No</p>
+                            <p className={`text-sm font-mono font-bold ${transaction.manualReceiptNo ? 'text-amber-900' : 'text-slate-400'}`}>{transaction.manualReceiptNo || 'NA'}</p>
+                        </div>
                         {transaction.transactionId && (
                             <div className="mt-1">
                                 <p className="text-[10px] text-slate-400 uppercase font-semibold">Transaction ID</p>

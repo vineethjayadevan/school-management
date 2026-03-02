@@ -24,10 +24,23 @@ export const downloadAttendanceCSV = (data, reportName = 'Attendance_Report') =>
     const csvContent = [
         headers.join(','),
         ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
+    ];
+
+    // Add Marked By Info if available
+    if (data.markedBy) {
+        csvContent.push('');
+        csvContent.push('MARKING DETAILS (Date: Teacher)');
+        dates.forEach(date => {
+            if (data.markedBy[date]) {
+                csvContent.push(`${date},${data.markedBy[date]}`);
+            }
+        });
+    }
+
+    const finalCsv = csvContent.join('\n');
 
     // Create download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([finalCsv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);

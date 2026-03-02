@@ -22,7 +22,7 @@ const getFees = async (req, res) => {
 const addFee = async (req, res) => {
     try {
         // Support legacy single 'type'/'amount' or the new 'breakdown' array
-        const { studentId, type, amount, breakdown, date, mode, transactionId, remarks } = req.body;
+        const { studentId, type, amount, breakdown, date, mode, transactionId, remarks, manualReceiptNo } = req.body;
 
         const feeBreakdown = breakdown || (type && amount ? [{ feeType: type, amount: Number(amount) }] : []);
 

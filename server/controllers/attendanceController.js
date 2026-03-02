@@ -124,7 +124,7 @@ const getClassAttendanceSummary = async (req, res) => {
             className,
             section,
             date: { $gte: start, $lte: end }
-        }).sort({ date: 1 });
+        }).populate('markedBy', 'name').sort({ date: 1 });
 
         // Helper to get local date string YYYY-MM-DD
         const getLocalDateString = (d) => {
@@ -137,6 +137,15 @@ const getClassAttendanceSummary = async (req, res) => {
 
         // 3. Format into a matrix
         const dates = [...new Set(attendanceRecords.map(a => getLocalDateString(a.date)))];
+
+        // Create a map for quick access to who marked what date
+        const markedByMap = {};
+        attendanceRecords.forEach(record => {
+            const dateStr = getLocalDateString(record.date);
+            if (!markedByMap[dateStr] && record.markedBy) {
+                markedByMap[dateStr] = record.markedBy.name;
+            }
+        });
 
         const reportData = students.map(student => {
             const studentAttendance = {};
@@ -157,7 +166,7 @@ const getClassAttendanceSummary = async (req, res) => {
             };
         });
 
-        res.json({ dates, students: reportData });
+        res.json({ dates, students: reportData, markedBy: markedByMap });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

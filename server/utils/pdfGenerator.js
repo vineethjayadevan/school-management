@@ -98,9 +98,12 @@ const generateFeeReceipt = (fee, student) => {
         doc.text("DATE", rightColX, currentY, { align: 'right', width: 200 });
         currentY += 12;
 
-        doc.fillColor('#0f172a').fontSize(12).font('Courier-Bold').text(fee.receiptNo || 'PENDING', leftColX, currentY);
+        doc.fillColor('#0f172a').fontSize(12).font('Courier-Bold');
+        doc.text(`${fee.receiptNo || 'PENDING'} `, leftColX, currentY, { continued: true });
+        doc.fontSize(9).fillColor('#64748b').font('Helvetica-Bold').text(`(Manual: ${fee.manualReceiptNo || 'NA'})`);
+
         const paymentDate = new Date(fee.paymentDate || fee.date || Date.now()).toLocaleDateString();
-        doc.font('Helvetica-Bold').text(paymentDate, rightColX, currentY, { align: 'right', width: 200 }); // Assuming width 200
+        doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text(paymentDate, rightColX, currentY, { align: 'right', width: 200 }); // Assuming width 200
         currentY += 30;
 
         // Row 2: Student & Parent

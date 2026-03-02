@@ -44,6 +44,9 @@ import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
 import SalaryManager from './pages/admin/SalaryManager';
 import TransferCertificates from './pages/admin/TransferCertificates';
+import AdminAttendanceReport from './pages/admin/AttendanceReport';
+import StaffAttendanceMarking from './pages/staff/StaffAttendanceMarking';
+import StaffAttendanceReport from './pages/staff/StaffAttendanceReport';
 import { Toaster } from './components/ui/Toast';
 import { authService } from './services/auth';
 import { useAuth } from './context/AuthContext';
@@ -177,6 +180,11 @@ function App() {
                             <TimetablePage />
                         </RequireAuth>
                     } />
+                    <Route path="attendance" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <AdminAttendanceReport />
+                        </RequireAuth>
+                    } />
 
                     <Route path="fees" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
@@ -186,6 +194,16 @@ function App() {
                     <Route path="staff" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
                             <StaffDirectory />
+                        </RequireAuth>
+                    } />
+                    <Route path="staff-attendance" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StaffAttendanceMarking />
+                        </RequireAuth>
+                    } />
+                    <Route path="staff-attendance-report" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StaffAttendanceReport />
                         </RequireAuth>
                     } />
                     <Route path="staff/new" element={

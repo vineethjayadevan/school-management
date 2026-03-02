@@ -38,6 +38,11 @@ export default function FeeDashboard() {
     const [paymentMode, setPaymentMode] = useState('Cash');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showReceipt, setShowReceipt] = useState(false);
+    const [classes, setClasses] = useState([]);
+    const [searchClass, setSearchClass] = useState('All');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [manualReceiptNo, setManualReceiptNo] = useState('');
 
     // Dynamic Categories State
     const [allCategories, setAllCategories] = useState([]);
@@ -53,7 +58,18 @@ export default function FeeDashboard() {
                 console.error("Failed to fetch all fee categories", error);
             }
         };
+
+        const fetchClasses = async () => {
+            try {
+                const data = await storageService.academics.getClasses();
+                setClasses(data);
+            } catch (error) {
+                console.error("Failed to fetch classes", error);
+            }
+        };
+
         fetchAllCategories();
+        fetchClasses();
     }, []);
 
     // Filter categories when a specific student is selected for the payment form
@@ -167,18 +183,36 @@ export default function FeeDashboard() {
     const handleSearch = async (e) => {
         const term = e.target.value;
         setSearchTerm(term);
+
+        if (term.length === 0) {
+            setSearchResults([]);
+            return;
+        }
+
         if (term.length > 2) {
+            setIsSearching(true);
             try {
-                const results = await storageService.students.getAll(term, { status: 'Active' });
-                if (results.length > 0) {
-                    setSelectedStudent(results[0]);
-                } else {
-                    setSelectedStudent(null);
+                const params = { status: 'Active' };
+                if (searchClass !== 'All') {
+                    params.className = searchClass;
                 }
+                const results = await storageService.students.getAll(term, params);
+                setSearchResults(results);
             } catch (err) {
                 console.error("Search failed", err);
+            } finally {
+                setIsSearching(false);
             }
         }
+    };
+
+    const handleSelectStudent = (student) => {
+        setSelectedStudent(student);
+        setSearchTerm(student.name);
+        setSearchResults([]);
+        // Clear previous breakdown when new student selected
+        setFeeBreakdown({});
+        setTransactionId('');
     };
 
 
@@ -251,6 +285,7 @@ export default function FeeDashboard() {
             mode: paymentMode,
             transactionId: transactionId.trim(),
             remarks: 'Collected via Portal',
+            manualReceiptNo: manualReceiptNo.trim(),
             // Preliminary Receipt No for Preview
             receiptNo: (() => {
                 const now = new Date();
@@ -279,8 +314,11 @@ export default function FeeDashboard() {
 
             const response = await storageService.fees.add(txnData);
 
-            // Update with real receipt number from backend
-            setLastTransaction({ ...lastTransaction, receiptNo: response.receiptNo || 'NEW' });
+            // Update with real receipt number from backend, preserving manual number
+            setLastTransaction({
+                ...lastTransaction,
+                receiptNo: response.receiptNo || 'NEW'
+            });
 
             // Mark as confirmed so UI switches to Success/Print mode
             setIsPaymentConfirmed(true);
@@ -318,6 +356,7 @@ export default function FeeDashboard() {
         setFeeBreakdown({});
         setTransactionId('');
         setIsPaymentConfirmed(false);
+        setManualReceiptNo('');
     };
 
     // --- Render Helpers ---
@@ -359,16 +398,79 @@ export default function FeeDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Find Student</label>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Enter Name, ID (STU001) or Roll No."
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="md:col-span-1">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Class Filter</label>
+                            <select
+                                value={searchClass}
+                                onChange={(e) => {
+                                    setSearchClass(e.target.value);
+                                    // Clear results when class filter changes to avoid confusion
+                                    setSearchResults([]);
+                                    if (searchTerm.length > 2) {
+                                        // Re-trigger search with new class
+                                        const event = { target: { value: searchTerm } };
+                                        handleSearch(event);
+                                    }
+                                }}
+                                className="w-full px-3 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-sm"
+                            >
+                                <option value="All">All Classes</option>
+                                {classes.map(c => (
+                                    <option key={c.id || c._id} value={c.name}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Search Student</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Type Student Name or Admission No..."
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                />
+                                {isSearching && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                )}
+
+                                {/* Search Results Dropdown */}
+                                {searchResults.length > 0 && (
+                                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                                        <div className="p-2 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            Select Student
+                                        </div>
+                                        {searchResults.map((student) => (
+                                            <button
+                                                key={student.id}
+                                                onClick={() => handleSelectStudent(student)}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-left border-b border-slate-50 last:border-0"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
+                                                    {student.name.charAt(0)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-semibold text-slate-900 truncate">{student.name}</div>
+                                                    <div className="text-[10px] text-slate-500 font-mono">
+                                                        {student.className} {student.section} | ID: {student.admissionNo}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {searchTerm.length > 2 && !isSearching && searchResults.length === 0 && !selectedStudent && (
+                                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-sm text-slate-500 z-50">
+                                        No students found matching your search.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -419,6 +521,17 @@ export default function FeeDashboard() {
                                     />
                                 </div>
                             )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Manual Receipt No</label>
+                                <input
+                                    type="text"
+                                    value={manualReceiptNo}
+                                    onChange={(e) => setManualReceiptNo(e.target.value)}
+                                    placeholder="Optional"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
                         </div>
 
                         <div className="border-t border-slate-200 pt-6">
@@ -516,7 +629,7 @@ export default function FeeDashboard() {
                     )}
                 </button>
             </div>
-        </div>
+        </div >
     );
 
 
@@ -938,10 +1051,11 @@ export default function FeeDashboard() {
         const formatCurrency = (amount) => `Rs. ${amount.toLocaleString()}`;
 
         // Table Headers and Data
-        const tableColumn = ["Date", "Receipt No", "Student", "Class", "Type", "Mode", "Status", "Amount"];
+        const tableColumn = ["Date", "Receipt No", "Manual No", "Student", "Class", "Type", "Mode", "Status", "Amount"];
         const tableRows = filteredAllTransactions.map(t => [
             new Date(t.paymentDate || t.createdAt).toLocaleDateString(),
             t.receiptNo || '-',
+            t.manualReceiptNo || 'NA',
             t.student?.name || 'Unknown',
             t.student?.className || t.student?.class || '-',
             t.type || '-',
@@ -1377,7 +1491,14 @@ export default function FeeDashboard() {
                                                 <td className="px-6 py-4 font-mono text-slate-500 text-xs">{student.rollNo || '-'}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">{student.name}</div>
-                                                    <div className="text-xs text-slate-500 font-mono">{student.admissionNo}</div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-500 font-mono">{student.admissionNo}</span>
+                                                        {student.manualReceiptNo && (
+                                                            <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-100 font-medium">
+                                                                M: {student.manualReceiptNo}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-slate-700">
                                                     {student.displayClass} <span className="text-slate-400">({student.section || '-'})</span>
@@ -1639,6 +1760,7 @@ export default function FeeDashboard() {
                                     <tr>
                                         <th className="px-6 py-3">Date</th>
                                         <th className="px-6 py-3">Receipt No</th>
+                                        <th className="px-6 py-3">Manual No</th>
                                         <th className="px-6 py-3">Student</th>
                                         <th className="px-6 py-3">Class</th>
                                         <th className="px-6 py-3">Mode</th>
@@ -1657,6 +1779,7 @@ export default function FeeDashboard() {
                                             <tr key={t._id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-6 py-3 text-slate-600">{new Date(t.paymentDate || t.createdAt).toLocaleDateString()}</td>
                                                 <td className="px-6 py-3 text-slate-500 text-xs font-mono">{t.receiptNo || '-'}</td>
+                                                <td className="px-6 py-3 text-slate-500 text-xs font-mono">{t.manualReceiptNo || 'NA'}</td>
                                                 <td className="px-6 py-3 font-medium text-slate-900">{t.student?.name || 'Unknown'}</td>
                                                 <td className="px-6 py-3 text-slate-600">{t.student ? `${t.student.className || t.student.class || ''}` : '-'}</td>
                                                 <td className="px-6 py-3 text-slate-600">{t.paymentMode}</td>

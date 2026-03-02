@@ -156,23 +156,43 @@ export const storageService = {
             return data;
         }
     },
+    academics: {
+        getClasses: async () => {
+            const { data } = await api.get('/academics/classes');
+            return data;
+        }
+    },
     attendance: {
         mark: async (attendanceData) => {
             const { data } = await api.post('/attendance/mark', attendanceData);
             return data;
         },
-        getByClass: async (className, section, date) => {
-            const { data } = await api.get(`/attendance/${className}/${section}/${date}`);
+        getByClass: async (className, sectionName, date) => {
+            const { data } = await api.get(`/attendance/class/${className}/${sectionName}?date=${date}`);
             return data;
         },
-        getStudentStats: async (studentId, month, year) => {
-            const params = month && year ? `?month=${month}&year=${year}` : '';
+        getStudent: async (studentId, params = '') => {
             const { data } = await api.get(`/attendance/student/${studentId}${params}`);
             return data;
         },
         getReport: async (className, section, params) => {
             const queryParams = new URLSearchParams(params).toString();
             const { data } = await api.get(`/attendance/report/${className}/${section}?${queryParams}`);
+            return data;
+        }
+    },
+    staffAttendance: {
+        mark: async (attendanceData) => {
+            const { data } = await api.post('/staff-attendance/mark', attendanceData);
+            return data;
+        },
+        getDay: async (date) => {
+            const { data } = await api.get(`/staff-attendance/day?date=${date}`);
+            return data;
+        },
+        getSummary: async (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            const { data } = await api.get(`/staff-attendance/summary?${queryParams}`);
             return data;
         }
     },

@@ -60,6 +60,7 @@ app.use('/api/teacher', require('./routes/teacherRoutes'));
 app.use('/api/system', require('./routes/systemRoutes'));
 
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/staff-attendance', require('./routes/staffAttendanceRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/academic-years', require('./routes/academicYearRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
