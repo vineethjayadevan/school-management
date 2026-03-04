@@ -1,7 +1,6 @@
 /**
  * importHistoricalStudents.js
  * ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
  * Supports both .xlsx (Excel) and .csv files.
  * Pass the path as the first argument.
  *
@@ -14,42 +13,19 @@
  *   - Dates: DD-MM-YYYY or YYYY-MM-DD both accepted
  *   - Leave blank cells empty — don't write N/A or -
  *   - Aadhar: format as TEXT in Excel to avoid scientific notation
-=======
- * Imports students from a CSV file into the DB, linking them to the current
- * active Academic Year and recording their previous year into academicHistory.
- *
- * USAGE:
- *   node server/scripts/importHistoricalStudents.js <path-to-csv>
- *
- * EXAMPLE:
- *   node server/scripts/importHistoricalStudents.js ./server/scripts/students_2026.csv
- *
- * CSV RULES:
- *   - First row must be the header (column names exactly as listed below)
- *   - Dates can be DD-MM-YYYY or YYYY-MM-DD (both work)
- *   - If a field is blank, leave the cell empty (don't write "N/A" or "-")
- *   - Save as CSV UTF-8 from Excel
- *   - Aadhar numbers: format the column as TEXT in Excel before typing to avoid scientific notation
- *
- * RUN FROM PROJECT ROOT (school-management folder):
- *   node server/scripts/importHistoricalStudents.js server/scripts/students_template.csv
->>>>>>> work
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
-<<<<<<< HEAD
 const XLSX = require('xlsx');
-=======
->>>>>>> work
+
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const Student = require('../models/Student');
 const AcademicYear = require('../models/AcademicYear');
 
-<<<<<<< HEAD
 // ─── File Parser: auto-detects .xlsx or .csv ─────────────────────────────────
 function parseFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
@@ -75,9 +51,6 @@ function parseFile(filePath) {
 }
 
 // ─── CSV Parser (fallback for .csv files) ─────────────────────────────────────
-=======
-// ─── CSV Parser (no external deps) ───────────────────────────────────────────
->>>>>>> work
 function parseCSV(filePath) {
     const raw = fs.readFileSync(filePath, 'utf-8');
     // Normalize line endings
@@ -124,6 +97,13 @@ function parseCSVLine(line) {
 // Parses both DD-MM-YYYY (Indian) and YYYY-MM-DD dates
 function parseDate(val) {
     if (!val) return undefined;
+
+    // If it's a number (Excel date)
+    if (!isNaN(val) && Number(val) > 40000) {
+        // Excel dates are number of days since Dec 30, 1899
+        return new Date((Number(val) - 25569) * 86400 * 1000);
+    }
+
     // Indian format: DD-MM-YYYY or DD/MM/YYYY
     const indianMatch = val.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
     if (indianMatch) {
@@ -152,7 +132,7 @@ const importStudents = async () => {
     const csvPath = process.argv[2];
     if (!csvPath) {
         console.error('\n❌ Usage: node importHistoricalStudents.js <path-to-csv>\n');
-        console.error('   Example: node server/scripts/importHistoricalStudents.js ./server/scripts/students_2026.csv\n');
+        console.error('   Example: node server/scripts/importHistoricalStudents.js ./server/scripts/students_2026.xlsx\n');
         process.exit(1);
     }
     const resolvedPath = path.resolve(csvPath);
@@ -161,13 +141,8 @@ const importStudents = async () => {
         process.exit(1);
     }
 
-<<<<<<< HEAD
     console.log(`\n📁 Reading File: ${resolvedPath}`);
     const rows = parseFile(resolvedPath);
-=======
-    console.log(`\n📁 Reading CSV: ${resolvedPath}`);
-    const rows = parseCSV(resolvedPath);
->>>>>>> work
     console.log(`📋 Found ${rows.length} student row(s) to process.\n`);
 
     // Connect to DB
@@ -195,12 +170,7 @@ const importStudents = async () => {
         const row_label = `Row ${row._rowNum} | ${row.name} (${row.admissionNo})`;
         try {
             // ── Validate required fields ────────────────────────────────────
-<<<<<<< HEAD
-            // ── Validate required fields ────────────────────────────────────
             const requiredFields = ['admissionNo', 'name', 'className', 'section', 'applicationNo'];
-=======
-            const requiredFields = ['admissionNo', 'name', 'className', 'section', 'applicationNo', 'submissionDate'];
->>>>>>> work
             const missing = requiredFields.filter(f => !row[f]);
             if (missing.length > 0) {
                 console.warn(`⚠️  Skipped ${row_label} — Missing: ${missing.join(', ')}`);
@@ -208,16 +178,6 @@ const importStudents = async () => {
                 continue;
             }
 
-<<<<<<< HEAD
-=======
-            // Need at least one parent/contact
-            if (!row.fatherMobile && !row.motherMobile) {
-                console.warn(`⚠️  Skipped ${row_label} — Must provide fatherMobile or motherMobile`);
-                skippedCount++;
-                continue;
-            }
-
->>>>>>> work
             // ── Skip if already exists ──────────────────────────────────────
             const existing = await Student.findOne({ admissionNo: row.admissionNo });
             if (existing) {
@@ -247,11 +207,7 @@ const importStudents = async () => {
 
             // ── Derive auto-fields ──────────────────────────────────────────
             const guardian = row.fatherName || row.motherName || 'Parent';
-<<<<<<< HEAD
             const primaryPhone = row.fatherMobile || row.motherMobile || '0000000000';
-=======
-            const primaryPhone = row.fatherMobile || row.motherMobile;
->>>>>>> work
             const email = row.fatherEmail || row.motherEmail || '';
 
             // ── Build transportation object ─────────────────────────────────
