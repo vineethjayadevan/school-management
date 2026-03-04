@@ -34,6 +34,7 @@ export default function StudentDetails() {
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
     const [siblings, setSiblings] = useState([]);
     const [discounts, setDiscounts] = useState([]); // Per-category fee discounts
+    const [activeYearName, setActiveYearName] = useState(''); // Active academic year name for display
 
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
@@ -65,8 +66,8 @@ export default function StudentDetails() {
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            // Parallel fetch: Student Profile, Fee History, and Active Categories
-            const [data, feeHistory, categoriesRes] = await Promise.all([
+            // Parallel fetch: Student Profile, Fee History, Active Categories, and Active Academic Year
+            const [data, feeHistory, categoriesRes, yearsRes] = await Promise.all([
                 storageService.students.getById(id).catch(err => {
                     console.error("Failed to fetch student profile:", err);
                     return null;
@@ -78,8 +79,13 @@ export default function StudentDetails() {
                 api.get('/fee-categories').catch(err => {
                     console.error("Failed to fetch fee categories:", err);
                     return { data: [] };
-                })
+                }),
+                api.get('/academic-years').catch(() => ({ data: [] }))
             ]);
+
+            // Derive active year name for the fee overview label
+            const activeYear = (yearsRes?.data || []).find(y => y.isActive);
+            if (activeYear) setActiveYearName(activeYear.name);
 
             const fetchedCategories = categoriesRes.data || [];
             setActiveCategories(fetchedCategories);
@@ -1741,7 +1747,7 @@ export default function StudentDetails() {
                                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
                                     <div className="flex justify-between items-end mb-1">
                                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Annual Fee</p>
-                                        <p className="text-[10px] font-medium text-slate-400">2025-26 Session</p>
+                                        <p className="text-[10px] font-medium text-slate-400">{activeYearName ? `${activeYearName} Session` : 'Current Session'}</p>
                                     </div>
                                     <p className="text-2xl font-bold text-slate-900">₹{student?.feeDetails?.totalFee?.toLocaleString()}</p>
                                 </div>
