@@ -1,6 +1,9 @@
 const Student = require('../models/Student');
 const Staff = require('../models/Staff');
 const Fee = require('../models/Fee');
+const AcademicYear = require('../models/AcademicYear');
+const Salary = require('../models/Salary');
+
 
 // @desc    Get dashboard statistics
 // @route   GET /api/dashboard
@@ -11,15 +14,33 @@ const getDashboardStats = async (req, res) => {
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
+        // 0. Get Active Year for context
+        const activeYear = await AcademicYear.findOne({ isActive: true });
+
         // 1. Basic Counts
-        // Use a more inclusive query for the transition period: Active or status not yet set
-        const studentCount = await Student.countDocuments({
+        // Total Active Students (Global)
+        const totalStudentCount = await Student.countDocuments({
             $or: [
                 { studentStatus: 'Active' },
                 { studentStatus: { $exists: false } }
             ],
             isActive: true
         });
+
+        // New Admissions (Specifically admitted during the active academic session)
+        let newAdmissionsCount = 0;
+        if (activeYear) {
+            newAdmissionsCount = await Student.countDocuments({
+                currentAcademicYear: activeYear._id,
+                submissionDate: { $gte: activeYear.startDate },
+                $or: [
+                    { studentStatus: 'Active' },
+                    { studentStatus: { $exists: false } }
+                ],
+                isActive: true
+            });
+        }
+
         const staffCount = await Staff.countDocuments({ status: 'Active' });
 
         // 2. Financials (This Month)
@@ -40,9 +61,6 @@ const getDashboardStats = async (req, res) => {
         const feesCollectedThisMonth = feeCollectedAggregation.length > 0 ? feeCollectedAggregation[0].total : 0;
 
         // Salary Paid This Month
-        // We need to query the Salary model (implied from previous context)
-        // Assuming Salary model exists and has 'month' field (YYYY-MM) or paymentDate
-        const Salary = require('../models/Salary');
         const currentMonthStr = today.toISOString().slice(0, 7); // YYYY-MM
 
         const salaryAggregation = await Salary.aggregate([
@@ -59,16 +77,14 @@ const getDashboardStats = async (req, res) => {
 
 
         // 3. Activity Panel Counts
-        // Pending Admissions (Assumed status 'Pending' or similar, otherwise mock or count recent)
-        // If Student model doesn't have 'Pending' status, we might count students added today?
-        // Let's assume 'Inactive' or just recent additions for now.
-        const recentAdmissionsCount = await Student.countDocuments({
-            createdAt: { $gte: new Date(today.setHours(0, 0, 0, 0)) }
+        // Admissions Today (Records actually created on this calendar day)
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const admissionsTodayCount = await Student.countDocuments({
+            createdAt: { $gte: startOfToday }
         });
 
-        // Fees Overdue (This is complex without a robust due date system, let's approximation or 0)
-        // Or count students with pending balance? 
-        // For now, let's return 0 or placeholder
+        // Fees Overdue (placeholder)
         const feesOverdueCount = 0;
 
         // Pending Salaries Count
@@ -118,15 +134,17 @@ const getDashboardStats = async (req, res) => {
 
         res.json({
             counts: {
-                students: studentCount,
+                totalStudents: totalStudentCount,
+                newAdmissions: newAdmissionsCount,
                 staff: staffCount,
-                admissionsToday: recentAdmissionsCount,
+                admissionsToday: admissionsTodayCount,
                 feesOverdue: feesOverdueCount,
                 pendingSalaries: pendingSalaryCount
             },
+            activeYear: activeYear ? activeYear.name : null,
             financials: {
                 feesCollectedThisMonth,
-                feesPending: 0, // Placeholder, usually requires expected - collected
+                feesPending: 0,
                 salaryPaidThisMonth: salaryStats.totalPaid,
                 salaryPendingThisMonth: salaryStats.totalPending
             },
