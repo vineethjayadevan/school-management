@@ -155,6 +155,16 @@ const createStudent = async (req, res) => {
             return res.status(400).json({ message: 'Student with this Admission No already exists' });
         }
 
+        // ── Auto-assign the currently active Academic Year ──────────────────────
+        // This ensures every student admitted via the form appears in the
+        // Promotion Wizard without needing a manual assignCurrentTerm script run.
+        if (!req.body.currentAcademicYear) {
+            const activeYear = await AcademicYear.findOne({ isActive: true });
+            if (activeYear) {
+                req.body.currentAcademicYear = activeYear._id;
+            }
+        }
+
         const student = await Student.create(req.body);
         const signedStudent = await signStudentPhoto(student);
         res.status(201).json(signedStudent);
