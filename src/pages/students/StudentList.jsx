@@ -8,9 +8,14 @@ import {
     Eye,
     Edit,
     FileSpreadsheet,
-    Printer
+    Printer,
+    Users,
+    Calendar,
+    GraduationCap,
+    Clock
 } from 'lucide-react';
 import { storageService } from '../../services/storage';
+import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
 export default function StudentList() {
@@ -20,10 +25,13 @@ export default function StudentList() {
     // Data State
     const [allStudents, setAllStudents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [classes, setClasses] = useState([]);
 
     // UI/Filter State
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedClass, setSelectedClass] = useState('Mont 1');
+    const [selectedYear, setSelectedYear] = useState('All');
+    const [selectedClass, setSelectedClass] = useState('All');
     const [viewMode, setViewMode] = useState('Active'); // 'Active' or 'Archived'
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
@@ -43,49 +51,49 @@ export default function StudentList() {
     };
 
     const loadStudents = async () => {
+        setLoading(true);
         try {
-            const data = await storageService.students.getAll();
-            setAllStudents(data);
+            const [studentsData, yearsRes, classesRes] = await Promise.all([
+                storageService.students.getAll(),
+                api.get('/academic-years').catch(() => ({ data: [] })),
+                api.get('/academics/classes').catch(() => ({ data: [] }))
+            ]);
+
+            setAllStudents(studentsData);
+            setAcademicYears(yearsRes.data || []);
+            setClasses(classesRes.data || []);
+
+            // Set default year to active one
+            const activeYear = (yearsRes.data || []).find(y => y.isActive);
+            if (activeYear) {
+                setSelectedYear(activeYear._id);
+            }
         } catch (error) {
-            addToast("Failed to load students", "error");
+            console.error("Failed to load directory data:", error);
+            addToast("Failed to load directory data", "error");
         } finally {
             setLoading(false);
         }
     };
 
-    // Derived State: Unique Classes for Tabs
-    // Derived State: Unique Classes for Tabs
     const formatClassLabel = (cls) => {
         if (!cls) return '';
-        // Normalize: If it's "Class X", make it "Grade X"
         return cls.replace(/^Class\s+/, 'Grade ');
     };
 
     const matchClassOrder = (cls) => {
-        // Custom sort order for classes
         if (cls === 'Mont 1') return -5;
         if (cls === 'Mont 2') return -4;
         if (cls === 'LKG') return -3;
         if (cls === 'UKG') return -2;
         if (cls.startsWith('KG')) return 0;
-        if (cls.startsWith('Class')) return parseInt(cls.split(' ')[1]) || 10;
         if (cls.startsWith('Grade')) return parseInt(cls.split(' ')[1]) || 10;
         return 20;
     };
 
-    const uniqueClasses = useMemo(() => {
-        // All school classes in order — always shown regardless of enrolment
-        const schoolClasses = ['Mont 1', 'Mont 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
-
-        // Also pick up any classes from student records that aren't in the static list
-        const dynamicClasses = allStudents
-            .filter(s => viewMode === 'Active' ? (!s.studentStatus || s.studentStatus === 'Active') : (s.studentStatus && s.studentStatus !== 'Active'))
-            .map(s => formatClassLabel(s.className || s.class))
-            .filter(c => c && !schoolClasses.includes(c));
-
-        const allClasses = [...new Set([...schoolClasses, ...dynamicClasses])];
-        return allClasses.sort((a, b) => matchClassOrder(a) - matchClassOrder(b));
-    }, [allStudents]);
+    const sortedClasses = useMemo(() => {
+        return [...classes].sort((a, b) => matchClassOrder(a.name) - matchClassOrder(b.name));
+    }, [classes]);
 
     // Derived State: Filtered Students
     const filteredStudents = useMemo(() => {
@@ -102,18 +110,49 @@ export default function StudentList() {
                 (student.admissionNo?.toLowerCase() || '').includes(searchLower) ||
                 (student.rollNo?.toLowerCase() || '').includes(searchLower);
 
-            // 2. Class Tab
-            const studentClassNormalized = formatClassLabel(student.className || student.class);
-            const matchesClass = studentClassNormalized === selectedClass;
+            // 2 & 3. Year & Class Filters
+            let matchesYear = false;
+            let matchesClass = false;
 
-            // 3. Advanced Filters
+            if (selectedYear === 'All') {
+                matchesYear = true;
+                const studentClass = student.className || student.class;
+                matchesClass = selectedClass === 'All' || studentClass === selectedClass;
+            } else {
+                // Check if it's the current year
+                if (student.currentAcademicYear === selectedYear) {
+                    matchesYear = true;
+                    const studentClass = student.className || student.class;
+                    matchesClass = selectedClass === 'All' || studentClass === selectedClass;
+                }
+                // Check history if not found in current year
+                else if (student.academicHistory && student.academicHistory.length > 0) {
+                    const historyEntry = student.academicHistory.find(h =>
+                        h.academicYear?._id === selectedYear || h.academicYear === selectedYear
+                    );
+                    if (historyEntry) {
+                        matchesYear = true;
+                        matchesClass = selectedClass === 'All' || historyEntry.className === selectedClass;
+                    }
+                }
+            }
+
+            // 4. Advanced Filters
             const matchesGender = filters.gender === 'All' || student.gender === filters.gender;
 
-            return matchesSearch && matchesClass && matchesGender;
+            return matchesSearch && matchesYear && matchesClass && matchesGender;
         }).sort((a, b) => {
             return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
         });
-    }, [allStudents, searchTerm, selectedClass, filters, viewMode]);
+    }, [allStudents, searchTerm, selectedYear, selectedClass, filters, viewMode]);
+
+    // Statistics Calculation
+    const stats = useMemo(() => {
+        const total = filteredStudents.length;
+        const male = filteredStudents.filter(s => s.gender === 'Male').length;
+        const female = filteredStudents.filter(s => s.gender === 'Female').length;
+        return { total, male, female };
+    }, [filteredStudents]);
 
 
     const handleExportCSV = () => {
@@ -123,16 +162,32 @@ export default function StudentList() {
         }
 
         const headers = ["Admission No", "Name", "Class", "Section", "Roll No", "Gender", "Parent", "Phone"];
-        const rows = filteredStudents.map(s => [
-            s.admissionNo,
-            s.name,
-            s.className || s.class,
-            s.section,
-            s.rollNo,
-            s.gender,
-            s.guardian,
-            s.primaryPhone || s.contact
-        ]);
+        const rows = filteredStudents.map(s => {
+            let displayClass = s.className || s.class;
+            let displaySection = s.section;
+
+            // Use historical class/section if viewing a past year
+            if (selectedYear !== 'All' && s.currentAcademicYear !== selectedYear && s.academicHistory) {
+                const hist = s.academicHistory.find(h =>
+                    h.academicYear?._id === selectedYear || h.academicYear === selectedYear
+                );
+                if (hist) {
+                    displayClass = hist.className;
+                    displaySection = hist.section;
+                }
+            }
+
+            return [
+                s.admissionNo,
+                s.name,
+                displayClass,
+                displaySection,
+                s.rollNo,
+                s.gender,
+                s.guardian,
+                s.primaryPhone || s.contact
+            ];
+        });
 
         const csvContent = [
             headers.join(','),
@@ -159,7 +214,37 @@ export default function StudentList() {
                     <h1 className="text-2xl font-bold text-slate-900">Students Directory</h1>
                     <p className="text-slate-500">Manage student admissions and records.</p>
                 </div>
-                {/* Button Removed as per request (moved to Admissions) */}
+
+                {/* Statistics Bar */}
+                <div className="flex items-center gap-3 sm:gap-6">
+                    <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
+                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <Users size={18} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</p>
+                            <p className="text-lg font-bold text-slate-900 leading-tight">{stats.total}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <Users size={18} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Male</p>
+                            <p className="text-lg font-bold text-slate-900 leading-tight">{stats.male}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
+                        <div className="p-2 bg-pink-50 text-pink-600 rounded-lg">
+                            <Users size={18} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Female</p>
+                            <p className="text-lg font-bold text-slate-900 leading-tight">{stats.female}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
@@ -179,49 +264,90 @@ export default function StudentList() {
                     </button>
                 </div>
 
-                {/* Top Toolbar */}
-                <div className="p-4 border-b border-slate-200 space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                        {/* Search */}
-                        <div className="relative w-full md:w-96">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search by Name, Admission No..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
-                            />
+                {/* Dynamic Filters Bar */}
+                <div className="p-4 border-b border-slate-200 bg-slate-50/30">
+                    <div className="flex flex-wrap gap-4 items-center">
+                        {/* Class Dropdown */}
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Class</label>
+                            <div className="relative">
+                                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <select
+                                    value={selectedClass}
+                                    onChange={(e) => setSelectedClass(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:border-slate-300 shadow-sm"
+                                >
+                                    <option value="All">All Classes</option>
+                                    {sortedClasses.map(c => (
+                                        <option key={c._id} value={c.name}>{formatClassLabel(c.name)}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
+                        {/* Academic Year Dropdown */}
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Session</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:border-slate-300 shadow-sm"
+                                >
+                                    <option value="All">All Sessions</option>
+                                    {academicYears.map(year => (
+                                        <option key={year._id} value={year._id}>
+                                            {year.name} {year.isActive ? '(Current)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Search (Moved to main bar for better reach) */}
+                        <div className="flex-[2] min-w-[300px]">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Search Students</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, admission number..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Quick filter/export */}
+                        <div className="flex items-end gap-2 pt-5">
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className={`flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                                className={`p-2.5 border rounded-xl transition-all shadow-sm ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                title="Advanced Filters"
                             >
-                                <Filter size={18} />
-                                <span>Filter</span>
+                                <Filter size={20} />
                             </button>
                             <button
                                 onClick={handleExportCSV}
-                                className="flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors"
+                                className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all shadow-sm"
+                                title="Export CSV"
                             >
-                                <FileSpreadsheet size={18} />
-                                <span>CSV</span>
+                                <FileSpreadsheet size={20} />
                             </button>
                         </div>
                     </div>
 
                     {/* Filter Panel (Collapsible) */}
                     {showFilters && (
-                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Gender</label>
                                 <select
                                     value={filters.gender}
                                     onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}
-                                    className="w-full p-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-indigo-500"
+                                    className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-indigo-500"
                                 >
                                     <option value="All">All Genders</option>
                                     <option value="Male">Male</option>
@@ -230,22 +356,6 @@ export default function StudentList() {
                             </div>
                         </div>
                     )}
-
-                    {/* Class Tabs */}
-                    <div className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
-                        {uniqueClasses.map((cls) => (
-                            <button
-                                key={cls}
-                                onClick={() => setSelectedClass(cls)}
-                                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${selectedClass === cls
-                                    ? 'bg-slate-900 text-white font-medium shadow-md'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                    }`}
-                            >
-                                {formatClassLabel(cls)}
-                            </button>
-                        ))}
-                    </div>
                 </div>
 
                 {/* Data Table */}
@@ -310,7 +420,27 @@ export default function StudentList() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-700">{formatClassLabel(student.className || student.class)} - {student.section}</span>
+                                                {(() => {
+                                                    let displayClass = student.className || student.class;
+                                                    let displaySection = student.section;
+
+                                                    if (selectedYear !== 'All' && student.currentAcademicYear !== selectedYear && student.academicHistory) {
+                                                        const hist = student.academicHistory.find(h =>
+                                                            h.academicYear?._id === selectedYear || h.academicYear === selectedYear
+                                                        );
+                                                        if (hist) {
+                                                            displayClass = hist.className;
+                                                            displaySection = hist.section;
+                                                        }
+                                                    }
+                                                    return (
+                                                        <>
+                                                            <span className="text-sm font-medium text-slate-700">
+                                                                {formatClassLabel(displayClass)} - {displaySection}
+                                                            </span>
+                                                        </>
+                                                    );
+                                                })()}
                                                 <span className="text-xs text-slate-500">Roll No: {student.rollNo}</span>
                                             </div>
                                         </td>
