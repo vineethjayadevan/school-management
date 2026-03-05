@@ -30,10 +30,11 @@ const getStaff = async (req, res) => {
 const addStaff = async (req, res) => {
     try {
         const { email } = req.body;
-        const staffExists = await Staff.findOne({ email });
-
-        if (staffExists) {
-            return res.status(400).json({ message: 'Staff with this email already exists' });
+        if (email) {
+            const staffExists = await Staff.findOne({ email });
+            if (staffExists) {
+                return res.status(400).json({ message: 'Staff with this email already exists' });
+            }
         }
 
         const startId = 'EMP' + Date.now().toString().slice(-4);
@@ -42,7 +43,7 @@ const addStaff = async (req, res) => {
             employeeId: req.body.employeeId || startId,
             name: req.body.name,
             role: req.body.role,
-            email: req.body.email,
+            email: req.body.email || undefined,
             phone: req.body.phone || req.body.contact,
             qualification: req.body.qualification,
             joiningDate: req.body.joiningDate || new Date(),
@@ -81,7 +82,19 @@ const updateStaff = async (req, res) => {
         // Update fields
         staff.name = req.body.name || staff.name;
         staff.role = req.body.role || staff.role;
-        staff.email = req.body.email || staff.email;
+
+        // Handle email update and duplicates
+        if (req.body.email !== undefined && req.body.email !== staff.email) {
+            if (req.body.email) {
+                const emailExists = await Staff.findOne({ email: req.body.email });
+                if (emailExists) {
+                    return res.status(400).json({ message: 'Staff with this email already exists' });
+                }
+                staff.email = req.body.email;
+            } else {
+                staff.email = undefined;
+            }
+        }
         staff.phone = req.body.phone || req.body.contact || staff.phone;
         staff.qualification = req.body.qualification || staff.qualification;
         staff.joiningDate = req.body.joiningDate || staff.joiningDate;
