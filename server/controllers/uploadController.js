@@ -40,15 +40,20 @@ const uploadFile = async (req, res) => {
 
         const bucket = storageInstance.bucket(bucketName);
         const timestamp = Date.now();
-        const studentId = req.body.studentId || 'unknown-student';
         const category = req.body.category ? req.body.category.replace(/[^a-zA-Z0-9.-]/g, '_') : 'document';
         // Clean filename to remove spaces/special chars
         const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
 
-        // Structure: students/{studentId}/{category}-{timestamp}.{ext}
-        // Extract extension from original name
+        // Determine storage path based on entity type
+        // Structure: students/{id}/{category}-{timestamp}.ext  OR  staff/{id}/{category}-{timestamp}.ext
         const ext = path.extname(cleanName);
-        const fileName = `students/${studentId}/${category}-${timestamp}${ext}`;
+        let fileName;
+        if (req.body.staffId) {
+            fileName = `staff/${req.body.staffId}/${category}-${timestamp}${ext}`;
+        } else {
+            const studentId = req.body.studentId || 'unknown-student';
+            fileName = `students/${studentId}/${category}-${timestamp}${ext}`;
+        }
 
         const blob = bucket.file(fileName);
         const blobStream = blob.createWriteStream({
@@ -61,8 +66,19 @@ const uploadFile = async (req, res) => {
             res.status(500).json({ message: err.message });
         });
 
-        blobStream.on('finish', () => {
-            // successful upload
+        blobStream.on('finish', async () => {
+            // For profile photos, make them publicly readable so they display in <img> tags
+            const photoCategories = ['Staff_Photo', 'Student_Photo', 'Staff Photo', 'Student Photo'];
+            if (photoCategories.includes(req.body.category)) {
+                try {
+                    await blob.makePublic();
+                } catch (e) {
+                    // If uniform bucket-level access is enabled, makePublic() won't work
+                    // In that case, the bucket itself needs allUsers read IAM, or use signed URLs
+                    console.warn('Could not make blob public (bucket may use uniform access):', e.message);
+                }
+            }
+
             const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
 
             res.status(200).json({

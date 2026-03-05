@@ -57,7 +57,8 @@ const addStaff = async (req, res) => {
             spouseEmail: req.body.spouseEmail,
             address: req.body.address,
             idCardNumber: req.body.idCardNumber,
-            idCardImage: req.body.idCardImage
+            idCardImage: req.body.idCardImage,
+            photoUrl: req.body.photoUrl || ''
         });
 
         res.status(201).json(newStaff);
@@ -96,6 +97,7 @@ const updateStaff = async (req, res) => {
         staff.address = req.body.address !== undefined ? req.body.address : staff.address;
         staff.idCardNumber = req.body.idCardNumber !== undefined ? req.body.idCardNumber : staff.idCardNumber;
         staff.idCardImage = req.body.idCardImage !== undefined ? req.body.idCardImage : staff.idCardImage;
+        staff.photoUrl = req.body.photoUrl !== undefined ? req.body.photoUrl : staff.photoUrl;
 
         // Handle subjects update
         if (req.body.subjects) {

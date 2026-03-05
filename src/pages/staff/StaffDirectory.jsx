@@ -15,6 +15,46 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
+const StaffAvatar = ({ member }) => {
+    const [imgUrl, setImgUrl] = useState(member.photoUrl);
+    const [hasError, setHasError] = useState(false);
+
+    const handleError = async () => {
+        if (!hasError && member.photoUrl) {
+            setHasError(true);
+            try {
+                // If direct URL fails (e.g. 403), try fetching a signed URL
+                const { data } = await api.get('/upload/signed-url', {
+                    params: { fileName: member.photoUrl }
+                });
+                if (data.signedUrl) {
+                    setImgUrl(data.signedUrl);
+                    setHasError(false); // Reset error state to try loading the signed URL
+                }
+            } catch (err) {
+                console.error("Failed to load fallback signed URL", err);
+            }
+        }
+    };
+
+    if (!imgUrl || (hasError && imgUrl === member.photoUrl)) {
+        return (
+            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                {member.name.charAt(0)}
+            </div>
+        );
+    }
+
+    return (
+        <img
+            src={imgUrl}
+            alt={member.name}
+            className="w-10 h-10 rounded-full object-cover border-2 border-indigo-100 shadow-sm"
+            onError={handleError}
+        />
+    );
+};
+
 export default function StaffDirectory() {
     const [staff, setStaff] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -163,8 +203,8 @@ export default function StaffDirectory() {
                                         <tr key={member._id} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
-                                                        {member.name.charAt(0)}
+                                                    <div className="relative w-10 h-10 flex-shrink-0">
+                                                        <StaffAvatar member={member} />
                                                     </div>
                                                     <div>
                                                         <div className="font-medium text-slate-900">{member.name}</div>
@@ -173,8 +213,13 @@ export default function StaffDirectory() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-slate-900 font-medium">{member.category}</div>
-                                                {member.subcategory && <div className="text-xs text-slate-500">{member.subcategory}</div>}
+                                                <div className="text-sm text-slate-900 font-medium">
+                                                    {member.category}
+                                                    {member.subcategory && (
+                                                        <span className="text-slate-500 font-normal ml-1">({member.subcategory})</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 uppercase tracking-wider">{member.role}</div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1 text-sm text-slate-600">

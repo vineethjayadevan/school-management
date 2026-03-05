@@ -41,6 +41,7 @@ const staffSchema = mongoose.Schema({
     address: { type: String },
     idCardNumber: { type: String },
     idCardImage: { type: String }, // URL to storage
+    photoUrl: { type: String, default: '' }, // Profile photo URL (GCS)
 }, {
     timestamps: true,
 });

@@ -15,7 +15,8 @@ import {
     CheckCircle2,
     X,
     Heart,
-    Shield
+    Shield,
+    Camera
 } from 'lucide-react';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -30,6 +31,8 @@ export default function StaffForm() {
     const [submitting, setSubmitting] = useState(false);
     const [idCardPreview, setIdCardPreview] = useState(null);
     const [idCardFile, setIdCardFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(null);
+    const [photoFile, setPhotoFile] = useState(null);
     const [subjects, setSubjects] = useState([]);
     const [categories, setCategories] = useState([]);
 
@@ -44,6 +47,10 @@ export default function StaffForm() {
     });
 
     const isMarried = watch('isMarried');
+    const selectedCategoryName = watch('category');
+
+    const selectedCategory = categories.find(c => c.name === selectedCategoryName);
+    const availableSubcategories = selectedCategory?.subcategories || [];
 
     useEffect(() => {
         fetchSubjects();
@@ -52,6 +59,13 @@ export default function StaffForm() {
             fetchStaff();
         }
     }, [id]);
+
+    useEffect(() => {
+        // Clear subcategory if it doesn't belong to the new category
+        if (selectedCategoryName && !isEdit) {
+            setValue('subcategory', '');
+        }
+    }, [selectedCategoryName]);
 
     const fetchSubjects = async () => {
         try {
@@ -80,8 +94,15 @@ export default function StaffForm() {
                 subjects: data.subjects?.map(s => s._id) || []
             };
             reset(formattedData);
-            if (data.idCardImage) {
-                setIdCardPreview(data.idCardImage);
+            if (data.idCardImage) setIdCardPreview(data.idCardImage);
+            if (data.photoUrl) {
+                // Show the photo; fetch a signed URL as fallback in case GCS object isn't public
+                try {
+                    const signRes = await api.get('/upload/signed-url', { params: { fileName: data.photoUrl } });
+                    setPhotoPreview(signRes.data.signedUrl || data.photoUrl);
+                } catch {
+                    setPhotoPreview(data.photoUrl);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch staff:', error);
@@ -97,9 +118,17 @@ export default function StaffForm() {
         if (file) {
             setIdCardFile(file);
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setIdCardPreview(reader.result);
-            };
+            reader.onloadend = () => setIdCardPreview(reader.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setPhotoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setPhotoPreview(reader.result);
             reader.readAsDataURL(file);
         }
     };
@@ -122,25 +151,56 @@ export default function StaffForm() {
         }
     };
 
+    const uploadPhoto = async (staffId) => {
+        if (!photoFile) return null;
+        const formData = new FormData();
+        formData.append('file', photoFile);
+        formData.append('category', 'Staff Photo');
+        formData.append('staffId', staffId);
+        try {
+            const { data } = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return data.url;
+        } catch (error) {
+            console.error('Photo upload failed:', error);
+            throw new Error('Failed to upload staff photo');
+        }
+    };
+
     const onSubmit = async (formData) => {
         setSubmitting(true);
         try {
             let idCardImageUrl = formData.idCardImage;
-
             if (idCardFile) {
                 idCardImageUrl = await uploadFile();
             }
 
+            // For photo: if editing, we know the ID; if creating, we get it after
+            let photoUrl = formData.photoUrl || '';
+
             const payload = {
                 ...formData,
-                idCardImage: idCardImageUrl
+                idCardImage: idCardImageUrl,
+                photoUrl
             };
 
+            let savedId = id;
             if (isEdit) {
-                await api.put(`/staff/${id}`, payload);
+                // Upload photo first if changed
+                if (photoFile) {
+                    photoUrl = await uploadPhoto(id) || photoUrl;
+                }
+                await api.put(`/staff/${id}`, { ...payload, photoUrl });
                 addToast('Staff updated successfully', 'success');
             } else {
-                await api.post('/staff', payload);
+                const { data: created } = await api.post('/staff', payload);
+                savedId = created._id;
+                // Upload photo after creation (need the ID for path)
+                if (photoFile) {
+                    photoUrl = await uploadPhoto(savedId) || '';
+                    await api.put(`/staff/${savedId}`, { photoUrl });
+                }
                 addToast('Staff added successfully', 'success');
             }
             navigate('/admin/staff');
@@ -171,7 +231,44 @@ export default function StaffForm() {
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <div>
+
+                    {/* Profile Photo Upload */}
+                    <div className="relative group">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-200 shadow-md bg-indigo-50 flex items-center justify-center cursor-pointer"
+                            onClick={() => document.getElementById('staff-photo-input').click()}>
+                            {photoPreview ? (
+                                <img src={photoPreview} alt="Photo" className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={28} className="text-indigo-300" />
+                            )}
+                        </div>
+                        {/* Camera overlay */}
+                        <label htmlFor="staff-photo-input"
+                            className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <Camera size={18} className="text-white" />
+                        </label>
+                        <input
+                            id="staff-photo-input"
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handlePhotoChange}
+                        />
+                        {photoPreview && (
+                            <button type="button"
+                                onClick={() => {
+                                    setPhotoPreview(null);
+                                    setPhotoFile(null);
+                                    setValue('photoUrl', '');
+                                }}
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white shadow-md hover:bg-red-600 transition-colors">
+                                <X size={11} />
+                            </button>
+                        )}
+                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-slate-400">Photo</div>
+                    </div>
+
+                    <div className="ml-2">
                         <h1 className="text-2xl font-bold text-slate-900">
                             {isEdit ? 'Edit Staff Member' : 'Add New Staff Member'}
                         </h1>
@@ -374,30 +471,53 @@ export default function StaffForm() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Subjects (For Teachers)</label>
-                            <select
-                                multiple
-                                {...register('subjects')}
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all min-h-[120px]"
-                            >
+                        <div className="md:col-span-2 space-y-4">
+                            <label className="text-sm font-semibold text-slate-700 block">Subjects (For Teachers)</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 {subjects.map(s => (
-                                    <option key={s._id} value={s._id}>{s.name}</option>
+                                    <label key={s._id} className="flex items-center gap-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            value={s._id}
+                                            {...register("subjects")}
+                                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                                        />
+                                        <span className="text-sm text-slate-600 group-hover:text-slate-900">{s.name}</span>
+                                    </label>
                                 ))}
-                            </select>
-                            <p className="text-[10px] text-slate-400">Hold Ctrl/Cmd to select multiple</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">HR Category</label>
-                            <select
-                                {...register('category')}
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
-                            >
-                                {categories.map(c => (
-                                    <option key={c._id} value={c.name}>{c.name}</option>
-                                ))}
-                            </select>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">HR Category</label>
+                                <select
+                                    {...register('category')}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                                >
+                                    <option value="">Select Category</option>
+                                    {categories.map(c => (
+                                        <option key={c._id} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">Subcategory</label>
+                                <select
+                                    {...register('subcategory')}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                                    disabled={!availableSubcategories.length}
+                                >
+                                    <option value="">Select Subcategory</option>
+                                    {availableSubcategories.map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                                {!availableSubcategories.length && selectedCategoryName && (
+                                    <p className="text-[10px] text-slate-400">No subcategories defined for this category</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
