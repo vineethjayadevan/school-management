@@ -213,13 +213,14 @@ export default function StaffDirectory() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-sm text-slate-900 font-medium">
-                                                    {member.category}
-                                                    {member.subcategory && (
-                                                        <span className="text-slate-500 font-normal ml-1">({member.subcategory})</span>
-                                                    )}
+                                                <div className="text-sm text-slate-900 font-medium uppercase tracking-tight">
+                                                    {member.role}
                                                 </div>
-                                                <div className="text-[10px] text-slate-400 uppercase tracking-wider">{member.role}</div>
+                                                {member.subcategory && (
+                                                    <div className="text-[10px] text-slate-500 font-normal">
+                                                        {member.subcategory}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1 text-sm text-slate-600">
