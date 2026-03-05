@@ -190,23 +190,85 @@ const getStudentFees = async (req, res) => {
     try {
         const studentId = req.user.profileId;
 
-        // Parallel fetch: Student Profile (for status) AND Fee History
-        const [student, history] = await Promise.all([
-            Student.findById(studentId).select('feesStatus admissionNo name className section'),
-            Fee.find({ student: studentId }).sort({ paymentDate: -1 })
+        // Parallel fetch: Student Profile, Fee History, and active Fee Categories
+        const [student, history, activeCategories] = await Promise.all([
+            Student.findById(studentId).select('feesStatus admissionNo name className section conveyanceSlab discounts'),
+            Fee.find({ student: studentId }).sort({ paymentDate: -1 }),
+            FeeCategory.find({ isActive: true })
         ]);
 
         if (!student) {
             return res.status(404).json({ message: 'Student profile not found' });
         }
 
+        // Calculate real expected breakdown for this student
+        const className = (student.className || student.class || '').trim();
+        const expectedBreakdown = activeCategories.map(cat => {
+            let dueAmount = 0;
+            if (cat.hasSlabs) {
+                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+                // Only apply if slab is selected (> 0)
+                if (slabCount > 0) {
+                    dueAmount = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                }
+            } else {
+                const classAmountObj = cat.amounts.find(a => (a.className || '').trim() === className);
+                if (classAmountObj) {
+                    dueAmount = classAmountObj.amount;
+                }
+            }
+
+            // Apply discounts if any
+            const discount = student.discounts?.find(d => d.categoryId?.toString() === cat._id.toString());
+            const discountAmount = discount ? discount.discountAmount : 0;
+
+            return {
+                type: cat.name,
+                totalDue: dueAmount,
+                discount: discountAmount,
+                due: Math.max(0, dueAmount - discountAmount)
+            };
+        }).filter(item => item.totalDue > 0);
+
         res.json({
             status: student.feesStatus,
             profile: student,
-            history: history
+            history: history,
+            expectedBreakdown
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Download fee receipt PDF
+// @route   GET /api/fees/:id/receipt
+// @access  Private
+const downloadReceipt = async (req, res) => {
+    try {
+        const feeId = req.params.id;
+        const fee = await Fee.findById(feeId).populate('student');
+
+        if (!fee) {
+            return res.status(404).json({ message: 'Receipt not found' });
+        }
+
+        // Security check: Only the student or admin/superuser can download
+        const isSelf = req.user.role === 'student' && fee.student._id.toString() === req.user.profileId.toString();
+        const isAdmin = ['superuser', 'admin', 'superadmin', 'officestaff'].includes(req.user.role);
+
+        if (!isSelf && !isAdmin) {
+            return res.status(403).json({ message: 'Unauthorized access to this receipt' });
+        }
+
+        const pdfBuffer = await generateFeeReceipt(fee, fee.student);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Receipt-${fee.receiptNo}.pdf`);
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Error generating receipt download:', error);
+        res.status(500).json({ message: 'Failed to generate receipt PDF' });
     }
 };
 
@@ -227,5 +289,6 @@ module.exports = {
     getFees,
     addFee,
     getStudentFees,
-    getStudentFeesAdmin
+    getStudentFeesAdmin,
+    downloadReceipt
 };

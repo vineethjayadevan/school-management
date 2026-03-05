@@ -426,7 +426,6 @@ const SuperAdminDashboard = () => {
                                         onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm"
                                         placeholder="jane@example.com"
-                                        readOnly={!!(selectedProfile && selectedProfile.email)}
                                     />
                                 </div>
                             </div>

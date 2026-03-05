@@ -45,6 +45,7 @@ import Admissions from './pages/admin/Admissions';
 import SalaryManager from './pages/admin/SalaryManager';
 import TransferCertificates from './pages/admin/TransferCertificates';
 import AdminAttendanceReport from './pages/admin/AttendanceReport';
+import StudentAttendanceReport from './pages/admin/StudentAttendanceReport';
 import StaffAttendanceMarking from './pages/staff/StaffAttendanceMarking';
 import StaffAttendanceReport from './pages/staff/StaffAttendanceReport';
 import { Toaster } from './components/ui/Toast';
@@ -55,6 +56,7 @@ import ClassDetails from './pages/teacher/ClassDetails';
 import MyClasses from './pages/teacher/MyClasses';
 import TeacherProfile from './pages/teacher/TeacherProfile';
 import AttendanceMarking from './pages/teacher/AttendanceMarking';
+import MyAttendance from './pages/teacher/MyAttendance';
 import TeacherSchedule from './pages/teacher/TeacherSchedule';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentProfile from './pages/student/StudentProfile';
@@ -185,6 +187,11 @@ function App() {
                             <AdminAttendanceReport />
                         </RequireAuth>
                     } />
+                    <Route path="student-attendance-report" element={
+                        <RequireAuth allowedRoles={['superuser', 'admin']}>
+                            <StudentAttendanceReport />
+                        </RequireAuth>
+                    } />
 
                     <Route path="fees" element={
                         <RequireAuth allowedRoles={['superuser', 'admin']}>
@@ -254,6 +261,7 @@ function App() {
                     <Route path="classes/:className/:sectionName" element={<ClassDetails />} />
                     <Route path="profile" element={<TeacherProfile />} />
                     <Route path="attendance" element={<AttendanceMarking />} />
+                    <Route path="my-attendance" element={<MyAttendance />} />
                     <Route path="assignments" element={<div>Assignments Placeholder</div>} />
                     <Route path="schedule" element={<TeacherSchedule />} />
                 </Route>

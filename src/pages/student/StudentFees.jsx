@@ -23,36 +23,47 @@ export default function StudentFees() {
     }, []);
 
     const getFeeBreakdown = () => {
-        if (!feeData.profile) return [];
+        if (!feeData.profile || !feeData.expectedBreakdown) return [];
 
-        const cls = feeData.profile.className || feeData.profile.class;
-        const structure = feeStructure[cls] || { tuition: 20000, materials: 6500 };
         const payments = feeData.history.filter(t => t.status === 'Paid');
 
-        return Object.entries(structure).map(([type, dueAmount]) => {
-            const paidAmount = payments
-                .filter(t => {
-                    if (t.feeType?.toLowerCase().includes('full')) return true; // Full fee covers everything
-                    return t.feeType?.toLowerCase().includes(type.toLowerCase());
-                })
+        return feeData.expectedBreakdown.map(cat => {
+            const baseDue = cat.totalDue || cat.due;
+            const discount = cat.discount || 0;
+            const netDue = cat.due;
+
+            // Sum up payments for this category
+            const paid = payments
                 .reduce((sum, t) => {
-                    if (t.feeType?.toLowerCase().includes('full')) {
-                        // If Full Fee paid, assume this category is fully paid
-                        // Returns the max due for this category to ensure it shows as Paid
-                        return sum + dueAmount;
+                    // 1. Check if fee has explicit itemized breakdown
+                    if (t.breakdown && t.breakdown.length > 0) {
+                        const item = t.breakdown.find(b => b.feeType === cat.type);
+                        return sum + (item ? Number(item.amount) : 0);
                     }
-                    return sum + (t.amount || 0);
+
+                    // 2. Fallback to top-level feeType matching
+                    if (t.feeType === cat.type) {
+                        return sum + (t.amount || 0);
+                    }
+
+                    // 3. 'Full Fee' covers everything in that year (simplified assumption for legacy/manual entries)
+                    if (t.feeType?.toLowerCase().includes('full')) {
+                        return sum + netDue;
+                    }
+
+                    return sum;
                 }, 0);
 
-            // Cap at due amount if overpaid (which might happen with full fee logic above)
-            const effectivePaid = paidAmount > dueAmount ? dueAmount : paidAmount;
+            const effectivePaid = Math.min(paid, netDue);
 
             return {
-                type: type.charAt(0).toUpperCase() + type.slice(1),
-                due: dueAmount,
+                type: cat.type,
+                baseDue: baseDue,
+                discount: discount,
+                due: netDue,
                 paid: effectivePaid,
-                pending: dueAmount - effectivePaid,
-                status: effectivePaid >= dueAmount ? 'Paid' : effectivePaid > 0 ? 'Partial' : 'Pending'
+                pending: Math.max(0, netDue - effectivePaid),
+                status: effectivePaid >= netDue ? 'Paid' : effectivePaid > 0 ? 'Partial' : 'Pending'
             };
         });
     };
@@ -121,7 +132,9 @@ export default function StudentFees() {
                         <thead className="bg-slate-50 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
                             <tr>
                                 <th className="px-6 py-4">Fee Type</th>
-                                <th className="px-6 py-4 text-right">Total Due</th>
+                                <th className="px-6 py-4 text-right">Base Due</th>
+                                <th className="px-6 py-4 text-right">Discount</th>
+                                <th className="px-6 py-4 text-right">Net Payable</th>
                                 <th className="px-6 py-4 text-right">Paid</th>
                                 <th className="px-6 py-4 text-right">Pending</th>
                                 <th className="px-6 py-4 text-center">Status</th>
@@ -131,7 +144,9 @@ export default function StudentFees() {
                             {breakdown.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-slate-900">{item.type}</td>
-                                    <td className="px-6 py-4 text-right text-slate-600">₹{item.due.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-slate-500 line-through">₹{item.baseDue.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-indigo-600 font-medium">-₹{item.discount.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-slate-900 font-bold">₹{item.due.toLocaleString()}</td>
                                     <td className="px-6 py-4 text-right text-emerald-600 font-medium">₹{item.paid.toLocaleString()}</td>
                                     <td className="px-6 py-4 text-right text-rose-600 font-medium">₹{item.pending.toLocaleString()}</td>
                                     <td className="px-6 py-4 text-center">
@@ -166,6 +181,7 @@ export default function StudentFees() {
                                 <th className="px-6 py-4">Fee Type</th>
                                 <th className="px-6 py-4">Mode</th>
                                 <th className="px-6 py-4 text-right">Amount</th>
+                                <th className="px-6 py-4 text-center">Receipt</th>
                                 <th className="px-6 py-4 text-center">Status</th>
                             </tr>
                         </thead>
@@ -182,6 +198,14 @@ export default function StudentFees() {
                                         <td className="px-6 py-4 text-slate-900 font-medium">{t.feeType}</td>
                                         <td className="px-6 py-4 text-slate-600">{t.paymentMode}</td>
                                         <td className="px-6 py-4 text-right font-semibold text-slate-700">₹{t.amount?.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => storageService.fees.downloadReceipt(t._id, t.receiptNo)}
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors title='Download PDF'"
+                                            >
+                                                <CreditCard size={18} />
+                                            </button>
+                                        </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                                                 Paid

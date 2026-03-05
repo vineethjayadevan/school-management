@@ -46,6 +46,7 @@ const NAV_GROUPS = [
         children: [
             { name: 'Admissions', href: '/admin/admissions', icon: UserPlus, allowed: ['superuser', 'admin'] },
             { name: 'Students', href: '/admin/students', icon: Users, allowed: ['superuser', 'admin'] },
+            { name: 'Attendance Report', href: '/admin/student-attendance-report', icon: ClipboardList, allowed: ['superuser', 'admin'] },
             { name: 'Promote Students', href: '/admin/promotion', icon: ArrowUpRight, allowed: ['superuser', 'admin'] },
             { name: 'Transfer Certificates', href: '/admin/transfer-certificates', icon: FileX, allowed: ['superuser', 'admin'] },
         ],

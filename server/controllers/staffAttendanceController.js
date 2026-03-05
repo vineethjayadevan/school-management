@@ -121,8 +121,38 @@ const getStaffAttendanceSummary = async (req, res) => {
     }
 };
 
+// @desc    Get personal attendance for logged in staff
+// @route   GET /api/staff-attendance/my-attendance
+// @access  Private
+const getMyStaffAttendance = async (req, res) => {
+    try {
+        const staffId = req.user.profileId;
+        if (!staffId) {
+            return res.status(400).json({ message: 'User not linked to a staff profile' });
+        }
+
+        const { month, year } = req.query;
+        let query = { staff: staffId };
+
+        if (month && year) {
+            const start = new Date(year, month - 1, 1);
+            const end = new Date(year, month, 0, 23, 59, 59, 999);
+            query.date = { $gte: start, $lte: end };
+        }
+
+        const attendance = await StaffAttendance.find(query)
+            .sort({ date: -1 })
+            .populate('markedBy', 'name');
+
+        res.json(attendance);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     markStaffAttendance,
     getDayStaffAttendance,
-    getStaffAttendanceSummary
+    getStaffAttendanceSummary,
+    getMyStaffAttendance
 };

@@ -108,11 +108,11 @@ const generateFeeReceipt = (fee, student) => {
 
         // Row 2: Student & Parent
         doc.fillColor('#94a3b8').fontSize(8).font('Helvetica-Bold').text("STUDENT NAME", leftColX, currentY);
-        doc.text("PARENT / GUARDIAN", rightColX, currentY, { align: 'right', width: 200 });
+        doc.text("FATHER'S NAME", rightColX, currentY, { align: 'right', width: 200 });
         currentY += 12;
 
         doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text(student.name, leftColX, currentY);
-        const parentName = student.guardian || student.fatherName || 'N/A';
+        const parentName = student.fatherName || 'N/A';
         doc.font('Helvetica').fontSize(11).text(parentName, rightColX, currentY, { align: 'right', width: 200 });
         currentY += 16; // Spacing for next lines
 
@@ -121,7 +121,7 @@ const generateFeeReceipt = (fee, student) => {
         const studentDetails = `${student.className || student.class} - ${student.section} | Roll: ${student.rollNo || '-'}`;
         doc.text(studentDetails, leftColX, currentY);
 
-        const parentPhone = student.primaryPhone || student.phone || '-';
+        const parentPhone = student.fatherMobile || student.primaryPhone || student.phone || '-';
         doc.text(parentPhone, rightColX, currentY, { align: 'right', width: 200 });
         currentY += 12;
 

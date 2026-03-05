@@ -14,7 +14,7 @@ router.use(protect);
 // Teachers can mark and view class attendance
 router.post('/mark', authorize('teacher', 'admin', 'superuser'), markAttendance);
 router.get('/report/:className/:section', authorize('teacher', 'admin', 'superuser'), getClassAttendanceSummary);
-router.get('/:className/:section/:date', authorize('teacher', 'admin', 'superuser'), getAttendanceByClass);
+router.get('/class/:className/:section', authorize('teacher', 'admin', 'superuser'), getAttendanceByClass);
 
 // Students and teachers can view student-specific attendance
 router.get('/student/:studentId', getStudentAttendance);

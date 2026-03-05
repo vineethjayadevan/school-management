@@ -46,7 +46,8 @@ const markAttendance = async (req, res) => {
 // @access  Private (Teacher)
 const getAttendanceByClass = async (req, res) => {
     try {
-        const { className, section, date } = req.params;
+        const { className, section } = req.params;
+        const { date } = req.query;
 
         const searchDate = new Date(date);
         searchDate.setHours(0, 0, 0, 0);

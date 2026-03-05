@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { storageService } from '../../services/storage';
+import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import {
     CheckCircle,
@@ -28,10 +29,19 @@ export default function StaffAttendanceMarking() {
     const [marking, setMarking] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
-
-    const categories = ['All', 'Teaching', 'Teacher', 'Non-Teaching', 'Admin', 'Support'];
+    const [categories, setCategories] = useState(['All']);
 
     useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const { data } = await api.get('/staff-categories');
+                const catNames = data.map(c => c.name);
+                setCategories(['All', ...catNames]);
+            } catch (error) {
+                console.error("Failed to fetch categories", error);
+            }
+        };
+
         const fetchData = async () => {
             setLoading(true);
             try {
@@ -58,6 +68,8 @@ export default function StaffAttendanceMarking() {
                 setLoading(false);
             }
         };
+
+        fetchCategories();
         fetchData();
     }, [date]);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, CheckSquare, Plus, BookOpen, Users,
-    DollarSign, ArrowRight, Star, TrendingUp, CalendarDays, Award
+    DollarSign, ArrowRight, Star, TrendingUp, CalendarDays, Award, ClipboardList
 } from 'lucide-react';
 import { storageService } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';
@@ -245,11 +245,11 @@ export default function TeacherDashboard() {
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             <button
-                                onClick={() => navigate('/teacher/attendance')}
+                                onClick={() => navigate('/teacher/my-attendance')}
                                 className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center gap-2 transition-all border border-white/5"
                             >
-                                <CheckSquare size={20} className="text-emerald-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-tight">Attendance</span>
+                                <ClipboardList size={20} className="text-emerald-400" />
+                                <span className="text-[10px] font-bold uppercase tracking-tight">My Attendance</span>
                             </button>
                             <button
                                 onClick={() => navigate('/teacher/schedule')}

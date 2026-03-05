@@ -415,9 +415,15 @@ export default function StudentDetails() {
                 ? restData.guardianName
                 : (restData.fatherName || restData.motherName || restData.guardian);
 
+            // Synchronize primaryPhone: Use guardian phone if isGuardian is true, else use fatherMobile.
+            const updatedPrimaryPhone = restData.isGuardian
+                ? (restData.guardianPhone || data.emergencyPhone)
+                : (restData.fatherMobile || restData.motherMobile || student.primaryPhone);
+
             const updatedStudent = await storageService.students.update(id, {
                 ...restData,
                 guardian: updatedGuardian,
+                primaryPhone: updatedPrimaryPhone,
                 residentialAddress,
                 permanentAddress,
                 emergencyContact,
@@ -428,6 +434,7 @@ export default function StudentDetails() {
                 conveyanceSlab: parseInt(data.conveyanceSlab), // Convert to number
                 discounts: discounts.filter(d => d.discountAmount > 0) // Only save non-zero discounts
             });
+
 
             await fetchStudent();
             setMode('view');

@@ -42,6 +42,16 @@ export const storageService = {
         getByStudent: async (studentId) => {
             const { data } = await api.get(`/fees/student/${studentId}`);
             return data;
+        },
+        downloadReceipt: async (feeId, receiptNo) => {
+            const response = await api.get(`/fees/${feeId}/receipt`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Receipt-${receiptNo}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         }
     },
     staff: {
@@ -193,6 +203,11 @@ export const storageService = {
         getSummary: async (params) => {
             const queryParams = new URLSearchParams(params).toString();
             const { data } = await api.get(`/staff-attendance/summary?${queryParams}`);
+            return data;
+        },
+        getMyAttendance: async (params = {}) => {
+            const queryParams = new URLSearchParams(params).toString();
+            const { data } = await api.get(`/staff-attendance/my-attendance?${queryParams}`);
             return data;
         }
     },
