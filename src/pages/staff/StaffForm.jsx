@@ -321,13 +321,12 @@ export default function StaffForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Email Address <span className="text-red-500">*</span></label>
+                            <label className="text-sm font-semibold text-slate-700">Email Address</label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                 <input
                                     type="email"
                                     {...register('email', {
-                                        required: 'Email is required',
                                         pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
                                     })}
                                     className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-300 bg-red-50' : 'border-slate-200 focus:border-indigo-500'} focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all`}

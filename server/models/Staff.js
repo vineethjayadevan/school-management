@@ -5,7 +5,7 @@ const staffSchema = mongoose.Schema({
     name: { type: String, required: true },
     role: { type: String, required: true }, // Teacher, Admin, Driver, etc.
     qualification: { type: String },
-    email: { type: String, unique: true },
+    email: { type: String, unique: true, sparse: true },
     phone: { type: String, required: true },
     joiningDate: { type: Date },
     salary: { type: Number }, // Fixed monthly salary
