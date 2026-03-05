@@ -22,49 +22,51 @@ const createUser = async (req, res) => {
 
         // Automatic Profile Linking for Students
         if (role === 'student') {
-            const Student = require('../models/Student');
-            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+            if (req.body.profileId) {
+                // Explicit link from frontend selector
+                userData.profileId = req.body.profileId;
+            } else {
+                const Student = require('../models/Student');
+                const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
 
-            let student = null;
-            // 1. Try Email Match
-            if (email) {
-                student = await Student.findOne({ email: email.toLowerCase() });
-            }
-
-            // 2. Try Normalized Name Match
-            if (!student) {
-                const normalizedSearchName = normalize(name);
-                const allStudents = await Student.find({});
-                student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
-            }
-
-            if (student) {
-                userData.profileId = student._id;
-                console.log(`Automatic Link (User API): User ${email} -> Student ${student.name} (${student.admissionNo})`);
+                let student = null;
+                if (email) {
+                    student = await Student.findOne({ email: email.toLowerCase() });
+                }
+                if (!student) {
+                    const normalizedSearchName = normalize(name);
+                    const allStudents = await Student.find({});
+                    student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
+                }
+                if (student) {
+                    userData.profileId = student._id;
+                    console.log(`Auto Link: User ${email} -> Student ${student.name}`);
+                }
             }
         }
 
         // Automatic Profile Linking for Teachers
         if (role === 'teacher') {
-            const Staff = require('../models/Staff');
-            const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
+            if (req.body.profileId) {
+                // Explicit link from frontend selector
+                userData.profileId = req.body.profileId;
+            } else {
+                const Staff = require('../models/Staff');
+                const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
 
-            let staff = null;
-            // 1. Try Email Match
-            if (email) {
-                staff = await Staff.findOne({ email: email.toLowerCase() });
-            }
-
-            // 2. Try Name Match (Fuzzy/Normalized)
-            if (!staff) {
-                const normalizedSearchName = normalize(name);
-                const allStaff = await Staff.find({ role: 'Teacher' }); // Only match with teachers
-                staff = allStaff.find(s => normalize(s.name) === normalizedSearchName);
-            }
-
-            if (staff) {
-                userData.profileId = staff._id;
-                console.log(`Automatic Link (User API): User ${email} -> Teacher ${staff.name} (${staff._id})`);
+                let staff = null;
+                if (email) {
+                    staff = await Staff.findOne({ email: email.toLowerCase() });
+                }
+                if (!staff) {
+                    const normalizedSearchName = normalize(name);
+                    const allStaff = await Staff.find({});
+                    staff = allStaff.find(s => normalize(s.name) === normalizedSearchName);
+                }
+                if (staff) {
+                    userData.profileId = staff._id;
+                    console.log(`Auto Link: User ${email} -> Staff ${staff.name}`);
+                }
             }
         }
 
@@ -147,9 +149,44 @@ const updateUser = async (req, res) => {
     }
 };
 
+// @desc    Get unlinked Staff or Student profiles (for user creation dropdown)
+// @route   GET /api/users/unlinked-profiles?type=staff|student
+// @access  Private/Superuser
+const getUnlinkedProfiles = async (req, res) => {
+    try {
+        const { type } = req.query;
+
+        // Find all profileIds already linked to a user account
+        const linkedUsers = await User.find({ profileId: { $exists: true, $ne: null } }).select('profileId');
+        const linkedIds = linkedUsers.map(u => u.profileId.toString());
+
+        if (type === 'staff') {
+            const Staff = require('../models/Staff');
+            const profiles = await Staff.find({
+                _id: { $nin: linkedIds }
+            }).select('_id name email role category subcategory').sort({ name: 1 });
+            return res.json(profiles);
+        }
+
+        if (type === 'student') {
+            const Student = require('../models/Student');
+            const profiles = await Student.find({
+                _id: { $nin: linkedIds },
+                isActive: true
+            }).select('_id name email admissionNo className section').sort({ name: 1 });
+            return res.json(profiles);
+        }
+
+        res.status(400).json({ message: 'type must be "staff" or "student"' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getUsers,
     getUsersList,
+    getUnlinkedProfiles,
     updateUser
 };

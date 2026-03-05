@@ -192,31 +192,70 @@ const getTeacherSalaryHistory = async (req, res) => {
 // @desc    Get Teacher Profile
 // @route   GET /api/teacher/profile
 // @access  Private (Teacher)
+const { signUrl } = require('./uploadController');
+
 const getTeacherProfile = async (req, res) => {
     try {
         const teacherId = req.user.profileId;
-        const teacher = await Staff.findById(teacherId).lean();
+        const teacher = await Staff.findById(teacherId)
+            .populate('subjects', 'name code')
+            .lean();
 
         if (!teacher) {
             return res.status(404).json({ message: 'Teacher profile not found' });
         }
 
-        // Robust username fetch: Try req.user first, then direct DB query
+        // Sign the photoUrl if it exists
+        if (teacher.photoUrl) {
+            teacher.photoUrl = await signUrl(teacher.photoUrl);
+        }
+
+        // Fetch username
         let username = req.user.username;
         if (!username) {
             const user = await User.findOne({ profileId: teacherId }).select('username');
             username = user?.username;
         }
 
+        // Find classes where this teacher is class incharge
+        const classesAsIncharge = await Class.find({
+            'sections.classTeacher': teacherId
+        }).select('name sections').lean();
+
+        const classIncharge = [];
+        for (const cls of classesAsIncharge) {
+            for (const sec of cls.sections) {
+                if (sec.classTeacher?.toString() === teacherId.toString()) {
+                    classIncharge.push({ className: cls.name, section: sec.name });
+                }
+            }
+        }
+
+        // Unique subjects taught (from timetable)
+        const Timetable = require('../models/Timetable');
+        const timetableEntries = await Timetable.find({
+            'periods.teacher': teacherId
+        }).lean();
+
+        const subjectsTaught = new Set();
+        timetableEntries.forEach(tt => {
+            tt.periods.forEach(p => {
+                if (p.teacher?.toString() === teacherId.toString() && p.subject) {
+                    subjectsTaught.add(p.subject);
+                }
+            });
+        });
+
         res.json({
             ...teacher,
-            username: username || 'N/A'
+            username: username || 'N/A',
+            classIncharge,
+            subjectsTaughtInTimetable: [...subjectsTaught],
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 module.exports = {
     getTeacherStats,

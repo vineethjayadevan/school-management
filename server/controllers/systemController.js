@@ -68,7 +68,7 @@ const getUsers = async (req, res) => {
 // @route   POST /api/system/users
 // @access  Private/SuperAdmin
 const createUser = async (req, res) => {
-    const { name, username, password, role, email } = req.body;
+    const { name, username, password, role, email, profileId } = req.body;
 
     try {
         const userExists = await User.findOne({ username });
@@ -95,35 +95,45 @@ const createUser = async (req, res) => {
             isActive: true
         };
 
-        // Automatic Profile Linking for Students
-        if (role === 'student') {
-            const Student = require('../models/Student');
+        // If an explicit profileId was provided from the frontend selector, use it
+        if (profileId) {
+            userData.profileId = profileId;
+        } else {
+            // Fall back to automatic linking
             const normalize = (val) => val ? val.toLowerCase().replace(/[^a-z0-9]/g, '').trim() : '';
 
-            let student = null;
-            // 1. Try Email Match
-            if (email) {
-                student = await Student.findOne({ email: email.toLowerCase() });
-            }
-
-            // 2. Try Admission No Match from username (e.g. UN-2025-001)
-            if (!student && username) {
-                const admissionMatch = username.match(/UN-\d{4}-\d+/i);
-                if (admissionMatch) {
-                    student = await Student.findOne({ admissionNo: admissionMatch[0].toUpperCase() });
+            if (role === 'student') {
+                const Student = require('../models/Student');
+                let student = null;
+                if (email) student = await Student.findOne({ email: email.toLowerCase() });
+                if (!student && username) {
+                    const admissionMatch = username.match(/UN-\d{4}-\d+/i);
+                    if (admissionMatch) student = await Student.findOne({ admissionNo: admissionMatch[0].toUpperCase() });
+                }
+                if (!student) {
+                    const normalizedSearchName = normalize(name);
+                    const allStudents = await Student.find({});
+                    student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
+                }
+                if (student) {
+                    userData.profileId = student._id;
+                    console.log(`Auto Link: User ${username} -> Student ${student.name}`);
                 }
             }
 
-            // 3. Try Normalized Name Match
-            if (!student) {
-                const normalizedSearchName = normalize(name);
-                const allStudents = await Student.find({});
-                student = allStudents.find(s => normalize(s.name) === normalizedSearchName);
-            }
-
-            if (student) {
-                userData.profileId = student._id;
-                console.log(`Automatic Link: User ${username} -> Student ${student.name} (${student.admissionNo})`);
+            if (role === 'teacher') {
+                const Staff = require('../models/Staff');
+                let staff = null;
+                if (email) staff = await Staff.findOne({ email: email.toLowerCase() });
+                if (!staff) {
+                    const normalizedSearchName = normalize(name);
+                    const allStaff = await Staff.find({});
+                    staff = allStaff.find(s => normalize(s.name) === normalizedSearchName);
+                }
+                if (staff) {
+                    userData.profileId = staff._id;
+                    console.log(`Auto Link: User ${username} -> Staff ${staff.name}`);
+                }
             }
         }
 

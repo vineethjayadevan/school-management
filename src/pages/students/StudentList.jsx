@@ -119,17 +119,25 @@ export default function StudentList() {
                 const studentClass = student.className || student.class;
                 matchesClass = selectedClass === 'All' || studentClass === selectedClass;
             } else {
-                // Check if it's the current year
-                if (student.currentAcademicYear === selectedYear) {
+                // Normalize: currentAcademicYear can be a plain ID string or a populated object
+                const studentYearId =
+                    (typeof student.currentAcademicYear === 'object' && student.currentAcademicYear !== null)
+                        ? (student.currentAcademicYear._id?.toString() || student.currentAcademicYear.toString())
+                        : student.currentAcademicYear?.toString();
+
+                if (studentYearId === selectedYear) {
                     matchesYear = true;
                     const studentClass = student.className || student.class;
                     matchesClass = selectedClass === 'All' || studentClass === selectedClass;
                 }
                 // Check history if not found in current year
                 else if (student.academicHistory && student.academicHistory.length > 0) {
-                    const historyEntry = student.academicHistory.find(h =>
-                        h.academicYear?._id === selectedYear || h.academicYear === selectedYear
-                    );
+                    const historyEntry = student.academicHistory.find(h => {
+                        const hId = (typeof h.academicYear === 'object' && h.academicYear !== null)
+                            ? (h.academicYear._id?.toString() || h.academicYear.toString())
+                            : h.academicYear?.toString();
+                        return hId === selectedYear;
+                    });
                     if (historyEntry) {
                         matchesYear = true;
                         matchesClass = selectedClass === 'All' || historyEntry.className === selectedClass;

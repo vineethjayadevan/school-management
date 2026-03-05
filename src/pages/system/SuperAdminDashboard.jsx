@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { systemService } from '../../services/systemApi';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2, Search, Filter, Edit } from 'lucide-react';
+import { Users, Plus, KeyRound, ShieldAlert, LogOut, Loader2, AlertCircle, CheckCircle2, Search, Filter, Edit, Link, CheckCircle, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 
 const SuperAdminDashboard = () => {
     const { user, logout } = useAuth();
@@ -18,10 +19,15 @@ const SuperAdminDashboard = () => {
     const [roleFilter, setRoleFilter] = useState('');
 
     // Form states
-    const [newUserForm, setNewUserForm] = useState({ name: '', username: '', email: '', password: '', role: 'admin' });
+    const [newUserForm, setNewUserForm] = useState({ name: '', username: '', email: '', password: '', role: 'admin', profileId: '' });
     const [editUserForm, setEditUserForm] = useState({ name: '', role: '', email: '' });
     const [resetForm, setResetForm] = useState({ newPassword: '' });
     const [submitting, setSubmitting] = useState(false);
+
+    // Profile linking state
+    const [unlinkedProfiles, setUnlinkedProfiles] = useState([]);
+    const [loadingProfiles, setLoadingProfiles] = useState(false);
+    const [selectedProfile, setSelectedProfile] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -44,16 +50,59 @@ const SuperAdminDashboard = () => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await systemService.createUser(newUserForm);
+            await systemService.createUser({
+                ...newUserForm,
+                profileId: newUserForm.profileId || undefined,
+                email: newUserForm.email || undefined,
+            });
             toast.success('User created successfully');
             setShowCreateModal(false);
-            setNewUserForm({ name: '', username: '', email: '', password: '', role: 'admin' });
+            setNewUserForm({ name: '', username: '', email: '', password: '', role: 'admin', profileId: '' });
+            setSelectedProfile(null);
+            setUnlinkedProfiles([]);
             fetchUsers();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to create user');
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const fetchUnlinkedProfiles = async (type) => {
+        setLoadingProfiles(true);
+        setSelectedProfile(null);
+        setNewUserForm(prev => ({ ...prev, profileId: '' }));
+        try {
+            const { data } = await api.get(`/users/unlinked-profiles?type=${type}`);
+            setUnlinkedProfiles(data);
+        } catch (error) {
+            toast.error('Failed to load profiles');
+        } finally {
+            setLoadingProfiles(false);
+        }
+    };
+
+    const handleProfileSelect = (profileId) => {
+        const profile = unlinkedProfiles.find(p => p._id === profileId);
+        setSelectedProfile(profile);
+        if (profile) {
+            setNewUserForm(prev => ({
+                ...prev,
+                profileId,
+                name: profile.name,
+                email: profile.email || '',
+            }));
+        } else {
+            setNewUserForm(prev => ({ ...prev, profileId: '' }));
+        }
+    };
+
+    const handleRoleChange = (role) => {
+        setNewUserForm(prev => ({ ...prev, role, profileId: '', name: '', email: '' }));
+        setSelectedProfile(null);
+        if (role === 'teacher') fetchUnlinkedProfiles('staff');
+        else if (role === 'student') fetchUnlinkedProfiles('student');
+        else setUnlinkedProfiles([]);
     };
 
     const handleResetPassword = async (e) => {
@@ -353,6 +402,7 @@ const SuperAdminDashboard = () => {
                                     onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm"
                                     placeholder="e.g. John Doe"
+                                    readOnly={!!selectedProfile}
                                 />
                             </div>
 
@@ -376,6 +426,7 @@ const SuperAdminDashboard = () => {
                                         onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm"
                                         placeholder="jane@example.com"
+                                        readOnly={!!(selectedProfile && selectedProfile.email)}
                                     />
                                 </div>
                             </div>
@@ -396,7 +447,7 @@ const SuperAdminDashboard = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">System Role</label>
                                 <select
                                     value={newUserForm.role}
-                                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value })}
+                                    onChange={(e) => handleRoleChange(e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow sm:text-sm bg-white"
                                 >
                                     <option value="superadmin">Super Admin (Highest Privilege)</option>
@@ -409,6 +460,46 @@ const SuperAdminDashboard = () => {
                                     <option value="student">Student</option>
                                 </select>
                             </div>
+
+                            {/* Profile Selector — only for teacher/student */}
+                            {(newUserForm.role === 'teacher' || newUserForm.role === 'student') && (
+                                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-2">
+                                    <label className="block text-sm font-medium text-indigo-700 flex items-center gap-1.5">
+                                        <Link size={14} />
+                                        Link to {newUserForm.role === 'teacher' ? 'Staff' : 'Student'} Profile
+                                    </label>
+                                    {loadingProfiles ? (
+                                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                                            <Loader2 size={14} className="animate-spin" /> Loading profiles...
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={selectedProfile?._id || ''}
+                                            onChange={e => handleProfileSelect(e.target.value)}
+                                            className="w-full px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-sm bg-white"
+                                        >
+                                            <option value="">— Select a profile —</option>
+                                            {unlinkedProfiles.map(p => (
+                                                <option key={p._id} value={p._id}>
+                                                    {p.name}
+                                                    {p.admissionNo ? ` (${p.admissionNo} · ${p.className}-${p.section})` : ''}
+                                                    {p.category ? ` · ${p.category}` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                    {selectedProfile && (
+                                        <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                                            <CheckCircle size={12} /> Profile selected — name &amp; email auto-filled below
+                                        </div>
+                                    )}
+                                    {!loadingProfiles && unlinkedProfiles.length === 0 && (
+                                        <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                                            <AlertCircle size={12} /> No unlinked {newUserForm.role === 'teacher' ? 'staff' : 'student'} profiles found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="pt-4 mt-2 flex justify-end gap-3 border-t border-slate-100">
                                 <button
