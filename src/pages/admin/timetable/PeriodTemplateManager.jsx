@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Clock, Coffee, Save, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Clock, Coffee, Save, CheckCircle, AlertTriangle } from 'lucide-react';
 import api from '../../../services/api';
+import { useToast } from '../../../components/ui/Toast';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -13,6 +14,7 @@ const defaultSlot = () => ({
 });
 
 export default function PeriodTemplateManager() {
+    const { addToast } = useToast();
     const [academicYears, setAcademicYears] = useState([]);
     const [selectedYear, setSelectedYear] = useState('');
     const [workingDays, setWorkingDays] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
@@ -21,6 +23,7 @@ export default function PeriodTemplateManager() {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [validationError, setValidationError] = useState(null);
 
     useEffect(() => {
         api.get('/academic-years').then(r => {
@@ -94,6 +97,25 @@ export default function PeriodTemplateManager() {
 
     const handleSave = async () => {
         if (!selectedYear) return;
+
+        // Validation
+        for (let i = 0; i < slots.length; i++) {
+            const slot = slots[i];
+            if (!slot.startTime || !slot.endTime) {
+                const msg = `Slot ${i + 1} ("${slot.label}") is missing start or end time.`;
+                setValidationError(msg);
+                addToast(msg, 'error');
+                return;
+            }
+            if (slot.startTime >= slot.endTime) {
+                const msg = `Slot ${i + 1} ("${slot.label}"): start time must be before end time.`;
+                setValidationError(msg);
+                addToast(msg, 'error');
+                return;
+            }
+        }
+        setValidationError(null);
+
         setSaving(true);
         try {
             await api.post('/period-template', {
@@ -103,9 +125,10 @@ export default function PeriodTemplateManager() {
                 slots: slots.map((s, i) => ({ ...s, slotNumber: i + 1 }))
             });
             setSaved(true);
+            addToast('Period template saved!', 'success');
             setTimeout(() => setSaved(false), 3000);
         } catch (err) {
-            console.error(err);
+            addToast(err.response?.data?.message || 'Failed to save template', 'error');
         } finally {
             setSaving(false);
         }
@@ -256,6 +279,11 @@ export default function PeriodTemplateManager() {
                     {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Period Template'}
                 </button>
                 {saved && <span className="text-sm text-emerald-600 font-medium">✓ Template saved successfully</span>}
+                {validationError && (
+                    <span className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertTriangle size={14} />{validationError}
+                    </span>
+                )}
             </div>
         </div>
     );

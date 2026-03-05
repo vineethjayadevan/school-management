@@ -27,7 +27,7 @@ export default function StaffAttendanceReport() {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const categories = ['All', 'Teacher', 'Non-Teaching', 'Admin', 'Support'];
+    const categories = ['All', 'Teaching', 'Teacher', 'Non-Teaching', 'Admin', 'Support'];
 
     const fetchReport = async () => {
         setLoading(true);

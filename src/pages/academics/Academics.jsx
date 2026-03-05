@@ -72,8 +72,12 @@ export default function Academics() {
     };
 
     // Filter staff
-    const teachers = staff.filter(s => s.role === 'Teacher' || s.category === 'Teacher');
-    const nannies = staff.filter(s => s.role === 'Non-Teaching' || s.category === 'Non-Teaching');
+    const teachers = staff.filter(s =>
+        s.category === 'Teaching' ||
+        s.role?.toLowerCase().includes('teacher') ||
+        s.category === 'Teacher' // Legacy compatibility
+    );
+    const nannies = staff.filter(s => s.role === 'Non-Teaching' || s.category === 'Non-Teaching' || s.category === 'Support');
 
     return (
         <div className="space-y-6">

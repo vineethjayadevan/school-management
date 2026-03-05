@@ -11,9 +11,52 @@ const saveTimetable = async (req, res) => {
             return res.status(400).json({ message: 'academicYear, className, section, and periodTemplate are required.' });
         }
 
+        // Filter out break slots (no subject) before saving
+        const filteredSchedule = (schedule || []).map(dayEntry => ({
+            ...dayEntry,
+            slots: dayEntry.slots.filter(slot => slot.subject)
+        }));
+
+        // Teacher conflict detection: check if any teacher is double-booked
+        const allOtherTimetables = await Timetable.find({
+            academicYear,
+            $or: [{ className: { $ne: className } }, { section: { $ne: section } }]
+        }).lean();
+
+        const conflicts = [];
+        for (const dayEntry of filteredSchedule) {
+            for (const slot of dayEntry.slots) {
+                if (!slot.teacher) continue;
+                const teacherId = slot.teacher.toString();
+                for (const tt of allOtherTimetables) {
+                    const dayMatch = tt.schedule?.find(d => d.day === dayEntry.day);
+                    if (!dayMatch) continue;
+                    const slotMatch = dayMatch.slots?.find(s =>
+                        s.slotNumber === slot.slotNumber &&
+                        s.teacher?.toString() === teacherId
+                    );
+                    if (slotMatch) {
+                        conflicts.push({
+                            day: dayEntry.day,
+                            slotNumber: slot.slotNumber,
+                            conflictingClass: `${tt.className}-${tt.section}`,
+                            teacherId
+                        });
+                    }
+                }
+            }
+        }
+
+        if (conflicts.length > 0) {
+            return res.status(409).json({
+                message: 'Teacher conflict detected',
+                conflicts
+            });
+        }
+
         const timetable = await Timetable.findOneAndUpdate(
             { academicYear, className, section },
-            { academicYear, className, section, periodTemplate, schedule: schedule || [] },
+            { academicYear, className, section, periodTemplate, schedule: filteredSchedule },
             { upsert: true, new: true, runValidators: true }
         )
             .populate('schedule.slots.subject', 'name code type')

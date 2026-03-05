@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, CheckCircle, Grid3X3, X, ChevronDown } from 'lucide-react';
+import { Save, CheckCircle, Grid3X3, X, AlertTriangle } from 'lucide-react';
 import api from '../../../services/api';
+import { useToast } from '../../../components/ui/Toast';
 
 const SUBJECT_TYPE_COLORS = {
     'Core': 'bg-indigo-50 border-indigo-200 text-indigo-800',
@@ -65,6 +66,7 @@ function CellPopover({ slot, periodSlot, daySubjects, staffList, onSave, onClose
 }
 
 export default function TimetableBuilder() {
+    const { addToast } = useToast();
     const [academicYears, setAcademicYears] = useState([]);
     const [classes, setClasses] = useState([]);
     const [staffList, setStaffList] = useState([]);
@@ -81,6 +83,7 @@ export default function TimetableBuilder() {
     const [activeCell, setActiveCell] = useState(null); // { day, slotNumber }
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [saveError, setSaveError] = useState(null);
     const [loading, setLoading] = useState(false);
 
     // Initial data load
@@ -92,15 +95,22 @@ export default function TimetableBuilder() {
         ]).then(([yearsRes, classesRes, staffRes]) => {
             setAcademicYears(yearsRes.data || []);
             setClasses(classesRes.data || []);
-            setStaffList(staffRes.data || []);
+            // Only show teaching staff in teacher dropdown
+            const teachingStaff = (staffRes.data || []).filter(s =>
+                s.category === 'Teacher' ||
+                s.category === 'Teaching' ||
+                s.role?.toLowerCase().includes('teacher')
+            );
+            setStaffList(teachingStaff);
             const active = yearsRes.data?.find(y => y.isActive);
             if (active) setSelectedYear(active._id);
         });
     }, []);
 
-    // When year changes, load period template
+    // When year changes, load period template and clear stale data
     useEffect(() => {
         if (!selectedYear) return;
+        setClassSubjects([]);
         api.get(`/period-template?academicYear=${selectedYear}`)
             .then(r => setTemplate(r.data || null));
     }, [selectedYear]);
@@ -160,16 +170,20 @@ export default function TimetableBuilder() {
     const buildScheduleArray = () => {
         return workingDays.map(day => ({
             day,
-            slots: slots.map(slot => ({
-                slotNumber: slot.slotNumber,
-                ...(schedule[day]?.[slot.slotNumber] || { subject: null, teacher: null, note: '' })
-            }))
+            // Skip break slots — the template is source of truth for breaks
+            slots: slots
+                .filter(slot => !slot.isBreak)
+                .map(slot => ({
+                    slotNumber: slot.slotNumber,
+                    ...(schedule[day]?.[slot.slotNumber] || { subject: null, teacher: null, note: '' })
+                }))
         }));
     };
 
     const handleSave = async () => {
         if (!selectedYear || !selectedClass || !selectedSection || !template) return;
         setSaving(true);
+        setSaveError(null);
         try {
             await api.post('/timetable', {
                 academicYear: selectedYear,
@@ -179,9 +193,20 @@ export default function TimetableBuilder() {
                 schedule: buildScheduleArray()
             });
             setSaved(true);
+            addToast('Timetable saved successfully!', 'success');
             setTimeout(() => setSaved(false), 3000);
         } catch (err) {
-            console.error(err);
+            const errData = err.response?.data;
+            if (errData?.conflicts?.length > 0) {
+                const c = errData.conflicts[0];
+                const msg = `Teacher conflict: already assigned to ${c.conflictingClass} on ${c.day} (Slot ${c.slotNumber})`;
+                setSaveError(msg);
+                addToast(msg, 'error');
+            } else {
+                const msg = errData?.message || 'Failed to save timetable';
+                setSaveError(msg);
+                addToast(msg, 'error');
+            }
         } finally {
             setSaving(false);
         }
@@ -239,6 +264,12 @@ export default function TimetableBuilder() {
             {selectedYear && selectedClass && classSubjects.length === 0 && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
                     ⚠️ No subjects mapped for <strong>{selectedClass}</strong>. Go to <strong>Subject Mapping</strong> tab first.
+                </div>
+            )}
+            {saveError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
+                    <AlertTriangle size={15} className="flex-shrink-0" />
+                    {saveError}
                 </div>
             )}
 

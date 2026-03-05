@@ -26,8 +26,9 @@ export default function TeacherSchedule() {
 
     // Helper to get sessions for a specific day
     const getSessionsForDay = (day) => {
-        return schedule.filter(s => s.dayOfWeek === day)
-            .sort((a, b) => a.periods.startTime.localeCompare(b.periods.startTime));
+        return schedule
+            .filter(s => s.day === day)
+            .sort((a, b) => a.slotNumber - b.slotNumber);
     };
 
     if (loading) {
@@ -106,7 +107,9 @@ export default function TeacherSchedule() {
                                         >
                                             <div className="absolute left-0 top-3 bottom-3 w-1 bg-indigo-400 rounded-full group-hover:bg-indigo-600 transition-colors"></div>
                                             <div className="flex justify-between items-start mb-1">
-                                                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-700">{session.periods.subject}</h4>
+                                                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-700">
+                                                    {session.subject?.name || 'Period'}
+                                                </h4>
                                                 <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">
                                                     {session.className}-{session.section}
                                                 </span>
@@ -114,12 +117,15 @@ export default function TeacherSchedule() {
                                             <div className="flex items-center gap-4 text-slate-500">
                                                 <div className="flex items-center gap-1.5 text-[11px] font-medium">
                                                     <Clock size={12} className="text-slate-400" />
-                                                    {session.periods.startTime} - {session.periods.endTime}
+                                                    Slot {session.slotNumber}
                                                 </div>
+                                                {session.note && (
+                                                    <div className="text-[11px] text-slate-400 italic">{session.note}</div>
+                                                )}
                                             </div>
                                         </div>
-                                    )
-                                    ))}
+                                    ))
+                                )}
                             </div>
                         </div>
                     );

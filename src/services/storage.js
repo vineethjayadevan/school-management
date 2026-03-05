@@ -211,10 +211,12 @@ export const storageService = {
             data.schedule.forEach(dayEntry => {
                 dayEntry.slots.forEach(slot => {
                     if (slot.subject) {
-                        const templatePeriod = data.periodTemplate.periods.find(p => p.slotNumber === slot.slotNumber);
+                        // periodTemplate uses 'slots', not 'periods'
+                        const templateSlot = data.periodTemplate.slots?.find(p => p.slotNumber === slot.slotNumber);
                         sessions.push({
                             periods: {
-                                startTime: templatePeriod ? templatePeriod.startTime : `Slot ${slot.slotNumber}`,
+                                startTime: templateSlot ? templateSlot.startTime : `Slot ${slot.slotNumber}`,
+                                endTime: templateSlot ? templateSlot.endTime : '',
                                 subject: slot.subject.name,
                                 teacher: slot.teacher
                             },

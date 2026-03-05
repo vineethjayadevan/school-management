@@ -29,7 +29,7 @@ export default function StaffAttendanceMarking() {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
 
-    const categories = ['All', 'Teacher', 'Non-Teaching', 'Admin', 'Support'];
+    const categories = ['All', 'Teaching', 'Teacher', 'Non-Teaching', 'Admin', 'Support'];
 
     useEffect(() => {
         const fetchData = async () => {

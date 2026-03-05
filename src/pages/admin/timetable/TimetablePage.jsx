@@ -31,7 +31,6 @@ export default function TimetablePage() {
                 {TABS.map((tab, idx) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    const isLocked = idx > 0 && activeTab === 'periods'; // Soft guide — not hard lock
                     return (
                         <button
                             key={tab.id}

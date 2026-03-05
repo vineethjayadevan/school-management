@@ -36,7 +36,7 @@ export default function StaffForm() {
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
         defaultValues: {
             role: 'Teacher',
-            category: 'Teaching',
+            category: 'Teacher',
             isMarried: false,
             joiningDate: new Date().toISOString().split('T')[0],
             status: 'Active'
