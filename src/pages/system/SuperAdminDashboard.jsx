@@ -167,32 +167,32 @@ const SuperAdminDashboard = () => {
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Top Navigation */}
-            <nav className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-20">
+            <nav className="bg-slate-900 border-b border-white/5 px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                    <div className="bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/20">
+                    <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20 shadow-inner">
                         <ShieldAlert className="w-6 h-6 text-indigo-400" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-white leading-tight">System Portal</h1>
-                        <p className="text-xs text-slate-400 font-medium tracking-wide">LEVEL: SUPER_ADMIN</p>
+                        <h1 className="text-xl font-bold text-white leading-tight tracking-tight">System Portal</h1>
+                        <p className="text-[10px] text-indigo-400 font-bold tracking-[0.2em] uppercase">Super Admin Access</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3 min-w-0 pr-4 border-r border-slate-800">
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3 pr-6 border-r border-slate-800">
                         <div className="hidden sm:block text-right">
-                            <p className="text-sm font-medium text-white">{user?.name}</p>
-                            <p className="text-xs text-slate-400">@{user?.username || 'system'}</p>
+                            <p className="text-sm font-bold text-white transition-colors hover:text-indigo-400 cursor-default">{user?.name}</p>
+                            <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">@{user?.username || 'system'}</p>
                         </div>
-                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-indigo-300 font-bold uppercase shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-indigo-500/30 text-indigo-300 font-bold text-lg uppercase shadow-lg transform hover:scale-105 transition-transform cursor-pointer">
                             {user?.name?.charAt(0) || 'S'}
                         </div>
                     </div>
                     <button
                         onClick={() => { logout(); window.location.href = '/login'; }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 rounded-xl text-sm font-bold border border-slate-700/50 hover:border-rose-500/30 transition-all group shadow-sm"
                     >
-                        <LogOut className="w-4 h-4" />
-                        <span className="hidden sm:inline">Logout</span>
+                        <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        <span>Sign Out</span>
                     </button>
                 </div>
             </nav>

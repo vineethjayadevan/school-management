@@ -12,7 +12,8 @@ import {
     Calendar,
     FileSpreadsheet,
     Search,
-    ChevronDown
+    ChevronDown,
+    ArrowUpRight
 } from 'lucide-react';
 import api from '../../services/api'; // Keep existing imports
 import { useAuth } from '../../context/AuthContext';
@@ -641,6 +642,7 @@ export default function BoardDashboard() {
                                     <th className="px-6 py-4">Type</th>
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4">Description</th>
+                                    <th className="px-6 py-4 text-center">Receipt</th>
                                     <th className="px-6 py-4">User</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
                                 </tr>
@@ -687,6 +689,21 @@ export default function BoardDashboard() {
                                             title={t.title || t.description || ''}
                                         >
                                             <HighlightText text={t.title || t.description || '-'} highlight={searchQuery} />
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                            {t.receiptUrl ? (
+                                                <a
+                                                    href={t.receiptUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    title="View Receipt"
+                                                >
+                                                    <ArrowUpRight size={16} />
+                                                </a>
+                                            ) : (
+                                                <span className="text-slate-300">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {t.addedBy?.name || 'Unknown'}

@@ -58,9 +58,13 @@ import TeacherProfile from './pages/teacher/TeacherProfile';
 import AttendanceMarking from './pages/teacher/AttendanceMarking';
 import MyAttendance from './pages/teacher/MyAttendance';
 import TeacherSchedule from './pages/teacher/TeacherSchedule';
+import ExamDashboard from './pages/academics/exams/ExamDashboard';
+
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentProfile from './pages/student/StudentProfile';
 import StudentFees from './pages/student/StudentFees';
+import StudentExams from './pages/student/StudentExams';
+import StudentTimetableView from './pages/students/StudentTimetableView';
 
 import SystemLogin from './pages/system/SystemLogin';
 import SuperAdminDashboard from './pages/system/SuperAdminDashboard';
@@ -264,6 +268,7 @@ function App() {
                     <Route path="my-attendance" element={<MyAttendance />} />
                     <Route path="assignments" element={<div>Assignments Placeholder</div>} />
                     <Route path="schedule" element={<TeacherSchedule />} />
+                    <Route path="exams" element={<ExamDashboard />} />
                 </Route>
 
                 {/* STUDENT ROUTES */}
@@ -277,6 +282,8 @@ function App() {
                     <Route path="schedule" element={<div>My Schedule Placeholder</div>} />
                     <Route path="assignments" element={<div>My Assignments Placeholder</div>} />
                     <Route path="fees" element={<StudentFees />} />
+                    <Route path="timetable" element={<StudentTimetableView />} />
+                    <Route path="exams" element={<StudentExams />} />
                 </Route>
 
                 {/* BOARD MEMBER ROUTES */}

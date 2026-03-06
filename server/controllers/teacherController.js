@@ -4,6 +4,9 @@ const Salary = require('../models/Salary');
 const Staff = require('../models/Staff');
 const User = require('../models/User');
 const Subject = require('../models/Subject');
+const ExamSchedule = require('../models/ExamSchedule');
+const ExamMark = require('../models/ExamMark');
+const ExamCategory = require('../models/ExamCategory');
 
 // @desc    Get Teacher Statistics (Classes, Students)
 // @route   GET /api/teacher/stats
@@ -257,10 +260,97 @@ const getTeacherProfile = async (req, res) => {
     }
 };
 
+// @desc    Get Consolidated Marks for a Class Section (for Class Teacher)
+// @route   GET /api/teacher/classes/:className/:sectionName/marks
+// @access  Private (Teacher)
+const getClassMarks = async (req, res) => {
+    try {
+        const { className, sectionName } = req.params;
+        const teacherId = req.user.profileId;
+
+        // 1. Verify this teacher is the class teacher for this section
+        const cls = await Class.findOne({
+            name: className,
+            "sections.name": sectionName,
+            "sections.classTeacher": teacherId
+        }).lean();
+
+        if (!cls) {
+            return res.status(403).json({ message: "Access denied. You are not the class teacher for this section." });
+        }
+
+        // 2. Fetch all active students in this section
+        const students = await Student.find({
+            className,
+            section: sectionName,
+            studentStatus: 'Active'
+        }).select('name admissionNo rollNo').sort({ rollNo: 1, name: 1 }).lean();
+
+        // 3. Fetch all exam schedules for this class/section
+        const schedules = await ExamSchedule.find({
+            class: cls._id,
+            section: sectionName
+        })
+            .populate('examCategory', 'name academicYear')
+            .populate('subject', 'name code')
+            .lean();
+
+        // 4. Fetch all marks for these schedules
+        const scheduleIds = schedules.map(s => s._id);
+        const marks = await ExamMark.find({
+            examSchedule: { $in: scheduleIds }
+        }).lean();
+
+        // 5. Structure data: Group by Category -> Subject
+        const reportData = {
+            students,
+            categories: []
+        };
+
+        const categoriesMap = {};
+
+        schedules.forEach(sched => {
+            const catId = sched.examCategory._id.toString();
+            if (!categoriesMap[catId]) {
+                categoriesMap[catId] = {
+                    _id: catId,
+                    name: sched.examCategory.name,
+                    subjects: []
+                };
+            }
+
+            const subjectMarks = {};
+            marks.filter(m => m.examSchedule.toString() === sched._id.toString()).forEach(m => {
+                subjectMarks[m.student.toString()] = {
+                    marksObtained: m.marksObtained,
+                    grade: m.grade,
+                    status: m.status
+                };
+            });
+
+            categoriesMap[catId].subjects.push({
+                scheduleId: sched._id,
+                subjectName: sched.subject.name,
+                subjectCode: sched.subject.code,
+                maxMarks: sched.maxMarks,
+                passingMarks: sched.passingMarks,
+                marks: subjectMarks
+            });
+        });
+
+        reportData.categories = Object.values(categoriesMap);
+
+        res.json(reportData);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getTeacherStats,
     getTeacherClasses,
     getClassStudents,
     getTeacherSalaryHistory,
-    getTeacherProfile
+    getTeacherProfile,
+    getClassMarks
 };

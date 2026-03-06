@@ -137,6 +137,10 @@ export const storageService = {
             const { data } = await api.get(`/teacher/classes/${className}/${sectionName}/students`);
             return data;
         },
+        getClassMarks: async (className, sectionName) => {
+            const { data } = await api.get(`/teacher/classes/${className}/${sectionName}/marks`);
+            return data;
+        },
         getSalaryHistory: async () => {
             const { data } = await api.get('/teacher/salary-history');
             return data;

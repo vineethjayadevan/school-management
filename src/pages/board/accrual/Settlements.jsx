@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { useToast } from '../../../components/ui/Toast';
+import { compressImage } from '../../../utils/imageCompression';
 
 export default function Settlements() {
     const { addToast } = useToast();
@@ -40,7 +41,8 @@ export default function Settlements() {
         documentType: 'Receipt', // Default for Payment
         documentNumber: '',
         category: '',
-        subcategory: ''
+        subcategory: '',
+        attachment: null // Store selected file
     });
 
     // Dropdown Data
@@ -137,7 +139,29 @@ export default function Settlements() {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.post('/accrual/settlements', formData);
+            let uploadedUrl = '';
+
+            // Handle file upload if an attachment exists
+            if (formData.attachment) {
+                const compressedFile = await compressImage(formData.attachment, 800, 0.5); // Target ~10-50KB depending on source
+
+                const uploadData = new FormData();
+                uploadData.append('file', compressedFile);
+                uploadData.append('category', 'Settlement_Receipt');
+                // You might need an actual studentId/staffId if that logic is strictly enforced by uploadController. 
+                // Using a generic identifier since this is a finance settlement.
+                uploadData.append('studentId', 'finance_docs');
+
+                const uploadRes = await api.post('/upload', uploadData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                uploadedUrl = uploadRes.data.url;
+            }
+
+            const payload = { ...formData, attachmentUrl: uploadedUrl };
+            delete payload.attachment; // don't send file object in JSON payload
+
+            await api.post('/accrual/settlements', payload);
             addToast('Settlement recorded successfully', 'success');
             setShowForm(false);
             setFormData({
@@ -150,12 +174,13 @@ export default function Settlements() {
                 documentType: 'Receipt',
                 documentNumber: '',
                 category: '',
-                subcategory: ''
+                subcategory: '',
+                attachment: null
             });
             fetchSettlements();
         } catch (error) {
             console.error('Error recording settlement:', error);
-            addToast(error.response?.data?.message || 'Failed to record settlement', 'error');
+            addToast(error.response?.data?.message || error.message || 'Failed to record settlement', 'error');
         } finally {
             setLoading(false);
         }
@@ -258,7 +283,7 @@ export default function Settlements() {
                                 <div className="flex bg-slate-100 p-1 rounded-lg">
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: 'Receipt', relatedId: '', amount: '', category: '', subcategory: '' })}
+                                        onClick={() => setFormData({ ...formData, type: 'Receipt', relatedId: '', amount: '', category: '', subcategory: '', attachment: null })}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${formData.type === 'Receipt'
                                             ? 'bg-white text-emerald-600 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700'
@@ -268,7 +293,7 @@ export default function Settlements() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: 'Payment', relatedId: '', amount: '', category: '', subcategory: '' })}
+                                        onClick={() => setFormData({ ...formData, type: 'Payment', relatedId: '', amount: '', category: '', subcategory: '', attachment: null })}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${formData.type === 'Payment'
                                             ? 'bg-white text-rose-600 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700'
@@ -278,7 +303,7 @@ export default function Settlements() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: 'Capital Injection', relatedId: '', amount: '', category: '', subcategory: '' })}
+                                        onClick={() => setFormData({ ...formData, type: 'Capital Injection', relatedId: '', amount: '', category: '', subcategory: '', attachment: null })}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${formData.type === 'Capital Injection'
                                             ? 'bg-white text-blue-600 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700'
@@ -432,6 +457,24 @@ export default function Settlements() {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Attach Receipt/Voucher Image
+                                        <span className="text-xs text-slate-400 font-normal ml-2">(Auto-compressed for size)</span>
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setFormData({ ...formData, attachment: e.target.files[0] })}
+                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    />
+                                    {formData.attachment && (
+                                        <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                                            <CheckCircle2 size={12} /> File selected ({Math.round(formData.attachment.size / 1024)} KB)
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                                     <textarea
                                         rows="2"
@@ -471,6 +514,7 @@ export default function Settlements() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reference</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Attachment</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Recorded By</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
@@ -479,7 +523,7 @@ export default function Settlements() {
                         <tbody className="divide-y divide-slate-100">
                             {settlements.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                                                 <Wallet className="text-slate-400" />
@@ -526,6 +570,21 @@ export default function Settlements() {
                                                     </span>
                                                 )}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                            {item.attachmentUrl ? (
+                                                <a
+                                                    href={item.attachmentUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    title="View Attachment"
+                                                >
+                                                    <ArrowUpRight size={16} />
+                                                </a>
+                                            ) : (
+                                                <span className="text-slate-300">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                                             <span className="flex items-center gap-1.5">

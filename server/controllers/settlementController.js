@@ -8,7 +8,7 @@ const OtherIncome = require('../models/OtherIncome'); // Legacy Cash Ledger
 // @route   POST /api/accrual/settlements
 // @access  Private
 const createSettlement = async (req, res) => {
-    const { date, type, amount, relatedId, paymentMode, description, documentType, documentNumber, category, subcategory } = req.body;
+    const { date, type, amount, relatedId, paymentMode, description, documentType, documentNumber, category, subcategory, attachmentUrl } = req.body;
     // relatedId is either receivableId (for Receipt) or payableId (for Payment)
 
     const session = await Settlement.startSession();
@@ -25,7 +25,8 @@ const createSettlement = async (req, res) => {
             documentType,
             documentNumber,
             category,
-            subcategory
+            subcategory,
+            attachmentUrl
         };
 
         if (type === 'Receipt') {
@@ -57,6 +58,7 @@ const createSettlement = async (req, res) => {
                 subcategory: originalSubcategory,
                 amount,
                 description: `Settlement for ${receivable.customer} (Ref: ${receivable._id}) - ${description || ''} ${documentNumber ? `[Receipt: ${documentNumber}]` : ''}`,
+                receiptUrl: attachmentUrl, // Adding attachment URL to legacy ledger
                 addedBy: req.user._id
             });
             await otherIncome.save({ session });
@@ -101,6 +103,7 @@ const createSettlement = async (req, res) => {
                 subcategory: originalSubcategory,
                 amount,
                 description: `Settlement for ${payable.vendor} (Ref: ${payable._id}) - ${description || ''} [${documentType}: ${documentNumber || 'N/A'}]`,
+                receiptUrl: attachmentUrl, // Adding attachment URL to legacy ledger
                 addedBy: req.user._id
             });
             await expense.save({ session });
@@ -115,6 +118,7 @@ const createSettlement = async (req, res) => {
                 subcategory: req.body.subcategory || 'Capital Injection',
                 amount,
                 description: `Capital Injection - ${description || ''} ${documentNumber ? `[Receipt: ${documentNumber}]` : ''}`,
+                receiptUrl: attachmentUrl, // Adding attachment URL to legacy ledger
                 addedBy: req.user._id
             });
             await otherIncome.save({ session });

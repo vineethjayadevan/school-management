@@ -6,7 +6,8 @@ const {
     getTeacherClasses,
     getClassStudents,
     getTeacherSalaryHistory,
-    getTeacherProfile
+    getTeacherProfile,
+    getClassMarks
 } = require('../controllers/teacherController');
 
 // All routes are protected and for teachers only
@@ -16,6 +17,7 @@ router.use(authorize('teacher'));
 router.get('/stats', getTeacherStats);
 router.get('/classes', getTeacherClasses);
 router.get('/classes/:className/:sectionName/students', getClassStudents);
+router.get('/classes/:className/:sectionName/marks', getClassMarks);
 router.get('/salary-history', getTeacherSalaryHistory);
 router.get('/profile', getTeacherProfile);
 

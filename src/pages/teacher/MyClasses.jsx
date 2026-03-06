@@ -50,7 +50,7 @@ export default function MyClasses() {
                         myClasses.map((cls) => (
                             <div
                                 key={`${cls.name}-${cls.section}`}
-                                onClick={() => navigate(`/teacher/classes/${cls.name}/${cls.section}`)}
+                                onClick={() => navigate(`/teacher/classes/${cls.name}/${cls.section}`, { state: { role: cls.role } })}
                                 className="p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-all group"
                             >
                                 <div className="flex justify-between items-start">

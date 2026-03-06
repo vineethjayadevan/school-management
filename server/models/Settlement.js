@@ -25,7 +25,10 @@ const settlementSchema = mongoose.Schema({
 
     // Classification (Mainly for Capital Injection or Direct Settlements)
     category: { type: String },
-    subcategory: { type: String }
+    subcategory: { type: String },
+
+    // Receipt/Voucher Attachment
+    attachmentUrl: { type: String }
 }, {
     timestamps: true
 });
