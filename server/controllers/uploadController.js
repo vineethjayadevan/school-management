@@ -45,10 +45,14 @@ const uploadFile = async (req, res) => {
         const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
 
         // Determine storage path based on entity type
-        // Structure: students/{id}/{category}-{timestamp}.ext  OR  staff/{id}/{category}-{timestamp}.ext
         const ext = path.extname(cleanName);
         let fileName;
-        if (req.body.staffId) {
+        if (req.body.context === 'cash_expense') {
+            const date = new Date();
+            const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const uId = req.user ? req.user._id.toString() : (req.body.userId || 'unknown');
+            fileName = `finance/cash_based/expenses/${yearMonth}/expense_receipt_${uId}_${timestamp}${ext}`;
+        } else if (req.body.staffId) {
             fileName = `staff/${req.body.staffId}/${category}-${timestamp}${ext}`;
         } else {
             const studentId = req.body.studentId || 'unknown-student';

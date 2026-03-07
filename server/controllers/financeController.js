@@ -102,6 +102,10 @@ const getExpenses = async (req, res) => {
 const addExpense = async (req, res) => {
     const { title, vendor, amount, category, subcategory, description, date, receiptUrl, referenceType, referenceNo } = req.body;
 
+    if (!receiptUrl) {
+        return res.status(400).json({ message: 'Receipt attachment is mandatory for recording a cash-based expense.' });
+    }
+
     try {
         const expense = new Expense({
             title: title || `${category} - ${subcategory}`,

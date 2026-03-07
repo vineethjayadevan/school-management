@@ -317,6 +317,16 @@ export default function BoardDashboard() {
         }
     };
 
+    const handleViewReceipt = async (url) => {
+        try {
+            const res = await api.get(`/upload/signed-url?fileName=${encodeURIComponent(url)}`);
+            window.open(res.data.signedUrl, '_blank');
+        } catch (error) {
+            console.error('Failed to get signed URL', error);
+            alert('Could not load receipt. Ensure you have permissions or the file still exists.');
+        }
+    };
+
     const handleFilterChange = (key, value) => {
         setFilters(prev => {
             const newFilters = { ...prev, [key]: value };
@@ -692,15 +702,13 @@ export default function BoardDashboard() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                             {t.receiptUrl ? (
-                                                <a
-                                                    href={t.receiptUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                <button
+                                                    onClick={() => handleViewReceipt(t.receiptUrl)}
                                                     className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
                                                     title="View Receipt"
                                                 >
                                                     <ArrowUpRight size={16} />
-                                                </a>
+                                                </button>
                                             ) : (
                                                 <span className="text-slate-300">-</span>
                                             )}

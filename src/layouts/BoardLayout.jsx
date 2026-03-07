@@ -14,7 +14,9 @@ import {
     ArrowDownLeft,
     CheckCircle2,
     Calculator,
-    Tags
+    Tags,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -22,21 +24,54 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 export default function BoardLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [openMenus, setOpenMenus] = useState({
+        'Accrual Based': false,
+        'Cash Based': true, // Default open
+        'Setup': false
+    });
     const { logout, user } = useAuth();
     const navigate = useNavigate();
+
+    const toggleMenu = (menuLabel) => {
+        setOpenMenus(prev => ({
+            ...prev,
+            [menuLabel]: !prev[menuLabel]
+        }));
+    };
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const navItems = [
-        { path: '/board/ledger', icon: LayoutDashboard, label: 'Cash Ledger' },
-        { path: '/board/revenue-expense', icon: TrendingUp, label: 'Revenue & Expenses' },
-        { path: '/board/receivables-payables', icon: ArrowDownLeft, label: 'Receivables & Payables' },
-        { path: '/board/settlements', icon: CheckCircle2, label: 'Settlements' },
-        { path: '/board/accounting', icon: Calculator, label: 'Accounting' },
-        { path: '/board/categories', icon: Tags, label: 'Manage Categories' },
+    const navMenus = [
+        {
+            label: 'Accrual Based',
+            icon: ListTree,
+            subItems: [
+                { path: '/board/revenue-expense', icon: TrendingUp, label: 'Revenue & Expenses' },
+                { path: '/board/receivables-payables', icon: ArrowDownLeft, label: 'Receivables & Payables' },
+                { path: '/board/settlements', icon: CheckCircle2, label: 'Settlements' },
+                { path: '/board/accounting', icon: Calculator, label: 'Accounting' }
+            ]
+        },
+        {
+            label: 'Cash Based',
+            icon: Wallet,
+            subItems: [
+                { path: '/board/ledger', icon: LayoutDashboard, label: 'Cash Ledger' },
+                { path: '/board/cash/income', icon: TrendingUp, label: 'Income & Funding' },
+                { path: '/board/cash/expenses', icon: PieChart, label: 'Expenses' },
+                { path: '/board/cash/accounting', icon: Calculator, label: 'Accounting' }
+            ]
+        },
+        {
+            label: 'Setup',
+            icon: Tags,
+            subItems: [
+                { path: '/board/categories', icon: Tags, label: 'Manage Categories' }
+            ]
+        }
     ];
 
     return (
@@ -88,21 +123,48 @@ export default function BoardLayout() {
 
                         <nav className="space-y-1">
                             <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">Main Menu</p>
-                            {navItems.map((item) => (
-                                <NavLink
-                                    key={item.path}
-                                    to={item.path}
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={({ isActive }) => `
-                                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                                        ${isActive
-                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'}
-                                    `}
-                                >
-                                    <item.icon size={18} />
-                                    <span className="text-sm font-medium">{item.label}</span>
-                                </NavLink>
+                            {navMenus.map((menu) => (
+                                <div key={menu.label} className="mb-2">
+                                    <button
+                                        onClick={() => menu.label !== 'Accrual Based' && toggleMenu(menu.label)}
+                                        disabled={menu.label === 'Accrual Based'}
+                                        className={`
+                                            w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200
+                                            ${menu.label === 'Accrual Based' ? 'opacity-50 cursor-not-allowed' : ''}
+                                            ${openMenus[menu.label] && menu.label !== 'Accrual Based'
+                                                ? 'bg-slate-800 text-white'
+                                                : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <menu.icon size={18} />
+                                            <span className="text-sm font-bold">{menu.label}</span>
+                                        </div>
+                                        {openMenus[menu.label] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    </button>
+
+                                    {/* Sub Items */}
+                                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openMenus[menu.label] ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                                        <div className="pl-4 border-l border-slate-800 ml-5 space-y-1">
+                                            {menu.subItems.map((item) => (
+                                                <NavLink
+                                                    key={item.path}
+                                                    to={item.path}
+                                                    onClick={() => setIsSidebarOpen(false)}
+                                                    className={({ isActive }) => `
+                                                        flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
+                                                        ${isActive
+                                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                                            : 'text-slate-400 hover:text-white hover:bg-white/5'}
+                                                    `}
+                                                >
+                                                    <item.icon size={16} />
+                                                    <span className="text-sm font-medium">{item.label}</span>
+                                                </NavLink>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
                         </nav>
                     </div>

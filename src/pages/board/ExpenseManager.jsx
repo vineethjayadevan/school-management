@@ -9,12 +9,14 @@ import {
     IndianRupee,
     Edit,
     X,
-    RotateCcw
+    RotateCcw,
+    ArrowUpRight
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import imageCompression from 'browser-image-compression';
 
 export default function ExpenseManager() {
     const { addToast } = useToast();
@@ -24,6 +26,10 @@ export default function ExpenseManager() {
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState(null);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
+
+    // File upload state for receipts
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [availableSubcategories, setAvailableSubcategories] = useState([]);
@@ -118,17 +124,67 @@ export default function ExpenseManager() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!selectedFile && !formData.receiptUrl) {
+            addToast('Please attach a receipt or bill', 'error');
+            return;
+        }
+
+        setUploading(true);
         try {
+            let finalReceiptUrl = formData.receiptUrl;
+
+            // 1. Upload file if selected
+            if (selectedFile) {
+                let fileToUpload = selectedFile;
+
+                if (selectedFile.type.startsWith('image/')) {
+                    setUploading(true);
+                    try {
+                        const options = {
+                            maxSizeMB: 0.8, // 800KB target
+                            maxWidthOrHeight: 1600,
+                            useWebWorker: true,
+                            initialQuality: 0.8,
+                        };
+                        fileToUpload = await imageCompression(selectedFile, options);
+                    } catch (error) {
+                        console.error('Image compression failed:', error);
+                        // fallback to original file if compression fails
+                    }
+                }
+
+                const uploadData = new FormData();
+                uploadData.append('file', fileToUpload);
+                uploadData.append('context', 'cash_expense');
+                uploadData.append('userId', user._id);
+                // Try guessing category name to help grouping
+                uploadData.append('category', formData.category || 'expense');
+
+                const uploadRes = await api.post('/upload', uploadData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                finalReceiptUrl = uploadRes.data.url;
+            }
+
+            const payload = {
+                ...formData,
+                receiptUrl: finalReceiptUrl
+            };
+
+            // 2. Save the Expense record
             if (editId) {
-                await api.put(`/finance/expenses/${editId}`, formData);
+                await api.put(`/finance/expenses/${editId}`, payload);
                 addToast('Expense record updated', 'success');
             } else {
-                await api.post('/finance/expenses', formData);
+                await api.post('/finance/expenses', payload);
                 addToast('Expense recorded successfully', 'success');
             }
 
+            // 3. Reset state
             setShowForm(false);
             setEditId(null);
+            setSelectedFile(null);
             setFormData({
                 title: '',
                 amount: '',
@@ -143,6 +199,8 @@ export default function ExpenseManager() {
             fetchData();
         } catch (error) {
             addToast(error.response?.data?.message || 'Failed to save expense', 'error');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -181,6 +239,16 @@ export default function ExpenseManager() {
             addToast('Failed to delete expense', 'error');
         } finally {
             setDeleteModal({ isOpen: false, id: null });
+        }
+    };
+
+    const handleViewReceipt = async (url) => {
+        try {
+            const res = await api.get(`/upload/signed-url?fileName=${encodeURIComponent(url)}`);
+            window.open(res.data.signedUrl, '_blank');
+        } catch (error) {
+            console.error('Failed to get signed URL', error);
+            alert('Could not load receipt. Ensure you have permissions or the file still exists.');
         }
     };
 
@@ -268,7 +336,7 @@ export default function ExpenseManager() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-top-4">
                     <div className="mb-6 flex items-center justify-between">
                         <h2 className="text-lg font-bold text-slate-800">{editId ? 'Edit Expense Record' : 'New Expense Record'}</h2>
-                        <button onClick={() => { setShowForm(false); setEditId(null); }} className="text-slate-400 hover:text-slate-600">Close</button>
+                        <button onClick={() => { setShowForm(false); setEditId(null); setSelectedFile(null); }} className="text-slate-400 hover:text-slate-600">Close</button>
                     </div>
                     <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-6">
                         {/* Reference Type Check */}
@@ -370,6 +438,20 @@ export default function ExpenseManager() {
                             />
                         </div>
                         <div className="md:col-span-2 space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Attach Bill / Receipt <span className="text-red-500">*</span></label>
+                            <input
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                onChange={(e) => setSelectedFile(e.target.files[0])}
+                                required={!formData.receiptUrl}
+                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                            {formData.receiptUrl && !selectedFile && (
+                                <p className="text-xs text-indigo-600">Current attachment exists. Uploading a new one will replace it.</p>
+                            )}
+                            <p className="text-xs text-slate-400 mt-1">Required format: JPG, PNG, or PDF. Max size 5MB.</p>
+                        </div>
+                        <div className="md:col-span-2 space-y-2 mt-4">
                             <label className="text-xs font-semibold text-slate-500 uppercase">Description (Optional)</label>
                             <textarea
                                 value={formData.description}
@@ -388,9 +470,10 @@ export default function ExpenseManager() {
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20"
+                                disabled={uploading}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center gap-2"
                             >
-                                Save Record
+                                {uploading ? 'Processing...' : 'Save Record'}
                             </button>
                         </div>
                     </form>
@@ -429,6 +512,7 @@ export default function ExpenseManager() {
                                     <th className="px-6 py-4">Title</th>
                                     <th className="px-6 py-4">Category</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
+                                    <th className="px-6 py-4 text-center">Receipt</th>
                                     {/* <th className="px-6 py-4 text-center">Actions</th> */}
                                 </tr>
                             </thead>
@@ -465,6 +549,19 @@ export default function ExpenseManager() {
                                         {/* Removed Added By column */}
                                         <td className="px-6 py-4 text-right font-bold text-slate-900">
                                             ₹{expense.amount.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                            {expense.receiptUrl ? (
+                                                <button
+                                                    onClick={() => handleViewReceipt(expense.receiptUrl)}
+                                                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    title="View Receipt"
+                                                >
+                                                    <ArrowUpRight size={16} />
+                                                </button>
+                                            ) : (
+                                                <span className="text-slate-300">-</span>
+                                            )}
                                         </td>
                                         {/* Actions Column Hidden
                                         <td className="px-6 py-4 text-center">

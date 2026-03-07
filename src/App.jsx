@@ -8,6 +8,7 @@ import ExpenseManager from './pages/board/ExpenseManager';
 
 import IncomeOverview from './pages/board/IncomeOverview';
 import Cashflow from './pages/board/Cashflow';
+import CashAccountingView from './pages/board/accounting/CashAccountingView';
 import AccountingDashboard from './pages/board/accounting/AccountingDashboard';
 import ProfitAndLoss from './pages/board/accounting/ProfitAndLoss';
 import BalanceSheet from './pages/board/accounting/BalanceSheet';
@@ -294,12 +295,19 @@ function App() {
                 }>
                     <Route index element={<Navigate to="/board/ledger" replace />} />
 
-                    {/* New Sidebar Navigation Routes */}
+                    {/* New Sidebar Navigation Routes - ACCRUAL */}
                     <Route path="ledger" element={<BoardDashboard />} />
                     <Route path="revenue-expense" element={<RevenueExpenseManager />} />
                     <Route path="receivables-payables" element={<ReceivablesPayablesManager />} />
                     <Route path="settlements" element={<Settlements />} />
                     <Route path="accounting" element={<AccrualAccountingView />} />
+
+                    {/* New Sidebar Navigation Routes - CASH */}
+                    <Route path="cash/income" element={<IncomeOverview />} />
+                    <Route path="cash/expenses" element={<ExpenseManager />} />
+                    <Route path="cash/accounting" element={<CashAccountingView />} />
+
+                    {/* SETUP */}
                     <Route path="categories" element={<ManageCategories />} />
 
                     {/* Keep legacy nested routes if necessary for internal navigation, 
