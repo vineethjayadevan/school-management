@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Save, CheckCircle2 } from 'lucide-react';
 import api from '../../../services/api';
 import { useToast } from '../../../components/ui/Toast';
+import { format } from 'date-fns';
 
 export default function ExamGrading() {
     const [schedules, setSchedules] = useState([]);
@@ -16,7 +17,6 @@ export default function ExamGrading() {
 
     useEffect(() => {
         // Fetch schedules so teacher can pick which one to grade
-        // In a real app, you might filter by the logged-in teacher's classes
         api.get('/exams/schedules')
             .then(res => setSchedules(res.data))
             .catch(err => addToast('Failed to load schedules', 'error'));
@@ -123,7 +123,7 @@ export default function ExamGrading() {
                         <option value="">-- Choose Schedule --</option>
                         {schedules.map(s => (
                             <option key={s._id} value={s._id}>
-                                {s.examCategory?.name} | {s.class?.name} - {s.section} | {s.subject?.name}
+                                {s.examCategory?.name} | {s.class?.name} - {s.section} | {s.subject?.name} | {s.date ? format(new Date(s.date), 'dd MMM yyyy') : ''}
                             </option>
                         ))}
                     </select>
