@@ -265,6 +265,12 @@ export const storageService = {
         getProfile: async () => {
             const { data } = await api.get('/students/me');
             return data;
+        },
+        getAttendance: async () => {
+            // Usually the route is /attendance/student/:id, but we'll use 'me' if it expects an ID
+            // Let's assume the backend handles 'me' in the getStudentAttendance controller
+            const { data } = await api.get('/attendance/student/me');
+            return data;
         }
     }
 };

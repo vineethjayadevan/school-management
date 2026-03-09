@@ -72,8 +72,12 @@ const getAttendanceByClass = async (req, res) => {
 // @access  Private (Teacher/Student)
 const getStudentAttendance = async (req, res) => {
     try {
-        const { studentId } = req.params;
+        let { studentId } = req.params;
         const { month, year } = req.query;
+
+        if (studentId === 'me') {
+            studentId = req.user.profileId;
+        }
 
         let query = { student: studentId };
 

@@ -3,6 +3,7 @@ const Fee = require('../models/Fee');
 const FeeCategory = require('../models/FeeCategory');
 const TransferCertificate = require('../models/TransferCertificate');
 const AcademicYear = require('../models/AcademicYear');
+const Class = require('../models/Class');
 const { signUrl } = require('./uploadController');
 
 // Helper to check if a student has cleared all fees (mirrors promotionController logic)
@@ -126,8 +127,22 @@ const getStudentById = async (req, res) => {
 // @access  Private
 const getStudentProfile = async (req, res) => {
     try {
-        const student = await Student.findById(req.user.profileId);
+        let student = await Student.findById(req.user.profileId);
         if (student) {
+            student = student.toObject(); // Convert to plain object so we can add fields
+
+            // Fetch class teacher details
+            if (student.className && student.section) {
+                const classObj = await Class.findOne({ name: student.className }).populate('sections.classTeacher', 'name phone');
+                if (classObj) {
+                    const sectionObj = classObj.sections.find(s => s.name === student.section);
+                    if (sectionObj && sectionObj.classTeacher) {
+                        student.classTeacherName = sectionObj.classTeacher.name;
+                        student.classTeacherPhone = sectionObj.classTeacher.phone;
+                    }
+                }
+            }
+
             const signedStudent = await signStudentPhoto(student);
             res.json(signedStudent);
         } else {
