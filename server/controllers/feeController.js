@@ -3,6 +3,7 @@ const Student = require('../models/Student');
 const FeeCategory = require('../models/FeeCategory');
 const { generateFeeReceipt } = require('../utils/pdfGenerator');
 const { sendFeeReceiptEmail } = require('../utils/emailService');
+const { sendMSG91SMS, sendMSG91WhatsApp } = require('../utils/msg91Service');
 
 // @desc    Get all fees
 // @route   GET /api/fees
@@ -149,6 +150,8 @@ const addFee = async (req, res) => {
                 const GlobalSettings = require('../models/GlobalSettings');
                 const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
                 const emailEnabled = settings?.notificationSettings?.feeReceipt?.email ?? true;
+                const smsEnabled = settings?.notificationSettings?.feeReceipt?.sms ?? false;
+                const whatsappEnabled = settings?.notificationSettings?.feeReceipt?.whatsapp ?? false;
 
                 // 2. Determine Recipient Email
                 // Requirement: Send ONLY to Father's email. If not present, do not send.
@@ -175,6 +178,29 @@ const addFee = async (req, res) => {
                 } else {
                     console.log(`No Father's Email found for student ${student.admissionNo}. Fee receipt email skipped.`);
                 }
+
+                // 4. Send SMS and WhatsApp Notifications
+                const mobile = student.fatherMobile;
+
+                if (mobile) {
+                    const notifyData = {
+                        mobile,
+                        studentName: student.name,
+                        amount: insertedFee.amount,
+                        receiptNo,
+                        date
+                    };
+
+                    if (smsEnabled) {
+                        await sendMSG91SMS(notifyData);
+                    }
+                    if (whatsappEnabled) {
+                        await sendMSG91WhatsApp(notifyData);
+                    }
+                } else {
+                    console.log(`No Father's Mobile found for student ${student.admissionNo}. SMS/WhatsApp skipped.`);
+                }
+
             } catch (notifyError) {
                 console.error('Error in fee receipt notification process:', notifyError);
             }

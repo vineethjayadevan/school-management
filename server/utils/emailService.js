@@ -59,4 +59,113 @@ const sendFeeReceiptEmail = async ({ toEmail, studentName, feeAmount, receiptNo,
     }
 };
 
-module.exports = { sendFeeReceiptEmail };
+const sendAttendanceEmail = async ({ toEmail, studentName, admissionNo, className, date, status }) => {
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is missing. Email skipped.');
+        return { success: false, message: 'API Key Missing' };
+    }
+
+    try {
+        const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+        const formattedDate = new Date(date).toLocaleDateString('en-GB');
+
+        const isAbsent = status.toLowerCase() === 'absent';
+        const color = isAbsent ? '#e11d48' : '#eab308';
+
+        const { data, error } = await resend.emails.send({
+            from: fromEmail,
+            to: [toEmail],
+            subject: `Attendance Alert: ${studentName} is ${status}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <h2 style="color: ${color}; text-align: center;">Attendance Alert - ${status.toUpperCase()}</h2>
+                    <p>Dear Parent,</p>
+                    <p>This is to inform you about the attendance status of your ward <strong>${studentName}</strong>.</p>
+                    
+                    <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Admission No:</strong> ${admissionNo}</p>
+                        <p style="margin: 5px 0;"><strong>Class:</strong> ${className}</p>
+                        <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+                        <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: ${color}; font-weight: bold;">${status}</span></p>
+                    </div>
+
+                    <p>If you have any questions or concerns, please contact the school administration.</p>
+                    
+                    <p style="margin-top: 30px;">Best Regards,</p>
+                    <p><strong>MyStemGPS School Administration</strong></p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #888; text-align: center;">This is an automated email. Please do not reply directly to this message.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('Error sending attendance email:', error);
+            return { success: false, error };
+        }
+
+        console.log(`Attendance email sent to ${toEmail}. ID: ${data.id}`);
+        return { success: true, data };
+    } catch (err) {
+        console.error('Failed to send attendance email:', err);
+        return { success: false, error: err };
+    }
+};
+
+const sendStaffAttendanceEmail = async ({ toEmail, staffName, employeeId, date, status }) => {
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is missing. Email skipped.');
+        return { success: false, message: 'API Key Missing' };
+    }
+
+    try {
+        const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+        const formattedDate = new Date(date).toLocaleDateString('en-GB');
+
+        const isAbsent = status.toLowerCase() === 'absent';
+        const color = isAbsent ? '#e11d48' : '#eab308'; // red for absent, yellow for late
+
+        const { data, error } = await resend.emails.send({
+            from: fromEmail,
+            to: [toEmail],
+            subject: `Staff Attendance Alert: You were marked as ${status}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <h2 style="color: ${color}; text-align: center;">Attendance Alert - ${status.toUpperCase()}</h2>
+                    <p>Dear ${staffName},</p>
+                    <p>This is to formally notify you of your attendance status for the selected date.</p>
+                    
+                    <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Employee ID:</strong> ${employeeId}</p>
+                        <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+                        <p style="margin: 5px 0;"><strong>Recorded Status:</strong> <span style="color: ${color}; font-weight: bold;">${status}</span></p>
+                    </div>
+
+                    <p>If you believe this was marked in error, please contact the HR or administration department immediately to rectify the record.</p>
+                    
+                    <p style="margin-top: 30px;">Best Regards,</p>
+                    <p><strong>MyStemGPS Administration</strong></p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #888; text-align: center;">This is an automated system notification. Please do not reply directly to this message.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('Error sending staff attendance email:', error);
+            return { success: false, error };
+        }
+
+        console.log(`Staff attendance email sent to ${toEmail}. ID: ${data.id}`);
+        return { success: true, data };
+    } catch (err) {
+        console.error('Failed to send staff attendance email:', err);
+        return { success: false, error: err };
+    }
+};
+
+module.exports = {
+    sendFeeReceiptEmail,
+    sendAttendanceEmail,
+    sendStaffAttendanceEmail
+};

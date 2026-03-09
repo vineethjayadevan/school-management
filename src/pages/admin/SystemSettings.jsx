@@ -13,7 +13,9 @@ const SystemSettings = () => {
         notificationSettings: {
             feeReceipt: { email: true, whatsapp: false, sms: false },
             admissionEnquiry: { email: true, whatsapp: false, sms: false },
-            summerEnquiry: { email: true, whatsapp: false, sms: false }
+            summerEnquiry: { email: true, whatsapp: false, sms: false },
+            attendanceReport: { email: false, whatsapp: false, sms: false },
+            staffAttendanceReport: { email: false, whatsapp: false, sms: false }
         }
     });
     const [loading, setLoading] = useState(true);
@@ -33,7 +35,9 @@ const SystemSettings = () => {
                     notificationSettings: data.notificationSettings || {
                         feeReceipt: { email: true, whatsapp: false, sms: false },
                         admissionEnquiry: { email: true, whatsapp: false, sms: false },
-                        summerEnquiry: { email: true, whatsapp: false, sms: false }
+                        summerEnquiry: { email: true, whatsapp: false, sms: false },
+                        attendanceReport: { email: false, whatsapp: false, sms: false },
+                        staffAttendanceReport: { email: false, whatsapp: false, sms: false }
                     }
                 });
             }

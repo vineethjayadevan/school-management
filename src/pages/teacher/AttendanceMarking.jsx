@@ -12,10 +12,11 @@ import {
     Loader2,
     Search,
     User,
-    FileText,
     Download,
     ClipboardList,
-    AlertCircle
+    AlertCircle,
+    Send,
+    FileText
 } from 'lucide-react';
 import clsx from 'clsx';
 import { downloadAttendanceCSV } from '../../utils/AttendanceReportGenerator';
@@ -34,6 +35,7 @@ export default function AttendanceMarking() {
     const [attendance, setAttendance] = useState({}); // { studentId: { status, remarks } }
     const [loading, setLoading] = useState(true);
     const [marking, setMarking] = useState(false);
+    const [isNotifying, setIsNotifying] = useState(false);
     const [reporting, setReporting] = useState(false);
     const [reportType, setReportType] = useState('monthly'); // 'daily', 'monthly', 'yearly'
     const [searchTerm, setSearchTerm] = useState('');
@@ -224,6 +226,24 @@ export default function AttendanceMarking() {
         }
     };
 
+    const handleNotify = async () => {
+        if (!selectedClass) return;
+        setIsNotifying(true);
+        try {
+            const response = await storageService.attendance.notifyAbsentees(
+                selectedClass.name,
+                selectedClass.section,
+                date
+            );
+            addToast(response.message || "Notifications sent successfully", "success");
+        } catch (error) {
+            console.error("Failed to send notifications", error);
+            addToast(error.response?.data?.message || "Failed to send notifications", "error");
+        } finally {
+            setIsNotifying(false);
+        }
+    };
+
     const filteredStudents = students.filter(student =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.rollNo?.toString().includes(searchTerm)
@@ -259,6 +279,16 @@ export default function AttendanceMarking() {
                             />
                         </div>
                     </div>
+
+                    <button
+                        onClick={handleNotify}
+                        disabled={isNotifying || students.length === 0}
+                        className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                        title="Send SMS/WhatsApp/Email to Absent/Late students"
+                    >
+                        {isNotifying ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                        Notify Absentees
+                    </button>
 
                     <button
                         onClick={handleSave}

@@ -13,7 +13,8 @@ import {
     Search,
     User,
     ChevronRight,
-    Briefcase
+    Briefcase,
+    Send
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -27,6 +28,7 @@ export default function StaffAttendanceMarking() {
     const [attendance, setAttendance] = useState({}); // { staffId: { status, remarks } }
     const [loading, setLoading] = useState(true);
     const [marking, setMarking] = useState(false);
+    const [isNotifying, setIsNotifying] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [categories, setCategories] = useState(['All']);
@@ -133,6 +135,19 @@ export default function StaffAttendanceMarking() {
         }
     };
 
+    const handleNotify = async () => {
+        setIsNotifying(true);
+        try {
+            const response = await storageService.staffAttendance.notifyAbsentees(date);
+            addToast(response.message || "Notifications sent successfully", "success");
+        } catch (error) {
+            console.error("Failed to send notifications", error);
+            addToast(error.response?.data?.message || "Failed to send notifications", "error");
+        } finally {
+            setIsNotifying(false);
+        }
+    };
+
     const filteredStaff = staffList.filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             staff.employeeId?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -168,14 +183,26 @@ export default function StaffAttendanceMarking() {
                         />
                     </div>
 
-                    <button
-                        onClick={handleSave}
-                        disabled={marking}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-50"
-                    >
-                        {marking ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        Save Attendance
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleNotify}
+                            disabled={isNotifying}
+                            className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                            title="Send SMS/WhatsApp/Email to Absent/Late staff"
+                        >
+                            {isNotifying ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                            <span className="hidden sm:inline">Notify</span>
+                        </button>
+
+                        <button
+                            onClick={handleSave}
+                            disabled={marking}
+                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-50"
+                        >
+                            {marking ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                            <span className="hidden sm:inline">Save</span> Attendance
+                        </button>
+                    </div>
                 </div>
             </div>
 

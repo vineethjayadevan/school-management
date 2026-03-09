@@ -181,6 +181,10 @@ export const storageService = {
             const { data } = await api.post('/attendance/mark', attendanceData);
             return data;
         },
+        notifyAbsentees: async (className, section, date) => {
+            const { data } = await api.post('/attendance/notify', { className, section, date });
+            return data;
+        },
         getByClass: async (className, sectionName, date) => {
             const { data } = await api.get(`/attendance/class/${className}/${sectionName}?date=${date}`);
             return data;
@@ -196,8 +200,12 @@ export const storageService = {
         }
     },
     staffAttendance: {
-        mark: async (attendanceData) => {
-            const { data } = await api.post('/staff-attendance/mark', attendanceData);
+        mark: async (attendanceData, date) => {
+            const { data } = await api.post('/staff-attendance/mark', { date, attendanceData });
+            return data;
+        },
+        notifyAbsentees: async (date) => {
+            const { data } = await api.post('/staff-attendance/notify', { date });
             return data;
         },
         getDay: async (date) => {

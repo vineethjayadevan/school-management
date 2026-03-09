@@ -6,12 +6,14 @@ const NotificationSettings = ({ settings, setSettings }) => {
         { id: 'feeReceipt', label: 'Fee Receipt', description: 'Sent when a fee payment is successfully recorded.' },
         { id: 'admissionEnquiry', label: 'Admission Enquiry', description: 'Sent when a new admission enquiry is submitted.' },
         { id: 'summerEnquiry', label: 'Summer Enquiry', description: 'Sent when a summer vacation enquiry is submitted.' },
+        { id: 'attendanceReport', label: 'Student Attendance', description: 'Sent when a student is marked as absent or late.' },
+        { id: 'staffAttendanceReport', label: 'Staff Attendance', description: 'Sent when staff is marked as absent or late.' },
     ];
 
     const channels = [
         { id: 'email', label: 'Email', icon: Mail, color: 'text-blue-600', active: true },
-        { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: 'text-emerald-600', active: false },
-        { id: 'sms', label: 'SMS', icon: Smartphone, color: 'text-amber-600', active: false },
+        { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: 'text-emerald-600', active: true },
+        { id: 'sms', label: 'SMS', icon: Smartphone, color: 'text-amber-600', active: true },
     ];
 
     const handleToggle = (typeId, channelId) => {
@@ -35,10 +37,6 @@ const NotificationSettings = ({ settings, setSettings }) => {
                 <div>
                     <h2 className="text-lg font-semibold text-slate-800">Notification Channels</h2>
                     <p className="text-sm text-slate-500 mt-1">Configure which events trigger notifications across different platforms.</p>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 text-xs font-medium">
-                    <AlertCircle size={14} />
-                    WhatsApp/SMS integrations coming soon
                 </div>
             </div>
 
@@ -88,8 +86,8 @@ const NotificationSettings = ({ settings, setSettings }) => {
                 <h4 className="text-sm font-bold text-indigo-900 mb-1">How it works</h4>
                 <ul className="text-xs text-indigo-700 space-y-2 list-disc ml-4">
                     <li>Notifications are triggered automatically by the system when the corresponding event occurs.</li>
-                    <li>Email notifications require a valid <strong>Resend API Key</strong> set in the server environment.</li>
-                    <li>WhatsApp and SMS channels are currently under development and will be available in a future update.</li>
+                    <li>Email notifications require a valid <strong>Resend API Key</strong>.</li>
+                    <li>WhatsApp and SMS channels require valid <strong>MSG91 API credentials</strong> and approved templates initialized in your server variables.</li>
                     <li>Toggle switches to enable or disable specific notifications for each channel.</li>
                 </ul>
             </div>

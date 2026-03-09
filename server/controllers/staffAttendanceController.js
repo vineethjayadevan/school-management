@@ -1,5 +1,8 @@
 const StaffAttendance = require('../models/StaffAttendance');
 const Staff = require('../models/Staff');
+const GlobalSettings = require('../models/GlobalSettings');
+const { sendStaffAttendanceEmail } = require('../utils/emailService');
+const { sendStaffAttendanceMSG91SMS, sendStaffAttendanceMSG91WhatsApp } = require('../utils/msg91Service');
 
 // @desc    Mark or update staff attendance
 // @route   POST /api/staff-attendance/mark
@@ -150,9 +153,95 @@ const getMyStaffAttendance = async (req, res) => {
     }
 };
 
+// @desc    Notify staff who are marked absent or late
+// @route   POST /api/staff-attendance/notify
+// @access  Private/Admin
+const notifyStaffAbsentees = async (req, res) => {
+    try {
+        const { date } = req.body;
+
+        if (!date) {
+            return res.status(400).json({ message: 'Date is required' });
+        }
+
+        // 1. Check Global Settings
+        const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
+        const emailEnabled = settings?.notificationSettings?.staffAttendanceReport?.email ?? false;
+        const smsEnabled = settings?.notificationSettings?.staffAttendanceReport?.sms ?? false;
+        const whatsappEnabled = settings?.notificationSettings?.staffAttendanceReport?.whatsapp ?? false;
+
+        if (!emailEnabled && !smsEnabled && !whatsappEnabled) {
+            return res.status(400).json({ message: 'Staff attendance notifications are fully disabled in system settings' });
+        }
+
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // 2. Fetch Attendance Records for this date
+        const attendanceRecords = await StaffAttendance.find({
+            date: { $gte: startOfDay, $lte: endOfDay },
+            status: { $in: ['Absent', 'Late'] }
+        }).populate('staff');
+
+        if (attendanceRecords.length === 0) {
+            return res.status(200).json({ message: 'No absent or late staff to notify' });
+        }
+
+        let sentCount = 0;
+        const notificationPromises = [];
+
+        // 3. Queue Notifications
+        for (const record of attendanceRecords) {
+            const staff = record.staff;
+            if (!staff) continue;
+
+            const notifyData = {
+                staffName: staff.name,
+                employeeId: staff.employeeId,
+                date,
+                status: record.status // 'Absent' or 'Late'
+            };
+
+            // Queue Email
+            if (emailEnabled && staff.email) {
+                notificationPromises.push(
+                    sendStaffAttendanceEmail({
+                        ...notifyData,
+                        toEmail: staff.email
+                    })
+                );
+            }
+
+            // Queue SMS & WhatsApp
+            const mobile = staff.mobile || staff.phone; // Handle potential different field names
+            if (mobile) {
+                if (smsEnabled) {
+                    notificationPromises.push(sendStaffAttendanceMSG91SMS({ ...notifyData, mobile }));
+                }
+                if (whatsappEnabled) {
+                    notificationPromises.push(sendStaffAttendanceMSG91WhatsApp({ ...notifyData, mobile }));
+                }
+            }
+
+            sentCount++;
+        }
+
+        // Fire all notifications concurrently
+        await Promise.allSettled(notificationPromises);
+
+        res.json({ message: `Successfully processed notifications for ${sentCount} staff members` });
+    } catch (error) {
+        console.error('Error in notifyStaffAbsentees:', error);
+        res.status(500).json({ message: 'Failed to send staff notifications' });
+    }
+};
+
 module.exports = {
     markStaffAttendance,
     getDayStaffAttendance,
     getStaffAttendanceSummary,
-    getMyStaffAttendance
+    getMyStaffAttendance,
+    notifyStaffAbsentees
 };

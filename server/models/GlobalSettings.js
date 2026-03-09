@@ -31,6 +31,16 @@ const globalSettingsSchema = mongoose.Schema({
             email: { type: Boolean, default: true },
             whatsapp: { type: Boolean, default: false },
             sms: { type: Boolean, default: false }
+        },
+        attendanceReport: {
+            email: { type: Boolean, default: false },
+            whatsapp: { type: Boolean, default: false },
+            sms: { type: Boolean, default: false }
+        },
+        staffAttendanceReport: {
+            email: { type: Boolean, default: false },
+            whatsapp: { type: Boolean, default: false },
+            sms: { type: Boolean, default: false }
         }
     }
 }, {

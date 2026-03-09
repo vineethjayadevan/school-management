@@ -4,12 +4,14 @@ const {
     markStaffAttendance,
     getDayStaffAttendance,
     getStaffAttendanceSummary,
-    getMyStaffAttendance
+    getMyStaffAttendance,
+    notifyStaffAbsentees
 } = require('../controllers/staffAttendanceController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.get('/my-attendance', protect, getMyStaffAttendance);
 router.post('/mark', protect, admin, markStaffAttendance);
+router.post('/notify', protect, admin, notifyStaffAbsentees);
 router.get('/day', protect, admin, getDayStaffAttendance);
 router.get('/summary', protect, admin, getStaffAttendanceSummary);
 

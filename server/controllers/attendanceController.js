@@ -1,5 +1,8 @@
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
+const GlobalSettings = require('../models/GlobalSettings');
+const { sendAttendanceEmail } = require('../utils/emailService');
+const { sendAttendanceMSG91SMS, sendAttendanceMSG91WhatsApp } = require('../utils/msg91Service');
 
 // @desc    Mark attendance for a class
 // @route   POST /api/attendance/mark
@@ -173,9 +176,96 @@ const getClassAttendanceSummary = async (req, res) => {
     }
 };
 
+// @desc    Notify parents of absent or late students for a specific date/class
+// @route   POST /api/attendance/notify
+// @access  Private (Teacher)
+const notifyAbsentees = async (req, res) => {
+    try {
+        const { date, className, section } = req.body;
+
+        if (!date || !className || !section) {
+            return res.status(400).json({ message: 'Date, className, and section are required' });
+        }
+
+        // 1. Check Global Settings
+        const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
+        const emailEnabled = settings?.notificationSettings?.attendanceReport?.email ?? false;
+        const smsEnabled = settings?.notificationSettings?.attendanceReport?.sms ?? false;
+        const whatsappEnabled = settings?.notificationSettings?.attendanceReport?.whatsapp ?? false;
+
+        if (!emailEnabled && !smsEnabled && !whatsappEnabled) {
+            return res.status(400).json({ message: 'Attendance notifications are fully disabled in system settings' });
+        }
+
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        // 2. Fetch Attendance Records for this class/date
+        const attendanceRecords = await Attendance.find({
+            className,
+            section,
+            date: startOfDay,
+            status: { $in: ['Absent', 'Late'] }
+        }).populate('student');
+
+        if (attendanceRecords.length === 0) {
+            return res.status(200).json({ message: 'No absent or late students to notify' });
+        }
+
+        let sentCount = 0;
+        const notificationPromises = [];
+
+        // 3. Queue Notifications
+        for (const record of attendanceRecords) {
+            const student = record.student;
+            if (!student) continue;
+
+            const notifyData = {
+                studentName: student.name,
+                admissionNo: student.admissionNo,
+                className: `${className} ${section}`,
+                date,
+                status: record.status // 'Absent' or 'Late'
+            };
+
+            // Queue Email
+            if (emailEnabled && student.fatherEmail) {
+                notificationPromises.push(
+                    sendAttendanceEmail({
+                        ...notifyData,
+                        toEmail: student.fatherEmail
+                    })
+                );
+            }
+
+            // Queue SMS & WhatsApp
+            const mobile = student.fatherMobile;
+            if (mobile) {
+                if (smsEnabled) {
+                    notificationPromises.push(sendAttendanceMSG91SMS({ ...notifyData, mobile }));
+                }
+                if (whatsappEnabled) {
+                    notificationPromises.push(sendAttendanceMSG91WhatsApp({ ...notifyData, mobile }));
+                }
+            }
+
+            sentCount++;
+        }
+
+        // Fire all notifications concurrently
+        await Promise.allSettled(notificationPromises);
+
+        res.json({ message: `Successfully processed notifications for ${sentCount} students` });
+    } catch (error) {
+        console.error('Error in notifyAbsentees:', error);
+        res.status(500).json({ message: 'Failed to send notifications' });
+    }
+};
+
 module.exports = {
     markAttendance,
     getAttendanceByClass,
     getStudentAttendance,
-    getClassAttendanceSummary
+    getClassAttendanceSummary,
+    notifyAbsentees
 };
