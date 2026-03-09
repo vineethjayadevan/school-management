@@ -12,7 +12,8 @@ import {
     CheckSquare,
     User,
     ClipboardList,
-    FlaskConical
+    FlaskConical,
+    FileText
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ export default function TeacherLayout() {
         { name: 'My Attendance', href: '/teacher/my-attendance', icon: ClipboardList },
         { name: 'Schedule', href: '/teacher/schedule', icon: Calendar },
         { name: 'Exams', href: '/teacher/exams', icon: FlaskConical },
+        { name: 'Question Papers', href: '/teacher/question-papers', icon: FileText },
         { name: 'My Profile', href: '/teacher/profile', icon: User },
     ];
 

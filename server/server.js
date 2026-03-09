@@ -45,6 +45,7 @@ app.use('/api/enquiries', require('./routes/enquiryRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/timetable', require('./routes/timetableRoutes'));
 app.use('/api/exams', require('./routes/examRoutes'));
+app.use('/api/question-papers', require('./routes/questionPaperRoutes'));
 app.use('/api/period-template', require('./routes/periodTemplateRoutes'));
 app.use('/api/class-subject-matrix', require('./routes/classSubjectMatrixRoutes'));
 

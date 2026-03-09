@@ -60,6 +60,9 @@ import AttendanceMarking from './pages/teacher/AttendanceMarking';
 import MyAttendance from './pages/teacher/MyAttendance';
 import TeacherSchedule from './pages/teacher/TeacherSchedule';
 import ExamDashboard from './pages/academics/exams/ExamDashboard';
+import QuestionPaperList from './pages/academics/QuestionPaperList';
+import QuestionPaperBuilder from './pages/academics/QuestionPaperBuilder';
+import QuestionPaperViewer from './pages/academics/QuestionPaperViewer';
 
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentProfile from './pages/student/StudentProfile';
@@ -270,6 +273,10 @@ function App() {
                     <Route path="assignments" element={<div>Assignments Placeholder</div>} />
                     <Route path="schedule" element={<TeacherSchedule />} />
                     <Route path="exams" element={<ExamDashboard />} />
+                    <Route path="question-papers" element={<QuestionPaperList />} />
+                    <Route path="question-papers/build" element={<QuestionPaperBuilder />} />
+                    <Route path="question-papers/edit/:id" element={<QuestionPaperBuilder />} />
+                    <Route path="question-papers/:id" element={<QuestionPaperViewer />} />
                 </Route>
 
                 {/* STUDENT ROUTES */}
