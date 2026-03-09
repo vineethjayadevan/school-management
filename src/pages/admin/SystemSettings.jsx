@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import FeeSettings from '../../components/fees/FeeSettings';
 import StaffCategorySettings from '../../components/staff/StaffCategorySettings';
 import ExamCategories from '../academics/exams/ExamCategories';
+import NotificationSettings from '../../components/admin/NotificationSettings';
+import { Settings, Save, AlertCircle, CheckCircle2, Bell } from 'lucide-react';
 
 const SystemSettings = () => {
     const [settings, setSettings] = useState({
-        promotionRequiresFullFee: true
+        promotionRequiresFullFee: true,
+        notificationSettings: {
+            feeReceipt: { email: true, whatsapp: false, sms: false },
+            admissionEnquiry: { email: true, whatsapp: false, sms: false },
+            summerEnquiry: { email: true, whatsapp: false, sms: false }
+        }
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -23,7 +29,12 @@ const SystemSettings = () => {
             const { data } = await api.get('/settings');
             if (data) {
                 setSettings({
-                    promotionRequiresFullFee: data.promotionRequiresFullFee
+                    promotionRequiresFullFee: data.promotionRequiresFullFee,
+                    notificationSettings: data.notificationSettings || {
+                        feeReceipt: { email: true, whatsapp: false, sms: false },
+                        admissionEnquiry: { email: true, whatsapp: false, sms: false },
+                        summerEnquiry: { email: true, whatsapp: false, sms: false }
+                    }
                 });
             }
         } catch (error) {
@@ -102,6 +113,12 @@ const SystemSettings = () => {
                 >
                     Exam Categories
                 </button>
+                <button
+                    onClick={() => setActiveTab('notifications')}
+                    className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'notifications' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Notification Settings
+                </button>
             </div>
 
             {message.text && (
@@ -165,9 +182,28 @@ const SystemSettings = () => {
                     </div>
                     <StaffCategorySettings />
                 </div>
-            ) : (
+            ) : activeTab === 'examCategories' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <ExamCategories />
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 transition-all">
+                    <NotificationSettings settings={settings} setSettings={setSettings} />
+
+                    <div className="p-6 bg-slate-50 flex justify-end border-t border-slate-200">
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+                        >
+                            {saving ? (
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <Save size={18} />
+                            )}
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

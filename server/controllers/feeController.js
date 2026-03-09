@@ -143,15 +143,18 @@ const addFee = async (req, res) => {
         (async () => {
             try {
                 // 1. Generate PDF Receipt
-                console.log(`Generating receipt PDF for Receipt No: ${receiptNo}`);
-
                 const pdfBuffer = await generateFeeReceipt(insertedFee, student);
+
+                // Check notification settings
+                const GlobalSettings = require('../models/GlobalSettings');
+                const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
+                const emailEnabled = settings?.notificationSettings?.feeReceipt?.email ?? true;
 
                 // 2. Determine Recipient Email
                 // Requirement: Send ONLY to Father's email. If not present, do not send.
                 const recipientEmail = student.fatherEmail;
 
-                if (recipientEmail) {
+                if (recipientEmail && emailEnabled) {
                     console.log(`Sending fee receipt email to Father: ${recipientEmail}`);
 
                     // 3. Send Email

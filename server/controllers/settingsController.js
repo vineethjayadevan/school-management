@@ -26,7 +26,7 @@ const getSettings = async (req, res) => {
 // @access  Private (Admin)
 const updateSettings = async (req, res) => {
     try {
-        const { promotionRequiresFullFee } = req.body;
+        const { promotionRequiresFullFee, notificationSettings } = req.body;
 
         let settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
 
@@ -36,6 +36,10 @@ const updateSettings = async (req, res) => {
 
         if (promotionRequiresFullFee !== undefined) {
             settings.promotionRequiresFullFee = promotionRequiresFullFee;
+        }
+
+        if (notificationSettings !== undefined) {
+            settings.notificationSettings = notificationSettings;
         }
 
         settings.lastUpdatedBy = req.user._id;

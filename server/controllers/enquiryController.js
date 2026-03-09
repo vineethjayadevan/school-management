@@ -41,7 +41,11 @@ const createEnquiry = async (req, res) => {
 
         // --- Notification Logic (Resend) ---
         // Fire-and-forget: We do not await this, preventing frontend delay.
-        if (process.env.RESEND_API_KEY) {
+        const GlobalSettings = require('../models/GlobalSettings');
+        const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
+        const emailEnabled = settings?.notificationSettings?.admissionEnquiry?.email ?? true;
+
+        if (process.env.RESEND_API_KEY && emailEnabled) {
             const resend = new Resend(process.env.RESEND_API_KEY);
 
             resend.emails.send({
@@ -148,7 +152,11 @@ const createSummerEnquiry = async (req, res) => {
         res.status(201).json(summerEnquiry);
 
         // --- Notification Logic ---
-        if (process.env.RESEND_API_KEY) {
+        const GlobalSettings = require('../models/GlobalSettings');
+        const settings = await GlobalSettings.findById('SYSTEM_SETTINGS');
+        const emailEnabled = settings?.notificationSettings?.summerEnquiry?.email ?? true;
+
+        if (process.env.RESEND_API_KEY && emailEnabled) {
             const resend = new Resend(process.env.RESEND_API_KEY);
 
             resend.emails.send({

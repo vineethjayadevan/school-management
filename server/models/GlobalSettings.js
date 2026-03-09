@@ -13,6 +13,25 @@ const globalSettingsSchema = mongoose.Schema({
     lastUpdatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    },
+
+    // Notification Settings
+    notificationSettings: {
+        feeReceipt: {
+            email: { type: Boolean, default: true },
+            whatsapp: { type: Boolean, default: false },
+            sms: { type: Boolean, default: false }
+        },
+        admissionEnquiry: {
+            email: { type: Boolean, default: true },
+            whatsapp: { type: Boolean, default: false },
+            sms: { type: Boolean, default: false }
+        },
+        summerEnquiry: {
+            email: { type: Boolean, default: true },
+            whatsapp: { type: Boolean, default: false },
+            sms: { type: Boolean, default: false }
+        }
     }
 }, {
     timestamps: true
