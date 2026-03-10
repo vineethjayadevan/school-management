@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'School Management Portal',
-        short_name: 'SchoolPortal',
+        name: 'StemGPS',
+        short_name: 'StemGPS',
         description: 'School Management System for Teachers, Students, and Admins',
         theme_color: '#ffffff',
         background_color: '#ffffff',
