@@ -103,19 +103,19 @@ const Navbar = () => {
     };
 
     return (
-        <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-2 md:py-3' : 'bg-transparent py-2 md:py-5'}`}>
-            <div className="container mx-auto px-6 flex justify-between items-center">
-                <div className="flex items-center gap-3">
+        <nav className={`fixed w-full z-50 transition-all duration-500 pt-[calc(env(safe-area-inset-top)+0.5rem)] ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm pb-2 md:pt-[calc(env(safe-area-inset-top)+0.75rem)] md:pb-3' : 'bg-transparent pb-2 md:pt-[calc(env(safe-area-inset-top)+1.25rem)] md:pb-5'}`}>
+            <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
+                <div className="flex items-center gap-2 md:gap-3">
                     <img
                         src="/images/logo3.jpeg"
                         alt="Stem Global Logo"
-                        className={`transition-all duration-500 w-auto object-contain rounded-lg shrink-0 ${scrolled ? 'h-10 md:h-11' : 'h-11 md:h-12'}`}
+                        className={`transition-all duration-500 w-auto object-contain rounded-lg shrink-0 ${scrolled ? 'h-9 md:h-11' : 'h-10 md:h-12'}`}
                     />
                     <div className="flex flex-col">
-                        <span className={`text-lg md:text-xl font-bold tracking-tight leading-none ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
+                        <span className={`text-[15px] md:text-xl font-extrabold tracking-tight leading-tight ${scrolled ? 'text-slate-900' : 'text-slate-900'}`}>
                             STEM Global Public School
                         </span>
-                        <span className="text-[10px] md:text-xs font-medium text-slate-500 tracking-wide">
+                        <span className="hidden md:block text-[10px] md:text-xs font-medium text-slate-500 tracking-wide mt-0.5">
                             Kollannoor-Kappur Palakkad District Kerala
                         </span>
                     </div>
