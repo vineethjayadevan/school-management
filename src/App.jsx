@@ -359,12 +359,17 @@ function RedirectHandler() {
 }
 
 function HomeRoute() {
-    // Detect Mobile OS
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    // Detect if running as standalone PWA
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    // Detect Mobile OS (including iPadOS pretending to be Mac)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    
+    // Detect if running as standalone PWA (including iOS standalone)
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    if (isMobile || isPWA) {
+    // Small screen fallback just in case
+    const isSmallScreen = window.innerWidth <= 768;
+
+    if (isMobile || isPWA || isSmallScreen) {
         return <Navigate to="/portal-selection" replace />;
     }
 
