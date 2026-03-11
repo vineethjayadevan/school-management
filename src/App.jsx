@@ -40,6 +40,7 @@ import PromotionWizard from './pages/admin/PromotionWizard';
 import TimetablePage from './pages/admin/timetable/TimetablePage';
 
 import Login from './pages/auth/Login';
+import PortalSelection from './pages/auth/PortalSelection';
 import Home from './pages/Home';
 import UserManagement from './pages/admin/UserManagement';
 import Admissions from './pages/admin/Admissions';
@@ -107,8 +108,9 @@ function App() {
             <Toaster />
             <Routes>
                 {/* PUBLIC ROUTE */}
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<HomeRoute />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/portal-selection" element={<PortalSelection />} />
 
                 {/* SYSTEM ADMIN ROUTES */}
                 <Route path="/system/login" element={<SystemLogin />} />
@@ -354,6 +356,19 @@ function RedirectHandler() {
     if (user.role === 'board_member') return <Navigate to="/board/ledger" replace />;
 
     return <Navigate to="/login" replace />;
+}
+
+function HomeRoute() {
+    // Detect Mobile OS
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Detect if running as standalone PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isMobile || isPWA) {
+        return <Navigate to="/portal-selection" replace />;
+    }
+
+    return <Home />;
 }
 
 export default App
