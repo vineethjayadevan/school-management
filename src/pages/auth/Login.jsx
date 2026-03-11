@@ -15,6 +15,16 @@ export default function Login() {
         email: '',
         password: ''
     });
+    const [rememberMe, setRememberMe] = useState(false);
+
+    useEffect(() => {
+        // Load saved email if it exists
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail) {
+            setFormData(prev => ({ ...prev, email: savedEmail }));
+            setRememberMe(true);
+        }
+    }, []);
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -56,6 +66,12 @@ export default function Login() {
         e.preventDefault();
         setLoading(true);
         try {
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', formData.email);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+            
             const data = await login(formData.email, formData.password);
             addToast('Welcome back!', 'success');
             // Navigation handled by useEffect when user state updates
@@ -123,7 +139,12 @@ export default function Login() {
 
                                 <div className="flex items-center justify-between text-sm">
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                                        <input 
+                                            type="checkbox" 
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
+                                        />
                                         <span className="text-slate-600">Remember me</span>
                                     </label>
                                     <button type="button" className="text-indigo-600 hover:text-indigo-700 font-medium">
