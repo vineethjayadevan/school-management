@@ -359,17 +359,12 @@ function RedirectHandler() {
 }
 
 function HomeRoute() {
-    // Detect Mobile OS (including iPadOS pretending to be Mac)
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                     (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-    
     // Detect if running as standalone PWA (including iOS standalone)
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    // Small screen fallback just in case
-    const isSmallScreen = window.innerWidth <= 768;
-
-    if (isMobile || isPWA || isSmallScreen) {
+    // Only redirect if it is explicitly installed and running as a PWA
+    // Regular mobile browser visits will see the normal Home component
+    if (isPWA) {
         return <Navigate to="/portal-selection" replace />;
     }
 
