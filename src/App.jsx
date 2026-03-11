@@ -359,11 +359,15 @@ function RedirectHandler() {
 }
 
 function HomeRoute() {
-    // Detect if running as standalone PWA (including iOS standalone)
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    // Safely check for PWA standalone mode
+    let isPWA = false;
+    try {
+        isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                (window.navigator && window.navigator.standalone === true);
+    } catch (e) {
+        console.error("Error checking PWA status:", e);
+    }
 
-    // Only redirect if it is explicitly installed and running as a PWA
-    // Regular mobile browser visits will see the normal Home component
     if (isPWA) {
         return <Navigate to="/portal-selection" replace />;
     }
