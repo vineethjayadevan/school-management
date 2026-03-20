@@ -30,6 +30,9 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
+        ],
+        scope_extensions: [
+          { origin: "*.mystemgps.com" }
         ]
       },
       workbox: {

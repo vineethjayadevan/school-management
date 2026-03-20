@@ -1,3 +1,7 @@
+if (window.location.hostname === 'mystemgps.com') {
+    window.location.replace('https://www.mystemgps.com' + window.location.pathname + window.location.search);
+}
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
