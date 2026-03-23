@@ -13,7 +13,9 @@ import {
     FileSpreadsheet,
     Search,
     ChevronDown,
-    ArrowUpRight
+    ArrowUpRight,
+    LayoutGrid,
+    List
 } from 'lucide-react';
 import api from '../../services/api'; // Keep existing imports
 import { useAuth } from '../../context/AuthContext';
@@ -50,6 +52,7 @@ export default function BoardDashboard() {
     });
 
     const [activeTab, setActiveTab] = useState('cash');
+    const [viewMode, setViewMode] = useState(window.innerWidth < 1024 ? 'cards' : 'table');
 
     const downloadExcel = () => {
         // 1. Prepare Data
@@ -516,74 +519,87 @@ export default function BoardDashboard() {
                 </div>
             </div>
 
-            {/* Filters - Compact */}
-            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-
-                    {/* Search & Date Group */}
-                    <div className="flex flex-1 items-center gap-2 min-w-0">
-                        <div className="relative flex-1 min-w-[150px]">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            {/* Filters Section */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 items-end">
+                    
+                    {/* Search Field */}
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Search</label>
+                        <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder="Search transactions..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                             />
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <div className="relative">
+                    </div>
+
+                    {/* Date Range Group */}
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Date Range</label>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <div className="relative flex-1">
                                 <input
                                     type="date"
                                     value={filters.startDate}
                                     onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                                    className="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-32 md:w-auto"
+                                    className="w-full pl-3 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                 />
                             </div>
-                            <span className="text-slate-400">-</span>
-                            <div className="relative">
+                            <span className="hidden sm:block text-slate-400">-</span>
+                            <div className="relative flex-1">
                                 <input
                                     type="date"
                                     value={filters.endDate}
                                     onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                                    className="pl-3 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-32 md:w-auto"
+                                    className="w-full pl-3 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="h-8 w-px bg-slate-200 hidden lg:block"></div>
-
-                    {/* Dropdowns Group */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* Type Selector */}
+                    <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Type</label>
                         <select
                             value={filters.type}
                             onChange={(e) => handleFilterChange('type', e.target.value)}
-                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 capitalize"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 capitalize cursor-pointer"
                         >
                             <option value="all">All Types</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
                             <option value="capital">Capital</option>
                         </select>
+                    </div>
 
+                    {/* User Selector */}
+                    <div className="col-span-1">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Recorded By</label>
                         <select
                             value={filters.userId}
                             onChange={(e) => handleFilterChange('userId', e.target.value)}
-                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[150px]"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                         >
                             <option value="">All Users</option>
                             {boardMembers.map(member => (
                                 <option key={member._id} value={member._id}>{member.name}</option>
                             ))}
                         </select>
+                    </div>
 
-                        {(filters.type !== 'all' || filters.category) && (
+                    {/* Category Selector */}
+                    {(filters.type !== 'all' || filters.category) && (
+                        <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Category</label>
                             <select
                                 value={filters.category}
                                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[160px]"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                             >
                                 <option value="">Category</option>
                                 {filters.type === 'expense' && expenseCategories.map(cat => (
@@ -595,57 +611,84 @@ export default function BoardDashboard() {
                                         <option key={cat._id} value={cat.name}>{cat.name}</option>
                                     ))
                                 }
-                                {/* Show all if type is 'all' (though logic usually filters) - kept simple */}
                             </select>
-                        )}
+                        </div>
+                    )}
 
-                        {filters.category && availableSubcategories.length > 0 && (
+                    {/* Subcategory Selector */}
+                    {filters.category && availableSubcategories.length > 0 && (
+                        <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Subcategory</label>
                             <select
                                 value={filters.subcategory}
                                 onChange={(e) => handleFilterChange('subcategory', e.target.value)}
-                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[160px]"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
                             >
                                 <option value="">Subcategory</option>
                                 {availableSubcategories.map(sub => (
                                     <option key={sub} value={sub}>{sub}</option>
                                 ))}
                             </select>
-                        )}
+                        </div>
+                    )}
 
+                    {/* Clear Filters Button */}
+                    <div className="col-span-1 flex items-center h-full">
                         <button
                             onClick={clearFilters}
-                            title="Clear Filters"
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors py-2 px-1 text-sm font-medium group"
                         >
-                            <Filter size={16} className={Object.values(filters).some(v => v !== 'all' && v !== '') ? "text-indigo-500" : ""} />
+                            <Filter size={14} className={Object.values(filters).some(v => v !== 'all' && v !== '') ? "text-indigo-500" : ""} />
+                            <span>Clear Filters</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Table Wrapper */}
+            {/* Transactions Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <CreditCard size={20} className="text-indigo-500" />
-                        Transactions
-                    </h3>
-                    <span className="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
-                        {filteredTransactions.length} records found
-                    </span>
+                <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            <CreditCard size={20} className="text-indigo-500" />
+                            Transactions
+                        </h3>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 uppercase tracking-wider">
+                            {filteredTransactions.length} records found
+                        </span>
+                    </div>
+
+                    {/* View Switcher */}
+                    <div className="flex items-center self-end sm:self-auto bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${viewMode === 'table' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <List size={14} />
+                            <span>Table</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('cards')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${viewMode === 'cards' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <LayoutGrid size={14} />
+                            <span>Cards</span>
+                        </button>
+                    </div>
                 </div>
 
                 {filteredTransactions.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">
-                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                            <Search size={24} />
+                    <div className="p-12 text-center text-slate-400">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-200">
+                            <Search size={32} />
                         </div>
-                        <p>No transactions found matching your criteria.</p>
+                        <p className="text-lg font-medium text-slate-500">No transactions found</p>
+                        <p className="text-sm mt-1">Try adjusting your search or filters</p>
                     </div>
-                ) : (
+                ) : viewMode === 'table' ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                            <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
                                 <tr>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Ref/Receipt</th>
@@ -659,27 +702,27 @@ export default function BoardDashboard() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredTransactions.map((t) => (
-                                    <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr key={t._id} className="hover:bg-indigo-50/30 transition-colors">
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
                                             {new Date(t.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
                                             {t.type === 'expense' ? (
                                                 t.referenceType === 'Receipt' ? (
-                                                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{t.referenceNo}</span>
+                                                    <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[10px] border border-slate-200">{t.referenceNo}</span>
                                                 ) : (
-                                                    <span className="text-slate-400 text-xs">Voucher</span>
+                                                    <span className="text-slate-400 text-[10px] bg-slate-50 px-2 py-0.5 rounded border border-dashed border-slate-200">Voucher</span>
                                                 )
                                             ) : (
                                                 t.receiptNo ? (
-                                                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">{t.receiptNo}</span>
+                                                    <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[10px] border border-slate-200">{t.receiptNo}</span>
                                                 ) : (
                                                     <span className="text-slate-400 text-xs">-</span>
                                                 )
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income'
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight ${t.type === 'income'
                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                                                 : t.type === 'capital'
                                                     ? 'bg-blue-50 text-blue-700 border border-blue-100'
@@ -690,8 +733,8 @@ export default function BoardDashboard() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-700">
                                             <div className="flex flex-col">
-                                                <span className="font-medium"><HighlightText text={t.category} highlight={searchQuery} /></span>
-                                                {t.subcategory && <span className="text-xs text-slate-500"><HighlightText text={t.subcategory} highlight={searchQuery} /></span>}
+                                                <span className="font-bold"><HighlightText text={t.category} highlight={searchQuery} /></span>
+                                                {t.subcategory && <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight"><HighlightText text={t.subcategory} highlight={searchQuery} /></span>}
                                             </div>
                                         </td>
                                         <td
@@ -704,28 +747,100 @@ export default function BoardDashboard() {
                                             {t.receiptUrl ? (
                                                 <button
                                                     onClick={() => handleViewReceipt(t.receiptUrl)}
-                                                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                                                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-100"
                                                     title="View Receipt"
                                                 >
-                                                    <ArrowUpRight size={16} />
+                                                    <ArrowUpRight size={14} />
                                                 </button>
                                             ) : (
                                                 <span className="text-slate-300">-</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500">
+                                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">
                                             {t.addedBy?.name || 'Unknown'}
                                         </td>
-                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600'
-                                            : t.type === 'capital' ? 'text-blue-600'
-                                                : 'text-rose-600'
-                                            }`}>
+                                        <td className={`px-6 py-4 text-right font-bold text-sm ${t.type === 'income' || t.type === 'capital' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                             {t.type === 'income' || t.type === 'capital' ? '+' : '-'} ₹{t.amount?.toLocaleString()}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                ) : (
+                    /* Card View for Mobile/Tablets */
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50/50">
+                        {filteredTransactions.map((t) => (
+                            <div key={t._id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:border-indigo-200 transition-all group">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                            {new Date(t.date).toLocaleDateString('en-GB').replace(/\//g, '-')}
+                                        </span>
+                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${t.type === 'income'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                            : t.type === 'capital'
+                                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                : 'bg-rose-50 text-rose-700 border-rose-100'
+                                            }`}>
+                                            {t.type}
+                                        </span>
+                                    </div>
+                                    <span className={`text-base font-bold ${t.type === 'income' || t.type === 'capital' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {t.type === 'income' || t.type === 'capital' ? '+' : '-'} ₹{t.amount?.toLocaleString()}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-slate-800 uppercase tracking-tight">
+                                                <HighlightText text={t.category} highlight={searchQuery} />
+                                            </span>
+                                            {t.subcategory && (
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                                    <HighlightText text={t.subcategory} highlight={searchQuery} />
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {(t.title || t.description) && (
+                                        <p className="text-xs text-slate-600 line-clamp-2 px-1 italic">
+                                            <HighlightText text={t.title || t.description} highlight={searchQuery} />
+                                        </p>
+                                    )}
+
+                                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                                                <Search size={10} className="text-slate-400" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase leading-none mb-0.5">Recorded By</span>
+                                                <span className="text-[10px] font-bold text-slate-700 leading-none">{t.addedBy?.name || 'Unknown'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {t.type === 'expense' && t.referenceNo && (
+                                                <span className="text-[9px] font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-slate-500">
+                                                    #{t.referenceNo}
+                                                </span>
+                                            )}
+                                            {t.receiptUrl && (
+                                                <button
+                                                    onClick={() => handleViewReceipt(t.receiptUrl)}
+                                                    className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                                >
+                                                    <ArrowUpRight size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
