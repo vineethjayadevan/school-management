@@ -1,0 +1,27 @@
+[
+  {
+    "_id": "SYSTEM_SETTINGS",
+    "promotionRequiresFullFee": false,
+    "createdAt": "2026-02-24T08:38:34.298Z",
+    "updatedAt": "2026-03-09T04:38:13.308Z",
+    "__v": 0,
+    "lastUpdatedBy": "697c9edd14be52feb02612c2",
+    "notificationSettings": {
+      "feeReceipt": {
+        "email": true,
+        "whatsapp": false,
+        "sms": false
+      },
+      "admissionEnquiry": {
+        "email": true,
+        "whatsapp": false,
+        "sms": false
+      },
+      "summerEnquiry": {
+        "email": true,
+        "whatsapp": false,
+        "sms": false
+      }
+    }
+  }
+]

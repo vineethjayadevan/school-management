@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "6996d4723320100aa39230a6",
+    "name": "Teacher",
+    "subcategories": [
+      "Pre-Primary",
+      "Primary",
+      "Secondary",
+      "Senior Secondary",
+      "Head of Department",
+      "All Sections"
+    ],
+    "isTeaching": true,
+    "isActive": true,
+    "createdAt": "2026-02-19T09:14:26.395Z",
+    "updatedAt": "2026-03-05T07:18:19.087Z",
+    "__v": 1
+  },
+  {
+    "_id": "6996d4723320100aa39230a9",
+    "name": "Non-Teaching",
+    "subcategories": [
+      "Admin",
+      "Clerk",
+      "Accountant",
+      "Librarian",
+      "Lab Assistant",
+      "Peon",
+      "Cleaner",
+      "Security"
+    ],
+    "isTeaching": false,
+    "isActive": true,
+    "createdAt": "2026-02-19T09:14:26.481Z",
+    "updatedAt": "2026-02-19T09:14:26.481Z",
+    "__v": 0
+  },
+  {
+    "_id": "6996d4723320100aa39230ac",
+    "name": "Vehicle In-Charge",
+    "subcategories": [
+      "Driver",
+      "Helper",
+      "Conductor"
+    ],
+    "isTeaching": false,
+    "isActive": true,
+    "createdAt": "2026-02-19T09:14:26.570Z",
+    "updatedAt": "2026-02-19T09:14:26.570Z",
+    "__v": 0
+  }
+]

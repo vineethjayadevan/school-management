@@ -1,0 +1,102 @@
+[
+  {
+    "_id": "6996d125e03d6c05810d67dc",
+    "name": "Mathematics",
+    "code": "MATH",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-02-19T09:00:21.138Z",
+    "updatedAt": "2026-02-19T09:00:21.138Z",
+    "__v": 0
+  },
+  {
+    "_id": "6996d12ee03d6c05810d67eb",
+    "name": "English",
+    "code": "ENG",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-02-19T09:00:30.775Z",
+    "updatedAt": "2026-02-19T09:00:30.775Z",
+    "__v": 0
+  },
+  {
+    "_id": "6996d138e03d6c05810d67fa",
+    "name": "Science",
+    "code": "SCI",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-02-19T09:00:40.024Z",
+    "updatedAt": "2026-02-19T09:00:40.024Z",
+    "__v": 0
+  },
+  {
+    "_id": "6996d159e03d6c05810d6826",
+    "name": "Social Science",
+    "code": "SS",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-02-19T09:01:13.955Z",
+    "updatedAt": "2026-02-19T09:01:13.955Z",
+    "__v": 0
+  },
+  {
+    "_id": "6996d164e03d6c05810d6835",
+    "name": "Physical Education",
+    "code": "PE",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-02-19T09:01:24.973Z",
+    "updatedAt": "2026-02-19T09:01:24.973Z",
+    "__v": 0
+  },
+  {
+    "_id": "69afbbb886b25c3d0cfcb7f7",
+    "name": "Malayalam",
+    "code": "MAL101",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-03-10T06:35:36.141Z",
+    "updatedAt": "2026-03-10T06:35:36.141Z",
+    "__v": 0
+  },
+  {
+    "_id": "69afbbc686b25c3d0cfcb808",
+    "name": "Hindi",
+    "code": "HIN101",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-03-10T06:35:50.818Z",
+    "updatedAt": "2026-03-10T06:35:50.818Z",
+    "__v": 0
+  },
+  {
+    "_id": "69afbbd386b25c3d0cfcb819",
+    "name": "GK",
+    "code": "GK101",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-03-10T06:36:03.757Z",
+    "updatedAt": "2026-03-10T06:36:03.757Z",
+    "__v": 0
+  },
+  {
+    "_id": "69afdf6786b25c3d0cfcbf0c",
+    "name": "EVS",
+    "code": "EVS101",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-03-10T09:07:51.338Z",
+    "updatedAt": "2026-03-10T09:07:51.338Z",
+    "__v": 0
+  },
+  {
+    "_id": "69afdf7886b25c3d0cfcbf1e",
+    "name": "MS",
+    "code": "MS101",
+    "type": "Core",
+    "description": "",
+    "createdAt": "2026-03-10T09:08:08.136Z",
+    "updatedAt": "2026-03-10T09:08:08.136Z",
+    "__v": 0
+  }
+]

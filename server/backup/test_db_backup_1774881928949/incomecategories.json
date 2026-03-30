@@ -1,0 +1,140 @@
+[
+  {
+    "_id": "698cb2f57a55c149e5086b45",
+    "name": "Donations",
+    "subcategories": [
+      "General Donations (Revenue)",
+      "Capital Donations (Restricted)"
+    ],
+    "type": "income",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b4b",
+    "name": "Refundable Deposits & Advances",
+    "subcategories": [
+      "Security Deposits Received",
+      "Caution Deposits",
+      "Advances Received (Refundable)"
+    ],
+    "type": "capital",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b49",
+    "name": "Capital Introduced",
+    "subcategories": [
+      "Investment by Board Members",
+      "Additional Capital Contribution",
+      "Founder / Promoter Capital"
+    ],
+    "type": "capital",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b44",
+    "name": "Student Fees",
+    "subcategories": [
+      "Tuition Fees",
+      "Admission / Registration Fees",
+      "Transport Fees",
+      "Other Academic Fees"
+    ],
+    "type": "income",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.399Z",
+    "updatedAt": "2026-02-11T16:48:53.399Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b47",
+    "name": "Grants",
+    "subcategories": [
+      "Revenue Grants",
+      "Capital Grants"
+    ],
+    "type": "income",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b48",
+    "name": "Other Operating Income",
+    "subcategories": [
+      "Late Fees / Fines",
+      "Certificate / Examination Charges",
+      "Interest Received",
+      "Miscellaneous Operating Income"
+    ],
+    "type": "income",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b46",
+    "name": "Sponsorships",
+    "subcategories": [
+      "Event Sponsorships",
+      "Program / Activity Sponsorships"
+    ],
+    "type": "income",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b4a",
+    "name": "Loans Received",
+    "subcategories": [
+      "Bank / Financial Institution Loans",
+      "Director / Board Member Loans",
+      "Short-Term Loans"
+    ],
+    "type": "capital",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b4c",
+    "name": "Asset Sale Proceeds",
+    "subcategories": [
+      "Sale of Fixed Assets",
+      "Sale of Scrap / Old Items"
+    ],
+    "type": "capital",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  },
+  {
+    "_id": "698cb2f57a55c149e5086b4d",
+    "name": "Other Non-Operating Receipts",
+    "subcategories": [
+      "Insurance Claim Received",
+      "Refunds / Reimbursements Received",
+      "Extraordinary / One-time Receipts"
+    ],
+    "type": "capital",
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:48:53.400Z",
+    "updatedAt": "2026-02-11T16:48:53.400Z"
+  }
+]

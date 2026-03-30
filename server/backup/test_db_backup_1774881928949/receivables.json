@@ -1,0 +1,44 @@
+[
+  {
+    "_id": "698e39d6ea98b4fb4e858e28",
+    "source": "698e39d6ea98b4fb4e858e26",
+    "customer": "Cash Receipt",
+    "amount": 10000,
+    "paidAmount": 10000,
+    "balance": 0,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "status": "Paid",
+    "description": "Donation Recieved",
+    "createdAt": "2026-02-12T20:36:38.435Z",
+    "updatedAt": "2026-02-12T20:36:38.435Z",
+    "__v": 0
+  },
+  {
+    "_id": "698e39d6ea98b4fb4e858e2f",
+    "source": "698e39d6ea98b4fb4e858e2d",
+    "customer": "Cash Receipt",
+    "amount": 26500,
+    "paidAmount": 26500,
+    "balance": 0,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "status": "Paid",
+    "description": "Balance Amount from Annual Day Collection",
+    "createdAt": "2026-02-12T20:36:38.631Z",
+    "updatedAt": "2026-02-12T20:36:38.631Z",
+    "__v": 0
+  },
+  {
+    "_id": "698e39d6ea98b4fb4e858e36",
+    "source": "698e39d6ea98b4fb4e858e34",
+    "customer": "Cash Receipt",
+    "amount": 15000,
+    "paidAmount": 15000,
+    "balance": 0,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "status": "Paid",
+    "description": "Recieved from Building owner",
+    "createdAt": "2026-02-12T20:36:38.823Z",
+    "updatedAt": "2026-02-12T20:36:38.823Z",
+    "__v": 0
+  }
+]

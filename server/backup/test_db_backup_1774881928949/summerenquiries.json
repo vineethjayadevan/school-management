@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "69a424c055fd48ed55aad4fe",
+    "name": "Jayadevan V",
+    "age": "57",
+    "occupation": "Working",
+    "interestedCourses": [
+      "Self Defence Classes",
+      "Art & Craft Training"
+    ],
+    "email": "jayadev@gmail.com",
+    "phoneNumber": "9496206124",
+    "message": "",
+    "status": "New",
+    "createdAt": "2026-03-01T11:36:32.770Z",
+    "updatedAt": "2026-03-01T11:36:32.770Z",
+    "__v": 0
+  }
+]

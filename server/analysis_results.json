@@ -1,0 +1,54 @@
+{
+  "Expenses": {
+    "categories": {
+      "Infrastructure & Construction": [
+        "697c9f7d41a44ed84c0876a1"
+      ],
+      "Events & Activities": [
+        "697c9f7c41a44ed84c08769e",
+        "697c9f7c41a44ed84c08769b"
+      ],
+      "Professional & Statutory Expenses": [
+        "697c9f7d41a44ed84c0876a1"
+      ],
+      "Advertisement & Marketing": [
+        "697c9f7d41a44ed84c0876a1"
+      ]
+    },
+    "totalUniqueIds": 3
+  },
+  "Incomes": {
+    "categories": {
+      "Donations": [
+        "697c9f7d41a44ed84c0876a1"
+      ],
+      "Other Operating Income": [
+        "697c9f7d41a44ed84c0876a1"
+      ],
+      "Capital Introduced": [
+        "697c9f7c41a44ed84c08769b",
+        "697c9f7e41a44ed84c0876aa",
+        "697c9f7e41a44ed84c0876b0",
+        "697c9f7e41a44ed84c0876ad",
+        "697c9f7c41a44ed84c08769e",
+        "697c9f7e41a44ed84c0876b3",
+        "697c9f7d41a44ed84c0876a1",
+        "697c9f7e41a44ed84c0876b6",
+        "697c9f7d41a44ed84c0876a7",
+        "697c9f7d41a44ed84c0876a4"
+      ]
+    },
+    "totalUniqueIds": 10
+  },
+  "Capitals": {
+    "categories": {
+      "Investment": [
+        "697c9f7c41a44ed84c08769b",
+        "697c9f7e41a44ed84c0876aa",
+        "697c9f7e41a44ed84c0876b0",
+        "697c9f7e41a44ed84c0876ad"
+      ]
+    },
+    "totalUniqueIds": 4
+  }
+}

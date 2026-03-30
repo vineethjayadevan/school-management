@@ -1,0 +1,114 @@
+[
+  {
+    "_id": "6971fdea38e63ce33c5e4d08",
+    "name": "Mont 1",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "69837fca9862ff6cc240540d",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "6996d00ae03d6c05810d6744"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-01-22T10:37:30.073Z",
+    "updatedAt": "2026-02-19T08:55:38.784Z",
+    "__v": 1
+  },
+  {
+    "_id": "6971fdea38e63ce33c5e4d0b",
+    "name": "Mont 2",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "69837fca9862ff6cc240540d",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699c29417b91332815e53e68"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-01-22T10:37:30.155Z",
+    "updatedAt": "2026-02-23T10:17:37.475Z",
+    "__v": 2
+  },
+  {
+    "_id": "6971fdea38e63ce33c5e4d0e",
+    "name": "Grade 1",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "698380079862ff6cc2405419",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699c34f4b3855f5602163657"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-01-22T10:37:30.225Z",
+    "updatedAt": "2026-02-23T11:07:32.361Z",
+    "__v": 2
+  },
+  {
+    "_id": "6971fdea38e63ce33c5e4d11",
+    "name": "Grade 2",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "6983801a9862ff6cc240541f",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699c34fcb3855f5602163668"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-01-22T10:37:30.300Z",
+    "updatedAt": "2026-02-23T11:07:40.302Z",
+    "__v": 3
+  },
+  {
+    "_id": "6971fdea38e63ce33c5e4d14",
+    "name": "Grade 3",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "698380389862ff6cc2405425",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699c3502b3855f5602163679"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-01-22T10:37:30.374Z",
+    "updatedAt": "2026-02-23T11:07:46.668Z",
+    "__v": 3
+  },
+  {
+    "_id": "699d61931762d6612e89664d",
+    "name": "Grade 4",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "6983801a9862ff6cc240541f",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699d61931762d6612e89664e"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-02-24T08:30:11.039Z",
+    "updatedAt": "2026-02-24T08:30:11.039Z",
+    "__v": 0
+  },
+  {
+    "_id": "699d619d1762d6612e89665f",
+    "name": "Grade 5",
+    "sections": [
+      {
+        "name": "A",
+        "classTeacher": "698830b6091f012436127873",
+        "nanny": "6983806f9862ff6cc240544f",
+        "_id": "699d619d1762d6612e896660"
+      }
+    ],
+    "subjects": [],
+    "createdAt": "2026-02-24T08:30:21.779Z",
+    "updatedAt": "2026-02-24T08:30:21.779Z",
+    "__v": 0
+  }
+]
