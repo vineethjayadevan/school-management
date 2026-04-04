@@ -200,8 +200,8 @@ export const storageService = {
         }
     },
     staffAttendance: {
-        mark: async (attendanceData, date) => {
-            const { data } = await api.post('/staff-attendance/mark', { date, attendanceData });
+        mark: async (attendanceData) => {
+            const { data } = await api.post('/staff-attendance/mark', attendanceData);
             return data;
         },
         notifyAbsentees: async (date) => {
