@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "699d63d03a2acf7048bdb4c4",
+    "name": "2024-2025",
+    "startDate": "2024-06-03T00:00:00.000Z",
+    "endDate": "2025-03-28T00:00:00.000Z",
+    "isActive": false,
+    "isLocked": false,
+    "createdBy": "697c9edd14be52feb02612c2",
+    "createdAt": "2026-02-24T08:39:44.680Z",
+    "updatedAt": "2026-02-25T10:22:32.624Z",
+    "__v": 0
+  },
+  {
+    "_id": "699d64053a2acf7048bdb4cc",
+    "name": "2025-2026",
+    "startDate": "2025-06-02T00:00:00.000Z",
+    "endDate": "2026-03-27T00:00:00.000Z",
+    "isActive": false,
+    "isLocked": false,
+    "createdBy": "697c9edd14be52feb02612c2",
+    "createdAt": "2026-02-24T08:40:37.402Z",
+    "updatedAt": "2026-02-25T10:22:32.624Z",
+    "__v": 0
+  },
+  {
+    "_id": "699d642f3a2acf7048bdb4d3",
+    "name": "2026-2027",
+    "startDate": "2026-06-01T00:00:00.000Z",
+    "endDate": "2027-03-26T00:00:00.000Z",
+    "isActive": true,
+    "isLocked": false,
+    "createdBy": "697c9edd14be52feb02612c2",
+    "createdAt": "2026-02-24T08:41:19.562Z",
+    "updatedAt": "2026-02-25T10:22:32.623Z",
+    "__v": 0
+  }
+]

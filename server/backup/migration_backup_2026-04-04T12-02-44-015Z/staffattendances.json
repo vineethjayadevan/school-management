@@ -1,0 +1,222 @@
+[
+  {
+    "_id": "69d0b3285370182ceba6970c",
+    "staff": "69a9370c82e0689931c723da",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba6970d",
+    "staff": "69a9366982e0689931c72399",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba6970e",
+    "staff": "69a9362982e0689931c72381",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba6970f",
+    "staff": "69a935d582e0689931c7235a",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69710",
+    "staff": "69a9359682e0689931c72335",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69711",
+    "staff": "69a9354682e0689931c7230d",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69712",
+    "staff": "69a934e482e0689931c722c7",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69713",
+    "staff": "69a9347e82e0689931c7229f",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69714",
+    "staff": "69a9342982e0689931c72287",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3285370182ceba69715",
+    "staff": "69a931966f4a50cbd2c55904",
+    "date": "2026-04-01T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:43:52.254Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:43:52.254Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba69716",
+    "staff": "69a9370c82e0689931c723da",
+    "date": "2026-04-02T00:00:00.000Z",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba69717",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9366982e0689931c72399",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba69718",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9362982e0689931c72381",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Absent",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba69719",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a935d582e0689931c7235a",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971a",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9359682e0689931c72335",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Absent",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971b",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9354682e0689931c7230d",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971c",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a934e482e0689931c722c7",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971d",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9347e82e0689931c7229f",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971e",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a9342982e0689931c72287",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  },
+  {
+    "_id": "69d0b3465370182ceba6971f",
+    "date": "2026-04-02T00:00:00.000Z",
+    "staff": "69a931966f4a50cbd2c55904",
+    "__v": 0,
+    "createdAt": "2026-04-04T06:44:22.213Z",
+    "markedBy": "69caa346ea89f3510a5ecaaf",
+    "remarks": "",
+    "status": "Present",
+    "updatedAt": "2026-04-04T06:44:22.213Z"
+  }
+]

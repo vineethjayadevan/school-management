@@ -32,6 +32,7 @@ export default function StudentList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedYear, setSelectedYear] = useState('All');
     const [selectedClass, setSelectedClass] = useState('All');
+    const [selectedSection, setSelectedSection] = useState('All');
     const [viewMode, setViewMode] = useState('Active'); // 'Active' or 'Archived'
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
@@ -95,6 +96,11 @@ export default function StudentList() {
         return [...classes].sort((a, b) => matchClassOrder(a.name) - matchClassOrder(b.name));
     }, [classes]);
 
+    const availableSections = useMemo(() => {
+        if (selectedClass === 'All') return [];
+        return classes.find(c => c.name === selectedClass)?.sections || [];
+    }, [classes, selectedClass]);
+
     // Derived State: Filtered Students
     const filteredStudents = useMemo(() => {
         return allStudents.filter(student => {
@@ -110,14 +116,17 @@ export default function StudentList() {
                 (student.admissionNo?.toLowerCase() || '').includes(searchLower) ||
                 (student.rollNo?.toLowerCase() || '').includes(searchLower);
 
-            // 2 & 3. Year & Class Filters
+            // 2, 3 & 4. Year, Class & Section Filters
             let matchesYear = false;
             let matchesClass = false;
+            let matchesSection = false;
 
             if (selectedYear === 'All') {
                 matchesYear = true;
                 const studentClass = student.className || student.class;
+                const studentSection = student.section;
                 matchesClass = selectedClass === 'All' || studentClass === selectedClass;
+                matchesSection = selectedSection === 'All' || studentSection === selectedSection;
             } else {
                 // Normalize: currentAcademicYear can be a plain ID string or a populated object
                 const studentYearId =
@@ -128,7 +137,9 @@ export default function StudentList() {
                 if (studentYearId === selectedYear) {
                     matchesYear = true;
                     const studentClass = student.className || student.class;
+                    const studentSection = student.section;
                     matchesClass = selectedClass === 'All' || studentClass === selectedClass;
+                    matchesSection = selectedSection === 'All' || studentSection === selectedSection;
                 }
                 // Check history if not found in current year
                 else if (student.academicHistory && student.academicHistory.length > 0) {
@@ -141,6 +152,7 @@ export default function StudentList() {
                     if (historyEntry) {
                         matchesYear = true;
                         matchesClass = selectedClass === 'All' || historyEntry.className === selectedClass;
+                        matchesSection = selectedSection === 'All' || historyEntry.section === selectedSection;
                     }
                 }
             }
@@ -148,11 +160,11 @@ export default function StudentList() {
             // 4. Advanced Filters
             const matchesGender = filters.gender === 'All' || student.gender === filters.gender;
 
-            return matchesSearch && matchesYear && matchesClass && matchesGender;
+            return matchesSearch && matchesYear && matchesClass && matchesSection && matchesGender;
         }).sort((a, b) => {
             return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
         });
-    }, [allStudents, searchTerm, selectedYear, selectedClass, filters, viewMode]);
+    }, [allStudents, searchTerm, selectedYear, selectedClass, selectedSection, filters, viewMode]);
 
     // Statistics Calculation
     const stats = useMemo(() => {
@@ -276,13 +288,16 @@ export default function StudentList() {
                 <div className="p-4 border-b border-slate-200 bg-slate-50/30">
                     <div className="flex flex-wrap gap-4 items-center">
                         {/* Class Dropdown */}
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-[150px]">
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Class</label>
                             <div className="relative">
                                 <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                 <select
                                     value={selectedClass}
-                                    onChange={(e) => setSelectedClass(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedClass(e.target.value);
+                                        setSelectedSection('All');
+                                    }}
                                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:border-slate-300 shadow-sm"
                                 >
                                     <option value="All">All Classes</option>
@@ -293,8 +308,42 @@ export default function StudentList() {
                             </div>
                         </div>
 
-                        {/* Academic Year Dropdown */}
-                        <div className="flex-1 min-w-[200px]">
+                        {/* Section Dropdown */}
+                        <div className="flex-1 min-w-[150px]">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Section</label>
+                            <div className="relative">
+                                <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <select
+                                    value={selectedSection}
+                                    onChange={(e) => setSelectedSection(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:border-slate-300 shadow-sm"
+                                    disabled={selectedClass === 'All'}
+                                >
+                                    <option value="All">All Sections</option>
+                                    {availableSections.map((sec, idx) => (
+                                        <option key={idx} value={sec.name}>{sec.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Search */}
+                        <div className="flex-[1.5] min-w-[250px]">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Search Students</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, admission number..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Academic Year Dropdown (Session) - Moved to last */}
+                        <div className="flex-1 min-w-[150px]">
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Session</label>
                             <div className="relative">
                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -310,21 +359,6 @@ export default function StudentList() {
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-                        </div>
-
-                        {/* Search (Moved to main bar for better reach) */}
-                        <div className="flex-[2] min-w-[300px]">
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Search Students</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name, admission number..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                                />
                             </div>
                         </div>
 

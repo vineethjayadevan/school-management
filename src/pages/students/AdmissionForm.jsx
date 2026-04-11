@@ -12,6 +12,7 @@ export default function AdmissionForm() {
     const location = useLocation();
     const [step, setStep] = useState(1);
     const [siblings, setSiblings] = useState([]);
+    const [academicClasses, setAcademicClasses] = useState([]);
 
     // Prevent unregistering fields when they are hidden (vital for multi-step forms)
     const { register, handleSubmit, setValue, watch, trigger, formState: { errors } } = useForm({
@@ -26,6 +27,23 @@ export default function AdmissionForm() {
     const hasAllergy = watch('hasAllergy');
     const transportMode = watch('transportMode');
     const isSibling = watch('isSibling');
+    const selectedClass = watch('class');
+
+    // Fetch Academic Classes
+    useEffect(() => {
+        const fetchClasses = async () => {
+            try {
+                const response = await api.get('/academics/classes');
+                setAcademicClasses(response.data);
+            } catch (error) {
+                console.error("Failed to fetch academic classes:", error);
+            }
+        };
+        fetchClasses();
+    }, []);
+
+    // Deriving sections for the selected class
+    const availableSections = academicClasses.find(c => c.name === selectedClass)?.sections || [];
 
     // Check for pre-fill data from ReadyForAdmission page
     useEffect(() => {
@@ -407,13 +425,9 @@ export default function AdmissionForm() {
                                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none ${errors.class ? 'border-red-500' : 'border-slate-300'}`}
                                     >
                                         <option value="">Select Class</option>
-                                        <option value="Mont 1">Mont 1</option>
-                                        <option value="Mont 2">Mont 2</option>
-                                        <option value="Grade 1">Grade 1</option>
-                                        <option value="Grade 2">Grade 2</option>
-                                        <option value="Grade 3">Grade 3</option>
-                                        <option value="Grade 4">Grade 4</option>
-                                        <option value="Grade 5">Grade 5</option>
+                                        {academicClasses.map(cls => (
+                                            <option key={cls._id} value={cls.name}>{cls.name}</option>
+                                        ))}
                                     </select>
                                     {errors.class && <p className="text-xs text-red-500 mt-1">Class is required</p>}
                                 </div>
@@ -423,9 +437,10 @@ export default function AdmissionForm() {
                                         {...register('section')}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                     >
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                        <option value="C">C</option>
+                                        <option value="">Select Section</option>
+                                        {availableSections.map((sec, idx) => (
+                                            <option key={idx} value={sec.name}>{sec.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="space-y-2">

@@ -26,6 +26,7 @@ export default function StudentDetails() {
     const [loading, setLoading] = useState(true);
     const [student, setStudent] = useState(null);
     const [activeCategories, setActiveCategories] = useState([]); // State for active categories
+    const [academicClasses, setAcademicClasses] = useState([]); // State for academic classes
     const [documents, setDocuments] = useState([]); // State for documents (existing + pending previews)
     const [pendingUploads, setPendingUploads] = useState({}); // Stores File objects: { category: File }
     const [uploading, setUploading] = useState(false); // General loading state during submit
@@ -42,6 +43,10 @@ export default function StudentDetails() {
     // Watch conveyance slab for dynamic updates in Edit mode
     const watchConveyance = watch('conveyanceSlab');
     const transportMode = watch('transportMode');
+    const selectedClassName = watch('className');
+
+    // Deriving available sections for the selected class
+    const availableSections = academicClasses.find(c => c.name === selectedClassName)?.sections || [];
 
     useEffect(() => {
         if (id) {
@@ -66,8 +71,8 @@ export default function StudentDetails() {
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            // Parallel fetch: Student Profile, Fee History, Active Categories, and Active Academic Year
-            const [data, feeHistory, categoriesRes, yearsRes] = await Promise.all([
+            // Parallel fetch: Student Profile, Fee History, Active Categories, Active Academic Year, and Academic Classes
+            const [data, feeHistory, categoriesRes, yearsRes, classesRes] = await Promise.all([
                 storageService.students.getById(id).catch(err => {
                     console.error("Failed to fetch student profile:", err);
                     return null;
@@ -80,8 +85,12 @@ export default function StudentDetails() {
                     console.error("Failed to fetch fee categories:", err);
                     return { data: [] };
                 }),
-                api.get('/academic-years').catch(() => ({ data: [] }))
+                api.get('/academic-years').catch(() => ({ data: [] })),
+                api.get('/academics/classes').catch(() => ({ data: [] }))
             ]);
+
+            // Set academic classes
+            setAcademicClasses(classesRes?.data || []);
 
             // Derive active year name for the fee overview label
             const activeYear = (yearsRes?.data || []).find(y => y.isActive);
@@ -1089,21 +1098,19 @@ export default function StudentDetails() {
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Class</label>
                                             <select {...register("className")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                                <option value="Mont 1">Mont 1</option>
-                                                <option value="Mont 2">Mont 2</option>
-                                                <option value="Grade 1">Grade 1</option>
-                                                <option value="Grade 2">Grade 2</option>
-                                                <option value="Grade 3">Grade 3</option>
-                                                <option value="Grade 4">Grade 4</option>
-                                                <option value="Grade 5">Grade 5</option>
+                                                <option value="">Select Class</option>
+                                                {academicClasses.map(cls => (
+                                                    <option key={cls._id} value={cls.name}>{cls.name}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Section</label>
                                             <select {...register("section")} className="w-full p-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                                <option value="A">A</option>
-                                                <option value="B">B</option>
-                                                <option value="C">C</option>
+                                                <option value="">Select Section</option>
+                                                {availableSections.map((sec, idx) => (
+                                                    <option key={idx} value={sec.name}>{sec.name}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div>

@@ -1,0 +1,154 @@
+[
+  {
+    "_id": "698cadcbf7bd7f95c9cb4340",
+    "name": "Advertisement & Marketing",
+    "subcategories": [
+      "Advertisement"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433d",
+    "name": "Maintenance & Housekeeping",
+    "subcategories": [
+      "Cleaning & Security",
+      "Pest Control",
+      "Minor Maintenance"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb4338",
+    "name": "Staff & Human Resources",
+    "subcategories": [
+      "Salaries & Wages",
+      "Teaching Staff Payments",
+      "Non-Teaching Staff Payments",
+      "Contract / Guest Faculty",
+      "Staff Welfare & Training"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.148Z",
+    "updatedAt": "2026-02-11T16:26:51.148Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb4337",
+    "name": "Utilities",
+    "subcategories": [
+      "Electricity",
+      "Water",
+      "Internet",
+      "Telephone"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.148Z",
+    "updatedAt": "2026-02-11T16:26:51.148Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb4339",
+    "name": "Academic & Educational Expenses",
+    "subcategories": [
+      "Books & Learning Materials",
+      "Lab & Classroom Consumables",
+      "Examination Expenses",
+      "Library / Educational Tools"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433f",
+    "name": "Financial Expenses",
+    "subcategories": [
+      "Bank Charges",
+      "Payment Gateway Charges",
+      "Loan Interest",
+      "Penalties / Late Fees"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433a",
+    "name": "Events & Activities",
+    "subcategories": [
+      "Annual Day",
+      "Sports Day",
+      "Cultural Programs",
+      "Competitions",
+      "Festivals"
+    ],
+    "isActive": true,
+    "__v": 1,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-03-07T18:52:21.652Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433c",
+    "name": "Transport Expenses",
+    "subcategories": [
+      "Fuel",
+      "Vehicle Maintenance",
+      "Driver Salary",
+      "Insurance & Permits"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb4336",
+    "name": "Infrastructure & Construction",
+    "subcategories": [
+      "Building Construction",
+      "Furniture",
+      "Classroom Setup",
+      "Repairs & Renovation"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.148Z",
+    "updatedAt": "2026-02-11T16:26:51.148Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433b",
+    "name": "Administrative Expenses",
+    "subcategories": [
+      "Office Supplies",
+      "Printing & Stationery",
+      "Software Subscriptions",
+      "Communication Expenses",
+      "Miscellaneous Admin"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  },
+  {
+    "_id": "698cadcbf7bd7f95c9cb433e",
+    "name": "Professional & Statutory Expenses",
+    "subcategories": [
+      "Audit & Accounting",
+      "Legal & Consultancy",
+      "Government Fees & Licenses"
+    ],
+    "isActive": true,
+    "__v": 0,
+    "createdAt": "2026-02-11T16:26:51.149Z",
+    "updatedAt": "2026-02-11T16:26:51.149Z"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "698e39d6ea98b4fb4e858e26",
+    "date": "2026-04-02T00:00:00.000Z",
+    "customer": "Cash Receipt",
+    "category": "Donations",
+    "amount": 10000,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "description": "Donation Recieved",
+    "addedBy": "697c9f7d41a44ed84c0876a1",
+    "createdAt": "2026-02-12T20:36:38.396Z",
+    "updatedAt": "2026-02-12T20:36:38.484Z",
+    "__v": 0,
+    "linkedReceivable": "698e39d6ea98b4fb4e858e28"
+  },
+  {
+    "_id": "698e39d6ea98b4fb4e858e34",
+    "date": "2026-04-02T00:00:00.000Z",
+    "customer": "Cash Receipt",
+    "category": "Donations",
+    "subcategory": "Capital Donations (Restricted)",
+    "amount": 15000,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "description": "Recieved from Building owner",
+    "addedBy": "697c9f7d41a44ed84c0876a1",
+    "createdAt": "2026-02-12T20:36:38.778Z",
+    "updatedAt": "2026-02-12T20:36:38.865Z",
+    "__v": 0,
+    "linkedReceivable": "698e39d6ea98b4fb4e858e36"
+  },
+  {
+    "_id": "698e39d6ea98b4fb4e858e2d",
+    "date": "2026-04-02T00:00:00.000Z",
+    "customer": "Cash Receipt",
+    "category": "Other Operating Income",
+    "subcategory": "Miscellaneous Operating Income",
+    "amount": 26500,
+    "dueDate": "2026-04-02T00:00:00.000Z",
+    "description": "Balance Amount from Annual Day Collection",
+    "addedBy": "697c9f7d41a44ed84c0876a1",
+    "createdAt": "2026-02-12T20:36:38.581Z",
+    "updatedAt": "2026-02-12T20:36:38.685Z",
+    "__v": 0,
+    "linkedReceivable": "698e39d6ea98b4fb4e858e2f"
+  }
+]

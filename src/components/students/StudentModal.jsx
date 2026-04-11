@@ -15,7 +15,12 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
     const [mode, setMode] = useState(initialMode);
     const [loading, setLoading] = useState(false);
     const [student, setStudent] = useState(null);
+    const [academicClasses, setAcademicClasses] = useState([]);
     const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
+    const selectedClassName = watch('className');
+
+    // Deriving available sections for the selected class
+    const availableSections = academicClasses.find(c => c.name === selectedClassName)?.sections || [];
 
     // Accordion State: Only one section open at a time
     const [openSection, setOpenSection] = useState('academic');
@@ -38,12 +43,15 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
     const fetchStudent = async () => {
         setLoading(true);
         try {
-            // Parallel fetch: Student Profile, Fee History, and Fee Categories
-            const [data, feeHistory, categoriesRes] = await Promise.all([
+            // Parallel fetch: Student Profile, Fee History, Fee Categories, and Academic Classes
+            const [data, feeHistory, categoriesRes, classesRes] = await Promise.all([
                 storageService.students.getById(studentId),
                 storageService.fees.getByStudent(studentId).catch(() => []),
-                api.get('/fee-categories').catch(() => ({ data: [] }))
+                api.get('/fee-categories').catch(() => ({ data: [] })),
+                api.get('/academics/classes').catch(() => ({ data: [] }))
             ]);
+
+            setAcademicClasses(classesRes.data || []);
 
             const fetchedCategories = categoriesRes.data || [];
 
@@ -278,11 +286,21 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Class</label>
-                                            <input {...register("className")} className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <select {...register("className")} className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="">Select Class</option>
+                                                {academicClasses.map(cls => (
+                                                    <option key={cls._id} value={cls.name}>{cls.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Section</label>
-                                            <input {...register("section")} className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                            <select {...register("section")} className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                <option value="">Select Section</option>
+                                                {availableSections.map((sec, idx) => (
+                                                    <option key={idx} value={sec.name}>{sec.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">Roll No</label>

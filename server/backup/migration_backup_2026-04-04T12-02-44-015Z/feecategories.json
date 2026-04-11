@@ -1,0 +1,198 @@
+[
+  {
+    "_id": "699b466fb0ad368b759c65b0",
+    "name": "Tution Fee",
+    "amounts": [
+      {
+        "className": "Mont 1",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b1"
+      },
+      {
+        "className": "Mont 2",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b2"
+      },
+      {
+        "className": "Grade 1",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b3"
+      },
+      {
+        "className": "Grade 2",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b4"
+      },
+      {
+        "className": "Grade 3",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b5"
+      },
+      {
+        "className": "Grade 4",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b6"
+      },
+      {
+        "className": "Grade 5",
+        "amount": 20000,
+        "_id": "699b466fb0ad368b759c65b7"
+      }
+    ],
+    "isActive": true,
+    "description": "Tution Fee",
+    "createdAt": "2026-02-22T18:09:51.125Z",
+    "updatedAt": "2026-02-22T18:09:51.125Z",
+    "__v": 0
+  },
+  {
+    "_id": "699b4697b0ad368b759c65c4",
+    "name": "Materials Fee",
+    "amounts": [
+      {
+        "className": "Mont 1",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65c5"
+      },
+      {
+        "className": "Mont 2",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65c6"
+      },
+      {
+        "className": "Grade 1",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65c7"
+      },
+      {
+        "className": "Grade 2",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65c8"
+      },
+      {
+        "className": "Grade 3",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65c9"
+      },
+      {
+        "className": "Grade 4",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65ca"
+      },
+      {
+        "className": "Grade 5",
+        "amount": 5000,
+        "_id": "699b4697b0ad368b759c65cb"
+      }
+    ],
+    "isActive": true,
+    "description": "Materials Fee",
+    "createdAt": "2026-02-22T18:10:31.638Z",
+    "updatedAt": "2026-02-24T15:15:08.827Z",
+    "__v": 1,
+    "baseAmount": 0,
+    "hasSlabs": false,
+    "months": 10,
+    "slabMultiplier": 0
+  },
+  {
+    "_id": "699b4883f9432147e8bb0bb5",
+    "name": "Conveyance Fee",
+    "amounts": [
+      {
+        "className": "Mont 1",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bb6"
+      },
+      {
+        "className": "Mont 2",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bb7"
+      },
+      {
+        "className": "Grade 1",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bb8"
+      },
+      {
+        "className": "Grade 2",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bb9"
+      },
+      {
+        "className": "Grade 3",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bba"
+      },
+      {
+        "className": "Grade 4",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bbb"
+      },
+      {
+        "className": "Grade 5",
+        "amount": 0,
+        "_id": "699b4883f9432147e8bb0bbc"
+      }
+    ],
+    "hasSlabs": true,
+    "baseAmount": 200,
+    "slabMultiplier": 100,
+    "months": 10,
+    "isActive": true,
+    "description": "Conveyance Fee",
+    "createdAt": "2026-02-22T18:18:43.796Z",
+    "updatedAt": "2026-02-22T19:02:53.412Z",
+    "__v": 0
+  },
+  {
+    "_id": "699d3c5053895b700f0d6059",
+    "name": "Registration Fee",
+    "amounts": [
+      {
+        "className": "Mont 1",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605a"
+      },
+      {
+        "className": "Mont 2",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605b"
+      },
+      {
+        "className": "Grade 1",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605c"
+      },
+      {
+        "className": "Grade 2",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605d"
+      },
+      {
+        "className": "Grade 3",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605e"
+      },
+      {
+        "className": "Grade 4",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d605f"
+      },
+      {
+        "className": "Grade 5",
+        "amount": 1500,
+        "_id": "699d3c5053895b700f0d6060"
+      }
+    ],
+    "hasSlabs": false,
+    "baseAmount": 0,
+    "slabMultiplier": 0,
+    "months": 10,
+    "isActive": true,
+    "description": "Registering Fee",
+    "createdAt": "2026-02-24T05:51:12.782Z",
+    "updatedAt": "2026-02-24T13:15:11.477Z",
+    "__v": 1
+  }
+]
