@@ -1,0 +1,18 @@
+=== TRUE ADDITIONAL STUDENTS IN DATABASE ===
+These 15 students are in the DB but not in the Excel file.
+
+Admn No: 2505 | Name: Aaliya Amaal P | Class: Mont 2 | Status: Active
+Admn No: 2516 | Name: Muhammed Hashim P | Class: Grade 2 | Status: Active
+Admn No: 2501 | Name: Ashwa Mazin MA | Class: Mont 2 | Status: Active
+Admn No: 2542 | Name: Muhammed Ezdan | Class: Mont 2 | Status: Active
+Admn No: 2551 | Name: Shahla Fathima | Class: Grade 1 | Status: Active
+Admn No: 2550 | Name: Muhammed Sinan UT | Class: Grade 1 | Status: Active
+Admn No: 2513 | Name: Fathima Zahra MV | Class: Grade 4 | Status: Active
+Admn No: 2540 | Name: Izin Eike Shameem | Class: Mont 2 | Status: Active
+Admn No: 2545 | Name: Muhammed Zayan Anshif | Class: Grade 4 | Status: Active
+Admn No: 2566 | Name: Fathima Anshifa KV | Class: Grade 4 | Status: Active
+Admn No: 2509 | Name: Raiza Rashid | Class: Mont 2 | Status: Active
+Admn No: 2534 | Name: Sai krishna VS | Class: Mont 2 | Status: Active
+Admn No: 2554 | Name: Fathima Sidra | Class: Grade 1 | Status: Active
+Admn No: 2553 | Name: Sreehan Vineeth | Class: Grade 1 | Status: Active
+Admn No: 2546 | Name: Muhammad hanan KV | Class: Grade 1 | Status: Active

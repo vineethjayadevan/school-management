@@ -1,0 +1,154 @@
+=== STUDENTS WITH NAME MISMATCH (NOT UPDATED) ===
+
+Admn No: 2617
+Excel Name: Lakshmi Narayanan.T.V
+Database Name: LAKSHMI NARAYANA T.V
+
+Admn No: 2636
+Excel Name: Mohammed Tanim Ashraf.C.A
+Database Name: Muhammed Tanim Ashraf.C.A
+
+Admn No: 2623
+Excel Name: Nihara Lakshmi.P.k
+Database Name: Nihara Lakshmi
+
+Admn No: 2619
+Excel Name: Viswajith.k
+Database Name: viswajith
+
+Admn No: 2594
+Excel Name: Alfiya  Yusra. M. A
+Database Name: Alfia Yusra. M. A
+
+Admn No: 2585
+Excel Name: Aydin Adam. C. V
+Database Name: Aydin Adam
+
+Admn No: 2629
+Excel Name: Ezin Zahan. P
+Database Name: Ezin Zahan
+
+Admn No: 2606
+Excel Name: Aydhin Yousaf K. V
+Database Name: Aydhin yousaf
+
+Admn No: 2599
+Excel Name: Janna Fathima k. p
+Database Name: Janna Fathima. K. P
+
+Admn No: 2605
+Excel Name: Hemin Aibak kv
+Database Name: Hemin Aibak. K. V
+
+Admn No: 2595
+Excel Name: Safa Farheen pp
+Database Name: Safa Farheen. P. P
+
+Admn No: 2608
+Excel Name: Muhammed Hyzin Ks
+Database Name: Muhammed Hyzin K S
+
+Admn No: 2598
+Excel Name: Muhammed Hyzin KP
+Database Name: Muhammed Hyzin.K.p
+
+Admn No: 2633
+Excel Name: AYDIN ADAM P
+Database Name: AYDIIN ADAM P
+
+Admn No: 2591
+Excel Name: AYISHA EVA
+Database Name: Aysha Eva
+
+Admn No: 2578
+Excel Name: AYISHA MEHAK V
+Database Name: AYSHA MEHAK V
+
+Admn No: 2573
+Excel Name: Safa Mehrin K
+Database Name: safa Mehrin.k
+
+Admn No: 2616
+Excel Name: Ezin Hanan KP
+Database Name: Ithal Ranjith
+
+Admn No: 2640
+Excel Name: Atreya  K.R
+Database Name: Atreya.k.R
+
+Admn No: 2651
+Excel Name: Namit vishnu k
+Database Name: NAMITH VISHNU K
+
+Admn No: 2564
+Excel Name: AAMIL ALI AHAMED A V
+Database Name: Aamil Ali Ahmed AV
+
+Admn No: 2538
+Excel Name: ADWIK T V
+Database Name: Adwik TV
+
+Admn No: 2506
+Excel Name: AYAN M S
+Database Name: Ayan MS
+
+Admn No: 2631
+Excel Name: ISHWA AMREEN V
+Database Name: OHDA MARIYAM K
+
+Admn No: 2502
+Excel Name: KRISHAV K S
+Database Name: Krishav KS
+
+Admn No: 2532
+Excel Name: MOHAMMED SHEZAN M K
+Database Name: Muhammed Shezan MK
+
+Admn No: 2507
+Excel Name: SHEZA MEHRIN M K
+Database Name: Sheza Mehrin MK
+
+Admn No: 2504
+Excel Name: VIVAN SUNDHAR .M
+Database Name: Vivaan Sundhar.M
+
+Admn No: 2549
+Excel Name: Adam A
+Database Name: Adam Nafsal A
+
+Admn No: 2552
+Excel Name: Adhilakshmi M
+Database Name: Adhilakshmi Bijoy
+
+Admn No: 2526
+Excel Name: Anviya M.V
+Database Name: Anviya MV
+
+Admn No: 2503
+Excel Name: Nihaya Binth Ahamed V.K
+Database Name: Nihaya Binth Ahammed VK
+
+Admn No: 2665
+Excel Name: Niranjai.V. Raj
+Database Name: NILANAVAMI A
+
+Admn No: 2555
+Excel Name: Naeem Muhammed.K.H
+Database Name: Naeem Muhammed KH
+
+Admn No: 2527
+Excel Name: Advika M.V
+Database Name: Advika MV
+
+Admn No: 2519
+Excel Name: Muhammed Afnan P
+Database Name: Muhammed Aznan P
+
+Admn No: 2515
+Excel Name: Muhammed Shayan K.V
+Database Name: Muhammed Shayan KV
+
+Admn No: 2533
+Excel Name: Sulaiha Zaya V.K
+Database Name: Sulaiha Zaya
+

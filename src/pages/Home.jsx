@@ -2093,7 +2093,7 @@ export default function Home() {
     const { addToast } = useToast();
 
     // Control from admin panel later - true by default for now
-    const showSummerPopup = true;
+    const showSummerPopup = false;
 
     useEffect(() => {
         if (showSummerPopup) {
@@ -2664,7 +2664,7 @@ export default function Home() {
                 )}
             </AnimatePresence>
             <WhatsAppButton />
-            <SummerVacationFloatButton onClick={() => setIsSummerPopupOpen(true)} />
+            {/* <SummerVacationFloatButton onClick={() => setIsSummerPopupOpen(true)} /> */}
         </div>
     );
 }

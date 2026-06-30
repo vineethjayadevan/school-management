@@ -64,11 +64,7 @@ export default function StudentList() {
             setAcademicYears(yearsRes.data || []);
             setClasses(classesRes.data || []);
 
-            // Set default year to active one
-            const activeYear = (yearsRes.data || []).find(y => y.isActive);
-            if (activeYear) {
-                setSelectedYear(activeYear._id);
-            }
+
         } catch (error) {
             console.error("Failed to load directory data:", error);
             addToast("Failed to load directory data", "error");
@@ -162,17 +158,35 @@ export default function StudentList() {
 
             return matchesSearch && matchesYear && matchesClass && matchesSection && matchesGender;
         }).sort((a, b) => {
-            return String(a.rollNo || '').localeCompare(String(b.rollNo || ''), undefined, { numeric: true, sensitivity: 'base' });
+            const classA = a.className || a.class || '';
+            const classB = b.className || b.class || '';
+            const classOrderDiff = matchClassOrder(classA) - matchClassOrder(classB);
+            
+            if (classOrderDiff !== 0) {
+                return classOrderDiff;
+            }
+            
+            return String(a.name || '').localeCompare(String(b.name || ''));
         });
     }, [allStudents, searchTerm, selectedYear, selectedClass, selectedSection, filters, viewMode]);
 
-    // Statistics Calculation
+    // Base Students for Fixed Stats (only filtered by viewMode)
+    const baseStudents = useMemo(() => {
+        return allStudents.filter(student => {
+            const isActive = !student.studentStatus || student.studentStatus === 'Active';
+            if (viewMode === 'Active' && !isActive) return false;
+            if (viewMode === 'Archived' && isActive) return false;
+            return true;
+        });
+    }, [allStudents, viewMode]);
+
+    // Fixed Statistics Calculation
     const stats = useMemo(() => {
-        const total = filteredStudents.length;
-        const male = filteredStudents.filter(s => s.gender === 'Male').length;
-        const female = filteredStudents.filter(s => s.gender === 'Female').length;
+        const total = baseStudents.length;
+        const male = baseStudents.filter(s => s.gender === 'Male').length;
+        const female = baseStudents.filter(s => s.gender === 'Female').length;
         return { total, male, female };
-    }, [filteredStudents]);
+    }, [baseStudents]);
 
 
     const handleExportCSV = () => {
@@ -285,8 +299,13 @@ export default function StudentList() {
                 </div>
 
                 {/* Dynamic Filters Bar */}
-                <div className="p-4 border-b border-slate-200 bg-slate-50/30">
-                    <div className="flex flex-wrap gap-4 items-center">
+                <div className="p-4 border-b border-slate-200 bg-slate-50/30 relative">
+                    {/* Dynamic Count (Top Right of Filter Box) */}
+                    <div className="absolute top-3 right-4 text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full shadow-sm">
+                        Showing {filteredStudents.length} Students
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-4 items-center mt-2">
                         {/* Class Dropdown */}
                         <div className="flex-1 min-w-[150px]">
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Class</label>
@@ -342,25 +361,7 @@ export default function StudentList() {
                             </div>
                         </div>
 
-                        {/* Academic Year Dropdown (Session) - Moved to last */}
-                        <div className="flex-1 min-w-[150px]">
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">Session</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <select
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:border-slate-300 shadow-sm"
-                                >
-                                    <option value="All">All Sessions</option>
-                                    {academicYears.map(year => (
-                                        <option key={year._id} value={year._id}>
-                                            {year.name} {year.isActive ? '(Current)' : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+
 
                         {/* Quick filter/export */}
                         <div className="flex items-end gap-2 pt-5">

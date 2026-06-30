@@ -1,0 +1,43 @@
+=== ADDITIONAL STUDENTS IN DATABASE ===
+These 40 students are in the DB but not in the Excel file.
+
+Admn No: 2522 | Name: Aiza Mariyam M.V | Class: Grade 2 | Status: Active
+Admn No: 2560 | Name: Izza Fathima T.H | Class: Grade 2 | Status: Active
+Admn No: 2525 | Name: Vedha K | Class: Grade 2 | Status: Active
+Admn No: 2520 | Name: Hawwa Inaya V.K | Class: Grade 2 | Status: Active
+Admn No: 2523 | Name: Muhammed Ayan V.P | Class: Grade 2 | Status: Active
+Admn No: 2528 | Name: Isha Fathima .C | Class: Grade 2 | Status: Active
+Admn No: 2505 | Name: Aaliya Amaal P | Class: Mont 2 | Status: Active
+Admn No: 2539 | Name: Muhammed Febin Shaz V.V | Class: Grade 2 | Status: Active
+Admn No: 2548 | Name: Anay V.A | Class: Grade 2 | Status: Active
+Admn No: 2516 | Name: Muhammed Hashim P | Class: Grade 2 | Status: Active
+Admn No: 2535 | Name: Fathima Rimsha M.K | Class: Grade 2 | Status: Active
+Admn No: 2501 | Name: Ashwa Mazin MA | Class: Mont 2 | Status: Active
+Admn No: 2542 | Name: Muhammed Ezdan | Class: Mont 2 | Status: Active
+Admn No: 2551 | Name: Shahla Fathima | Class: Grade 1 | Status: Active
+Admn No: 2550 | Name: Muhammed Sinan UT | Class: Grade 1 | Status: Active
+Admn No: 2513 | Name: Fathima Zahra MV | Class: Grade 4 | Status: Active
+Admn No: 2521 | Name: Ahmed Imadudheen A | Class: Grade 2 | Status: Active
+Admn No: 2524 | Name: Muhammed Shezin V.P | Class: Grade 2 | Status: Active
+Admn No: 2510 | Name: Raiha Rashid | Class: Grade 2 | Status: Active
+Admn No: 2540 | Name: Izin Eike Shameem | Class: Mont 2 | Status: Active
+Admn No: 2545 | Name: Muhammed Zayan Anshif | Class: Grade 4 | Status: Active
+Admn No: 2566 | Name: Fathima Anshifa KV | Class: Grade 4 | Status: Active
+Admn No: 2514 | Name: Aireen Najeeb M.K | Class: Grade 2 | Status: Active
+Admn No: 2536 | Name: Diha M.D | Class: Grade 2 | Status: Active
+Admn No: 2518 | Name: Jazwa Mehr M.A | Class: Grade 2 | Status: Active
+Admn No: 2509 | Name: Raiza Rashid | Class: Mont 2 | Status: Active
+Admn No: 2534 | Name: Sai krishna VS | Class: Mont 2 | Status: Active
+Admn No: 2554 | Name: Fathima Sidra | Class: Grade 1 | Status: Active
+Admn No: 2553 | Name: Sreehan Vineeth | Class: Grade 1 | Status: Active
+Admn No: 2546 | Name: Muhammad hanan KV | Class: Grade 1 | Status: Active
+Admn No: 2670 | Name: Ehan Hamood M.P | Class: Grade 2 | Status: Active
+Admn No: 2628 | Name: Fathima Meharin K.S | Class: Grade 2 | Status: Active
+Admn No: 2647 | Name: Haya Zahra V.V | Class: Grade 2 | Status: Active
+Admn No: 2650 | Name: Mehvish Nasarudheen P.V | Class: Grade 2 | Status: Active
+Admn No: 2661 | Name: Mohammed Aashmin Eimick M.N | Class: Grade 2 | Status: Active
+Admn No: 2694 | Name: Mohammed Faizan K.P | Class: Grade 2 | Status: Active
+Admn No: 2667 | Name: Mohammed Shafin C | Class: Grade 2 | Status: Active
+Admn No: 2708 | Name: Muhammed Ameen | Class: Grade 2 | Status: Active
+Admn No: 2612 | Name: Muhammed Hathim K | Class: Grade 2 | Status: Active
+Admn No: 2687 | Name: Vigha V.V | Class: Grade 2 | Status: Active

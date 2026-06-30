@@ -112,12 +112,14 @@ export default function FeeDashboard() {
     const loadHistory = async () => {
         setLoadingHistory(true);
         try {
-            const [txnsData, studentsData] = await Promise.all([
-                storageService.fees.getAll(),
-                storageService.students.getAll() // Fetch students for stats
-            ]);
+            const txnsData = await storageService.fees.getAll();
+            const studentsData = await storageService.students.getAll(); // Fetch students for stats
+            
+            // Strictly filter out any archived or inactive students across the Fee Dashboard
+            const activeStudents = studentsData.filter(s => s.isActive !== false && s.studentStatus !== 'Transferred' && s.studentStatus !== 'Archived');
+            
             setTransactions(txnsData);
-            setStudents(studentsData);
+            setStudents(activeStudents);
         } catch (error) {
             console.error(error);
             addToast("Failed to load history", "error");
@@ -197,7 +199,8 @@ export default function FeeDashboard() {
                     params.className = searchClass;
                 }
                 const results = await storageService.students.getAll(term, params);
-                setSearchResults(results);
+                const activeResults = results.filter(s => s.isActive !== false && s.studentStatus !== 'Transferred' && s.studentStatus !== 'Archived');
+                setSearchResults(activeResults);
             } catch (err) {
                 console.error("Search failed", err);
             } finally {

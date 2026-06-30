@@ -1,0 +1,321 @@
+=== EXISTING STUDENTS MISMATCHES ===
+
+Admn No: 2637 | Name: Aleha Ashraf.C.A
+  -> Aadhar: Excel="4036 8879 9048", DB=""
+
+Admn No: 2618 | Name: Ardra.k.k
+  -> Aadhar: Excel="6890 1219 6767", DB=""
+
+Admn No: 2622 | Name: Aydhin Adham.v.T
+  -> Father Name: Excel="Noufel.V.T", DB="Noufel"
+
+Admn No: 2607 | Name: Iniya Meharish.K.M
+  -> Blood Group: Excel="AB+ve", DB=""
+
+Admn No: 2666 | Name: Krithvedha Kripesh
+  -> Caste: Excel="OBC", DB=""
+  -> Father Name: Excel="kripesh.E.p", DB="Kripesh. E. P"
+
+Admn No: 2617 | Name: Lakshmi Narayanan.T.V
+  -> Name: Excel="Lakshmi Narayanan.T.V", DB="LAKSHMI NARAYANA T.V"
+  -> Aadhar: Excel="9360 3710 0106", DB="936037100106"
+  -> Religion: Excel="Hindu", DB="HINDHU"
+  -> Father Name: Excel="Rakesh.T.V", DB="Rakesh T.v"
+
+Admn No: 2658 | Name: Mohamed Ehaan.P.A
+  -> Father Name: Excel="Mohamed Ashir.P.A", DB="Muhamed Ashir"
+
+Admn No: 2636 | Name: Mohammed Tanim Ashraf.C.A
+  -> Name: Excel="Mohammed Tanim Ashraf.C.A", DB="Muhammed Tanim Ashraf.C.A"
+  -> Aadhar: Excel="5214 0571 2541", DB=""
+
+Admn No: 2623 | Name: Nihara Lakshmi.P.k
+  -> Name: Excel="Nihara Lakshmi.P.k", DB="Nihara Lakshmi"
+
+Admn No: 2638 | Name: Takisha Kouser
+  -> Father Name: Excel="Mohammed Nishar.K.p", DB="Muhammed Nishar.K.p"
+
+Admn No: 2619 | Name: Viswajith.k
+  -> Name: Excel="Viswajith.k", DB="viswajith"
+
+Admn No: 2594 | Name: Alfiya  Yusra. M. A
+  -> Name: Excel="Alfiya  Yusra. M. A", DB="Alfia Yusra. M. A"
+
+Admn No: 2585 | Name: Aydin Adam. C. V
+  -> Name: Excel="Aydin Adam. C. V", DB="Aydin Adam"
+
+Admn No: 2629 | Name: Ezin Zahan. P
+  -> Name: Excel="Ezin Zahan. P", DB="Ezin Zahan"
+
+Admn No: 2615 | Name: Ithal Ranjith
+  -> DOB: Excel="2022-06-14", DB="2022-05-14"
+  -> Blood Group: Excel="AB+ve", DB="B+VE"
+
+Admn No: 2580 | Name: EVA MEHFIL P.V
+  -> DOB: Excel="2021-11-07", DB="2021-08-10"
+  -> Aadhar: Excel="7513 5074 7462", DB="751350747462"
+
+Admn No: 2641 | Name: Ehan Nijesh K
+  -> DOB: Excel="2021-12-08", DB="2021-09-11"
+
+Admn No: 2606 | Name: Aydhin Yousaf K. V
+  -> Name: Excel="Aydhin Yousaf K. V", DB="Aydhin yousaf"
+  -> Blood Group: Excel="B+ve", DB="A+ve"
+  -> Aadhar: Excel="6204 6361 8013", DB="6204 6361 8031"
+  -> Father Name: Excel="Ashkar Ali. K. V", DB="Ashkar Ali.k.v"
+
+Admn No: 2599 | Name: Janna Fathima k. p
+  -> Name: Excel="Janna Fathima k. p", DB="Janna Fathima. K. P"
+  -> Father Name: Excel="Hydrose KP", DB="Hydrose Koonam parambil"
+
+Admn No: 2605 | Name: Hemin Aibak kv
+  -> Name: Excel="Hemin Aibak kv", DB="Hemin Aibak. K. V"
+  -> Aadhar: Excel="5545 8069 9892", DB="5545 8060 9892"
+  -> Father Name: Excel="Shoukathali kv", DB="Shoukathali. K. V"
+  -> Father Mobile: Excel="9526489586", DB_Mobile="9744238586", DB_Primary="9744238586"
+
+Admn No: 2595 | Name: Safa Farheen pp
+  -> Name: Excel="Safa Farheen pp", DB="Safa Farheen. P. P"
+  -> Father Name: Excel="Abdul Vahab pp", DB="Abdul Vahab. P. P"
+
+Admn No: 2608 | Name: Muhammed Hyzin Ks
+  -> Name: Excel="Muhammed Hyzin Ks", DB="Muhammed Hyzin K S"
+  -> Aadhar: Excel="5989 0460 4026", DB="5689 0460 4026"
+  -> Religion: Excel="Islam", DB="Isalm"
+  -> Father Name: Excel="Saliek KM", DB="Saliek K H"
+
+Admn No: 2598 | Name: Muhammed Hyzin KP
+  -> Name: Excel="Muhammed Hyzin KP", DB="Muhammed Hyzin.K.p"
+  -> DOB: Excel="2022-09-01", DB="2022-02-08"
+  -> Aadhar: Excel="6641 1640 9519", DB=""
+  -> Caste: Excel="Muslim", DB="islam"
+  -> Father Name: Excel="Abid kp", DB="Abid.K.p"
+  -> Father Mobile: Excel="7715574487645", DB_Mobile="0077 1557 487645", DB_Primary="0077 1557 487645"
+
+Admn No: 2633 | Name: AYDIN ADAM P
+  -> Name: Excel="AYDIN ADAM P", DB="AYDIIN ADAM P"
+  -> DOB: Excel="2021-09-02", DB="2021-03-08"
+  -> Father Mobile: Excel="9946166431", DB_Mobile="971524331252", DB_Primary="971524331252"
+
+Admn No: 2591 | Name: AYISHA EVA
+  -> Name: Excel="AYISHA EVA", DB="Aysha Eva"
+
+Admn No: 2578 | Name: AYISHA MEHAK V
+  -> Name: Excel="AYISHA MEHAK V", DB="AYSHA MEHAK V"
+
+Admn No: 2642 | Name: AZMIN MARIYAM K.P
+  -> DOB: Excel="2021-11-02", DB="2021-03-10"
+
+Admn No: 2579 | Name: EIRA MARYAM M
+  -> DOB: Excel="2021-12-02", DB="2021-03-11"
+
+Admn No: 2609 | Name: ELZIN HAMZA A.V
+  -> Father Name: Excel="mahmood A.V", DB="Muhammed A.V"
+
+Admn No: 2610 | Name: HYDIN ADAM N.A
+  -> DOB: Excel="2021-11-06", DB="2021-07-10"
+
+Admn No: 2660 | Name: MUHAMMED IRFAN T.P
+  -> DOB: Excel="2021-11-11", DB="2021-12-10"
+
+Admn No: 2573 | Name: Safa Mehrin K
+  -> Name: Excel="Safa Mehrin K", DB="safa Mehrin.k"
+
+Admn No: 2616 | Name: Ezin Hanan KP
+  -> Name: Excel="Ezin Hanan KP", DB="Ithal Ranjith"
+  -> Gender: Excel="Male", DB="Female"
+  -> DOB: Excel="2021-12-02", DB="2022-05-14"
+  -> Religion: Excel="Muslim", DB="Hindu"
+  -> Caste: Excel="Mappila", DB="Thiyya"
+  -> Father Name: Excel="Shajimon", DB="Ranjith. T"
+  -> Father Mobile: Excel="9539202454", DB_Mobile="9746571603", DB_Primary="9746571603"
+
+Admn No: 2640 | Name: Atreya  K.R
+  -> Name: Excel="Atreya  K.R", DB="Atreya.k.R"
+  -> Blood Group: Excel="O+", DB="O+ve"
+  -> Father Name: Excel="Radhakrishnan k.k", DB="Radhakrishnan.k.k"
+
+Admn No: 2651 | Name: Namit vishnu k
+  -> Name: Excel="Namit vishnu k", DB="NAMITH VISHNU K"
+  -> Blood Group: Excel="B-", DB=""
+  -> Aadhar: Excel="2560 5045 7458", DB="256050457488"
+  -> Religion: Excel="Hindu", DB="HINDHU"
+
+Admn No: 2564 | Name: AAMIL ALI AHAMED A V
+  -> Name: Excel="AAMIL ALI AHAMED A V", DB="Aamil Ali Ahmed AV"
+  -> Blood Group: Excel="NIL", DB=""
+  -> Aadhar: Excel="NIL", DB=""
+  -> Religion: Excel="MUSLIM", DB=""
+  -> Caste: Excel="ISLAM", DB=""
+  -> Father Name: Excel="MOHAMMED FAIZAL", DB="Muhammed Faisal"
+  -> Father Mobile: Excel="9946663355", DB_Mobile="", DB_Primary="0000000000"
+
+Admn No: 2538 | Name: ADWIK T V
+  -> Name: Excel="ADWIK T V", DB="Adwik TV"
+  -> Blood Group: Excel="A+ ve", DB=""
+  -> Aadhar: Excel="6863 8649 1175", DB=""
+  -> Religion: Excel="HINDHU", DB=""
+  -> Caste: Excel="THIYYA", DB=""
+  -> Father Name: Excel="VIPIN KUMAR T S", DB="Vibin Kumar TS"
+
+Admn No: 2506 | Name: AYAN M S
+  -> Name: Excel="AYAN M S", DB="Ayan MS"
+  -> Blood Group: Excel="A+ ve", DB=""
+  -> Aadhar: Excel="5770 6657 8823", DB=""
+  -> Religion: Excel="HINDHU", DB=""
+  -> Caste: Excel="NAYAR", DB=""
+
+Admn No: 2631 | Name: ISHWA AMREEN V
+  -> Name: Excel="ISHWA AMREEN V", DB="OHDA MARIYAM K"
+  -> Class: Excel="Mont 2", DB="Mont 1"
+  -> Blood Group: Excel="A+ ve", DB="B+VE"
+  -> Aadhar: Excel="8290 7550 2739", DB="955102223719"
+  -> Caste: Excel="MAPPILA", DB="Islam"
+  -> Father Name: Excel="MUNEER", DB="Muzafir Muhammed K"
+  -> Father Mobile: Excel="9946824320", DB_Mobile="8137808074", DB_Primary="8137808074"
+
+Admn No: 2529 | Name: IZWA FATHIMA C
+  -> Blood Group: Excel="A+ ve", DB=""
+  -> Aadhar: Excel="NIL", DB=""
+  -> Religion: Excel="MUSLIM", DB=""
+  -> Caste: Excel="MAPPILA", DB=""
+
+Admn No: 2556 | Name: JOSHUA MATHEW
+  -> DOB: Excel="2019-10-24", DB="2019-10-25"
+  -> Blood Group: Excel="A+ ve", DB="A+"
+  -> Aadhar: Excel="NIL", DB=""
+  -> Caste: Excel="SAMBAVAR", DB="Sambhavar"
+  -> Father Name: Excel="MATHEW P A", DB="Mathew PA"
+
+Admn No: 2502 | Name: KRISHAV K S
+  -> Name: Excel="KRISHAV K S", DB="Krishav KS"
+  -> Blood Group: Excel="B+ ve", DB=""
+  -> Aadhar: Excel="7848 6748 2963", DB=""
+  -> Religion: Excel="HINDHU", DB=""
+  -> Caste: Excel="OBC", DB=""
+
+Admn No: 2532 | Name: MOHAMMED SHEZAN M K
+  -> Name: Excel="MOHAMMED SHEZAN M K", DB="Muhammed Shezan MK"
+  -> Blood Group: Excel="B+ ve", DB=""
+  -> Aadhar: Excel="6052 1733 1549", DB=""
+  -> Religion: Excel="MUSLIM", DB=""
+  -> Caste: Excel="MAPPILA", DB=""
+  -> Father Name: Excel="SAKIR HUSSAIN M K", DB="Sakkir Hussain MK"
+  -> Father Mobile: Excel="9645701191", DB_Mobile="", DB_Primary="0000000000"
+
+Admn No: 2507 | Name: SHEZA MEHRIN M K
+  -> Name: Excel="SHEZA MEHRIN M K", DB="Sheza Mehrin MK"
+  -> Blood Group: Excel="B+ ve", DB=""
+  -> Aadhar: Excel="9299 0238 3880", DB=""
+  -> Religion: Excel="MUSLIM", DB=""
+  -> Caste: Excel="MAPPILA", DB=""
+  -> Father Name: Excel="SHUHAIB MK", DB="Suaib MK"
+
+Admn No: 2654 | Name: FELLAH MARIYAM.A.V
+  -> Aadhar: Excel="4679 4668 1023", DB=""
+
+Admn No: 2504 | Name: VIVAN SUNDHAR .M
+  -> Name: Excel="VIVAN SUNDHAR .M", DB="Vivaan Sundhar.M"
+
+Admn No: 2549 | Name: Adam A
+  -> Name: Excel="Adam A", DB="Adam Nafsal A"
+  -> Gender: Excel="Male", DB="Female"
+  -> Blood Group: Excel="B+", DB=""
+  -> Religion: Excel="Muslim", DB=""
+  -> Caste: Excel="Islam", DB=""
+
+Admn No: 2552 | Name: Adhilakshmi M
+  -> Name: Excel="Adhilakshmi M", DB="Adhilakshmi Bijoy"
+  -> Blood Group: Excel="A+", DB=""
+  -> Aadhar: Excel="4859 7478 2138", DB=""
+  -> Religion: Excel="Hindu", DB=""
+  -> Caste: Excel="Thiyya", DB=""
+
+Admn No: 2559 | Name: Ajwa Mariyam K
+  -> Blood Group: Excel="B+", DB=""
+  -> Aadhar: Excel="2569 1814 5448", DB=""
+  -> Religion: Excel="Islam", DB=""
+  -> Caste: Excel="Muslim", DB=""
+  -> Father Name: Excel="Musthafa K.K", DB="Musthafa KK"
+  -> Father Mobile: Excel="9072256929", DB_Mobile="9562992652", DB_Primary="9562992652"
+
+Admn No: 2526 | Name: Anviya M.V
+  -> Name: Excel="Anviya M.V", DB="Anviya MV"
+  -> Blood Group: Excel="B+", DB=""
+  -> Aadhar: Excel="7021 9069 0232", DB=""
+  -> Religion: Excel="Hindu", DB=""
+  -> Caste: Excel="Parayan", DB=""
+
+Admn No: 2503 | Name: Nihaya Binth Ahamed V.K
+  -> Name: Excel="Nihaya Binth Ahamed V.K", DB="Nihaya Binth Ahammed VK"
+  -> DOB: Excel="2020-03-10", DB="2020-03-11"
+  -> Blood Group: Excel="A+", DB=""
+  -> Aadhar: Excel="2889 5803 7248", DB=""
+  -> Religion: Excel="Muslim", DB=""
+  -> Caste: Excel="Islam", DB=""
+  -> Father Name: Excel="Nishar Ahamed V.K", DB="Nisar Ahammed VK"
+
+Admn No: 2665 | Name: Niranjai.V. Raj
+  -> Name: Excel="Niranjai.V. Raj", DB="NILANAVAMI A"
+  -> Class: Excel="Grade 1", DB="Mont 2"
+  -> Gender: Excel="Male", DB="Female"
+  -> DOB: Excel="2019-07-11", DB="2020-12-02"
+  -> Blood Group: Excel="AB+", DB="A+VE"
+  -> Aadhar: Excel="6295 8729 8948", DB="3331 6165 4823"
+  -> Caste: Excel="Pulaya", DB="Thiyya"
+  -> Father Name: Excel="Rajan.V.K", DB="Nidhin Manoharan"
+  -> Father Mobile: Excel="9048514141", DB_Mobile="7034789990", DB_Primary="7034789990"
+
+Admn No: 2530 | Name: Shazia Sajid
+  -> Blood Group: Excel="B+", DB=""
+  -> Aadhar: Excel="7648 6928 9253", DB=""
+  -> Religion: Excel="Muslim", DB=""
+  -> Caste: Excel="Mappila", DB=""
+  -> Father Name: Excel="Sajid Mohammed P.P", DB="Sajid Muhammed"
+
+Admn No: 2555 | Name: Naeem Muhammed.K.H
+  -> Name: Excel="Naeem Muhammed.K.H", DB="Naeem Muhammed KH"
+  -> DOB: Excel="2017-03-13", DB="2017-03-14"
+  -> Blood Group: Excel="B+ve", DB=""
+  -> Aadhar: Excel="777635242030", DB=""
+  -> Religion: Excel="Muslim", DB=""
+  -> Caste: Excel="Islam", DB=""
+  -> Father Name: Excel="Haris.K.H", DB="Haris KH"
+  -> Father Mobile: Excel="9633371373", DB_Mobile="9633311373", DB_Primary="9633311373"
+
+Admn No: 2527 | Name: Advika M.V
+  -> Name: Excel="Advika M.V", DB="Advika MV"
+  -> DOB: Excel="2017-04-04", DB="2017-04-05"
+  -> Blood Group: Excel="B+", DB=""
+  -> Aadhar: Excel="7008 7687 8209", DB=""
+  -> Religion: Excel="Hindu", DB=""
+  -> Caste: Excel="Parayan", DB=""
+  -> Father Mobile: Excel="9946658562", DB_Mobile="", DB_Primary="0000000000"
+
+Admn No: 2519 | Name: Muhammed Afnan P
+  -> Name: Excel="Muhammed Afnan P", DB="Muhammed Aznan P"
+  -> Aadhar: Excel="7038 4178 5985", DB="703841785985"
+  -> Religion: Excel="Muslim", DB="Islam"
+  -> Caste: Excel="Muslim", DB="Mappila"
+
+Admn No: 2515 | Name: Muhammed Shayan K.V
+  -> Name: Excel="Muhammed Shayan K.V", DB="Muhammed Shayan KV"
+  -> DOB: Excel="2016-05-01", DB="2016-02-05"
+  -> Blood Group: Excel="A+", DB=""
+  -> Aadhar: Excel="4034 3775 4046", DB="403437754046"
+  -> Religion: Excel="Muslim", DB="Islam"
+  -> Father Name: Excel="Abdul Muneer", DB="Abdul Muneer KV"
+  -> Father Mobile: Excel="8086380404", DB_Mobile="9061417328", DB_Primary="9061417328"
+
+Admn No: 2517 | Name: Radhwa Naseer V
+  -> Aadhar: Excel="6063 5792 0600", DB="606357920600"
+  -> Father Mobile: Excel="561091929", DB_Mobile="971561091929", DB_Primary="971561091929"
+
+Admn No: 2533 | Name: Sulaiha Zaya V.K
+  -> Name: Excel="Sulaiha Zaya V.K", DB="Sulaiha Zaya"
+  -> Aadhar: Excel="2646 0487 3825", DB="264604873822"
+  -> Religion: Excel="Muslim", DB="Islam "
+  -> Caste: Excel="Islam", DB="Muslim"
+  -> Father Name: Excel="Mohammed Zakir V.K", DB="Mohammed Zakir"
+  -> Father Mobile: Excel="9539991181", DB_Mobile="9633906039", DB_Primary="9633906039"
+
