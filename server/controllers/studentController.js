@@ -57,17 +57,14 @@ const getStudents = async (req, res) => {
         const classNameFilter = req.query.className;
         const isActiveFilter = req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : null;
 
-        const keyword = req.query.search
-            ? {
-                $or: [
-                    { name: { $regex: req.query.search, $options: 'i' } },
-                    { admissionNo: { $regex: req.query.search, $options: 'i' } },
-                ],
-            }
-            : {};
-
-        // Combine filters
-        const query = { ...keyword };
+        const query = {};
+        
+        if (req.query.search) {
+            query.$or = [
+                { name: { $regex: req.query.search, $options: 'i' } },
+                { admissionNo: { $regex: req.query.search, $options: 'i' } },
+            ];
+        }
 
         if (classNameFilter && classNameFilter !== 'All') {
             query.className = classNameFilter;
@@ -75,15 +72,24 @@ const getStudents = async (req, res) => {
 
         if (statusFilter) {
             if (statusFilter === 'Active') {
-                query.$or = [
-                    ...(query.$or || []),
-                    {
-                        $or: [
-                            { studentStatus: 'Active' },
-                            { studentStatus: { $exists: false } }
-                        ]
-                    }
-                ];
+                if (query.$or) {
+                    // If there's already an $or for the search, we must wrap both in $and
+                    query.$and = [
+                        { $or: query.$or },
+                        {
+                            $or: [
+                                { studentStatus: 'Active' },
+                                { studentStatus: { $exists: false } }
+                            ]
+                        }
+                    ];
+                    delete query.$or;
+                } else {
+                    query.$or = [
+                        { studentStatus: 'Active' },
+                        { studentStatus: { $exists: false } }
+                    ];
+                }
                 query.isActive = true;
             } else {
                 query.studentStatus = statusFilter;

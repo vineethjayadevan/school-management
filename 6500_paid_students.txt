@@ -1,0 +1,132 @@
+STUDENTS WHO PAID EXACTLY 6500
+---------------------------------------------------------
+NAME                          DATE           ADMISSION NO
+---------------------------------------------------------
+Ayisha Mehak V                01/04/2026     2578
+Eva Mehfil PV                 01/04/2026     2580
+Nuzayh Ahmmad K               01/04/2026     2581
+Adhyush Raj M                 01/04/2026     2582
+Ayisha Inhara K               01/04/2026     2583
+Aydin Adam CV                 01/04/2026     2585
+Sayyid Ahmad Hassan           01/04/2026     2586
+Izzah Bathool KV              01/04/2026     2587
+Dua Mehwish CV                01/04/2026     2589
+Aliza Emin MN                 01/04/2026     2590
+Ayisha Eva                    01/04/2026     2591
+Adam Hyzin                    01/04/2026     2592
+Alfiya Mehwish                01/04/2026     2593
+Safa Mehrin K                 01/04/2026     2573
+Fathimma Zaiba K              01/04/2026     2596
+Fathima Minha                 01/04/2026     2597
+Vamika TP                     01/04/2026     2601
+Muhammed Yazdan Airik Swalih  01/04/2026     2603
+Adam Alvin KV                 01/04/2026     2604
+Hemin Aibak KV                01/04/2026     2605
+Aydhin Yousuf KV              01/04/2026     2606
+Iniya Meharish KM             01/04/2026     2607
+Ithal Ranjith                 01/04/2026     2615
+Kabani MK                     01/04/2026     2611
+Muhammed Hathim K             01/04/2026     2612
+Muhammed Zahi                 01/04/2026     2613
+Atif Lahiz MK                 01/04/2026     2574
+Hadi Emil T                   01/04/2026     2614
+Ezin Hanan KP                 01/04/2026     2616
+Lakshmi Narayanan TV          01/04/2026     2617
+Ardra KK                      01/04/2026     2618
+Viswajith K                   01/04/2026     2619
+Safna Farheen PP              01/04/2026     2595
+Abu Thwahir KP                10/04/2026     2620
+Ayisha Zaiba KP               10/04/2026     2621
+Aydin Adam P                  10/04/2026     2633
+Nihara Lakshmi PK             10/04/2026     2623
+Hydin Adam NA                 10/04/2026     2610
+Muhammed Amaan C              10/04/2026     2626
+Adam Azlan C                  10/04/2026     2627
+Ezin Zahan                    10/04/2026     2629
+Sreedhi Manikandan            10/04/2026     2630
+Ohda Mariyam K                10/04/2026     2631
+Ayzal Arsh KA                 10/04/2026     2632
+Aydin Aalam EV                10/04/2026     2677
+Hathim Ahammed CK             10/04/2026     2634
+Shayan Shafeek                10/04/2026     2635
+Takisha Kouser                10/04/2026     2638
+Fathima Zahra KV              10/04/2026     2639
+Atreya KR                     10/04/2026     2640
+Ehan Nijesh K                 10/04/2026     2641
+Raiza Rashid                  10/04/2026     2645
+Azmin Mariyam KP              10/04/2026     2642
+Lahiq Mohammed AP             10/04/2026     2643
+LahanMuhammed AP              10/04/2026     2644
+Isha Noorin TV                10/04/2026     2646
+Ayhan Ali  Ahamed AV          10/04/2026     2648
+Yuaan Kareem PV               10/04/2026     2649
+Mehvish Nasarudheen PV        10/04/2026     2650
+Namith Vishnu K               10/04/2026     2651
+Aysha Thahrin P               10/04/2026     2652
+Anha Hasin AV                 10/04/2026     2653
+Hadiya Mariyam TV             10/04/2026     2655
+Muhammed Hyzin Hamd EM        10/04/2026     2577
+Aysha Hisa Bindh Hakkeem      10/04/2026     2657
+Mohamed Ehaan PA              10/04/2026     2658
+Ziya Sageer VK                10/04/2026     2659
+Muhammed Irfan TP             10/04/2026     2660
+Haya Fathimma                 10/04/2026     2662
+Niranjai V Raj                10/04/2026     2665
+Ayan Ashley                   01/05/2026     2664
+Krithvedha Kripesh            01/05/2026     2666
+Mohammed Shafin C             01/05/2026     2667
+Mohammed Hyzin K              01/05/2026     2668
+Ehan Hamood MP                01/05/2026     2670
+Muhammed Bishrul Hafi PP      01/05/2026     2672
+Ewaan Mohammed NM             01/05/2026     2675
+Aydhin Adham VT               01/05/2026     2622
+Ayisha Afra PA                01/05/2026     2678
+Fathimma Rana T               01/05/2026     2679
+Amaya Alin PV                 01/05/2026     2680
+Emin Izyan                    01/05/2026     2681
+Muhammed Ayman KV             01/05/2026     2682
+Muhammed Farheen PV           01/05/2026     2683
+Muhammed Azmil KP             01/05/2026     2685
+Anvik Krishna KV              01/05/2026     2688
+Vedhathmika K                 25/05/2026     2690
+Mina Mehar MP                 25/05/2026     2691
+Haleema Kunnath               25/05/2026     2692
+Muhammed Shayan KR            25/05/2026     2693
+Mohammed Faizan KP            25/05/2026     2694
+Aisha Hamda TV                25/05/2026     2695
+Aibaq Aneesh                  25/05/2026     2698
+Muhammed Ramzan               25/05/2026     2701
+Muhammed Rayyan KR            25/05/2026     2702
+Ayaan  Mohammed KV            25/05/2026     2705
+Haiza KV                      25/05/2026     2707
+Zain Malik MN                 25/05/2026     2703
+Ayrin Suaatha OK              25/05/2026     2709
+Aidan Al Harith               25/05/2026     2710
+Muhammed Lazim                25/05/2026     2713
+Dilha MD                      25/05/2026     2536
+Vedha K                       25/05/2026     2525
+Fathimma Rimsha MK            25/05/2026     2535
+Thanhvi N                     25/05/2026     2715
+Hawwa Inaya VK                25/05/2026     2520
+Nihaya Binth Ahamed VK        25/05/2026     2503
+Ahmad Imadudeen A             25/05/2026     2521
+Muhammed Ayan VP              25/05/2026     2523
+Aireen Najeeb MK              25/05/2026     2514
+Muhammed FebinShaz VV         25/05/2026     2539
+Adwik TV                      01/06/2026     2538
+Aiza Mariyam MV               01/06/2026     2522
+Anviya MV                     01/06/2026     2526
+Anay VA                       01/06/2026     2548
+Jazwa Mehr MA                 01/06/2026     2518
+Adam A                        01/06/2026     2549
+Adhilakshmi M                 01/06/2026     2552
+Muhammed Shezin               01/06/2026     2524
+Hamid Ali K                   01/06/2026     2718
+Isha Fathimma C               15/06/2026     2528
+Izan Yousaf                   15/06/2026     2714
+Izwa Fathima C                15/06/2026     2529
+Raiha Rashid                  23/06/2026     2510
+---------------------------------------------------------
+Total Processed: 124
+Matched in DB: 124
+Not Found in DB: 0
