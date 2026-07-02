@@ -1,0 +1,66 @@
+=== EXACT MATCHES (1 Month) ===
+Row 146: Adm No: 2688 - Name: Anvik Krishna K.V - Match Amount: 1150
+Row 159: Adm No: 2503 - Name: Nihaya Binth Ahamed V.K - Match Amount: 1100
+Row 179: Adm No: 2518 - Name: Jazwa Mehr M.A - Match Amount: 1050
+Row 181: Adm No: 2649 - Name: Yuaan Kareem. P. V - Match Amount: 1350
+Row 183: Adm No: 2637 - Name: Aleha Ashraf.C.A - Match Amount: 1150
+Row 184: Adm No: 2636 - Name: Mohammed Tanim Ashraf.C.A - Match Amount: 1150
+Row 186: Adm No: 2504 - Name: VIVAN SUNDHAR .M - Match Amount: 1000
+Row 187: Adm No: 2547 - Name: EVA MEHAK K P - Match Amount: 1250
+Row 189: Adm No: 2631 - Name: Ohda Mariyam K - Match Amount: 1000
+Row 191: Adm No: 2675 - Name: Ewaan mohammed.NM - Match Amount: 1400
+Row 194: Adm No: 2635 - Name: Shayan Shafeek - Match Amount: 950
+Row 196: Adm No: 2579 - Name: EIRA MARYAM M - Match Amount: 1300
+Row 200: Adm No: 2614 - Name: Hadi Emil T - Match Amount: 1300
+Row 202: Adm No: 2690 - Name: VEDHATHMIKA. K - Match Amount: 950
+Row 207: Adm No: 2676 - Name: Mohammed Rizin P.P - Match Amount: 1300
+Row 214: Adm No: 2597 - Name: Fathima Minha - Match Amount: 1250
+Row 216: Adm No: 2582 - Name: ADHYUSH RAJ M - Match Amount: 1200
+Row 223: Adm No: 2615 - Name: Ithal Ranjith - Match Amount: 1150
+Row 225: Adm No: 2608 - Name: Muhammed Hyzin Ks - Match Amount: 1100
+Row 229: Adm No: 2605 - Name: Hemin Aibak kv - Match Amount: 950
+Row 231: Adm No: 2633 - Name: AYDIN ADAM P - Match Amount: 1550
+Row 233: Adm No: 2664 - Name: Ayan Ashley - Match Amount: 1100
+Row 235: Adm No: 2665 - Name: Niranjai.V. Raj - Match Amount: 1250
+Row 237: Adm No: 2601 - Name: Vamika. T.P - Match Amount: 1100
+Row 243: Adm No: 2665 - Name: Niranjai.V. Raj - Match Amount: 1250
+Row 245: Adm No: 2580 - Name: EVA MEHFIL P.V - Match Amount: 1100
+Row 248: Adm No: 2667 - Name: Mohammed Shafin C - Match Amount: 1100
+Row 253: Adm No: 2519 - Name: Muhammed Afnan P - Match Amount: 1100
+Row 256: Adm No: 2626 - Name: Muhammed Amaan C - Match Amount: 1100
+Row 258: Adm No: 2655 - Name: Hadiya Mariyam.T.V - Match Amount: 1300
+Row 261: Adm No: 2590 - Name: Aliza Emin. M. N - Match Amount: 1250
+Row 262: Adm No: 2661 - Name: Mohammed Aashmin Eimick M.N - Match Amount: 1250
+Row 265: Adm No: 2606 - Name: Aydhin Yousaf K. V - Match Amount: 950
+Row 267: Adm No: 2604 - Name: Adam Alvin K V - Match Amount: 950
+Row 269: Adm No: 2619 - Name: Viswajith.k - Match Amount: 950
+Row 270: Adm No: 2506 - Name: AYAN M S - Match Amount: 1400
+Row 272: Adm No: 2699 - Name: Maryam.T.V - Match Amount: 1300
+Row 274: Adm No: 2646 - Name: ISHA NOORIN T V - Match Amount: 1300
+Row 275: Adm No: 2701 - Name: Muhammed ramzan - Match Amount: 1100
+Row 279: Adm No: 2618 - Name: Ardra.k.k - Match Amount: 950
+Row 287: Adm No: 2617 - Name: Lakshmi Narayanan.T.V - Match Amount: 950
+Row 289: Adm No: 2612 - Name: Muhammed Hathim K - Match Amount: 1100
+Row 292: Adm No: 2536 - Name: Diha M.D - Match Amount: 1100
+Row 294: Adm No: 2656 - Name: Amelia Aimal TV - Match Amount: 1300
+Row 296: Adm No: 2652 - Name: AYSHA THAHRIN P - Match Amount: 1550
+Row 301: Adm No: 2541 - Name: DEEKSHITH ABHILASH - Match Amount: 1100
+Row 302: Adm No: 2508 - Name: AZAN FAISAL.K.P - Match Amount: 1100
+
+=== MULTIPLE MONTHS MATCHES ===
+Row 5: Adm No: 2578 - Name: AYISHA MEHAK V - Paid: 6500 (Multiple of 1300)
+Row 8: Adm No: 2581 - Name: Nuzayh Ahmmad K - Paid: 6500 (Multiple of 1300)
+Row 40: Adm No: 2614 - Name: Hadi Emil T - Paid: 6500 (Multiple of 1300)
+Row 73: Adm No: 2646 - Name: ISHA NOORIN T V - Paid: 6500 (Multiple of 1300)
+Row 82: Adm No: 2655 - Name: Hadiya Mariyam.T.V - Paid: 6500 (Multiple of 1300)
+Row 83: Adm No: 2656 - Name: Amelia Aimal TV - Paid: 5200 (Multiple of 1300)
+Row 91: Adm No: 2663 - Name: Muhammed Shayan.A - Paid: 5500 (Multiple of 1100)
+Row 128: Adm No: 2699 - Name: Maryam.T.V - Paid: 5200 (Multiple of 1300)
+Row 130: Adm No: 2702 - Name: Muhammed rayyan k.r - Paid: 6500 (Multiple of 1300)
+Row 155: Adm No: 2650 - Name: Mehvish Nasarudheen P.V - Paid: 10000 (Multiple of 1250)
+Row 157: Adm No: 2515 - Name: Muhammed Shayan K.V - Paid: 5000 (Multiple of 1000)
+Row 167: Adm No: 2692 - Name: Haleema Kunnath - Paid: 6000 (Multiple of 1000)
+Row 169: Adm No: 2607 - Name: Iniya Meharish.K.M - Paid: 6000 (Multiple of 1200)
+Row 176: Adm No: 2680 - Name: Amaya alin.pv - Paid: 5000 (Multiple of 1250)
+Row 188: Adm No: 2631 - Name: Ohda Mariyam K - Paid: 6000 (Multiple of 1000)
+Row 211: Adm No: 2718 - Name: Hamid Ali. K - Paid: 6500 (Multiple of 1300)

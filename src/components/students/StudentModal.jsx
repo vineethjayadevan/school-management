@@ -4,7 +4,7 @@ import { X, Edit, Save, User, Phone, MapPin, Calendar, Book, Users, FileText, Bu
 import { storageService } from '../../services/storage';
 import api from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
-import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee } from '../../utils/feeUtils';
+import { calculateDetailedFeeBreakdown } from '../../utils/feeUtils';
 
 /**
  * StudentModal Component
@@ -56,8 +56,8 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
             const fetchedCategories = categoriesRes.data || [];
 
             // Conveyance Calculation
-            const slab = data.conveyanceSlab ? parseInt(data.conveyanceSlab) : 0;
-            const monthlyConveyance = calculateConveyanceFee(slab);
+            const monthlyConveyance = data.monthlyConveyanceFee ? Number(data.monthlyConveyanceFee) : 0;
+            const conveyanceAnnual = monthlyConveyance * 10;
 
             const feeDetails = {
                 paid: 0,
@@ -99,11 +99,8 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                 let monthlyAmount = 0;
 
                 if (category.hasSlabs) {
-                    if (slab > 0) {
-                        const baseMonthly = category.baseAmount || 0;
-                        monthlyAmount = baseMonthly + (slab * (category.slabMultiplier || 0));
-                        annualTotal = monthlyAmount * (category.months || 10);
-                    }
+                    annualTotal = conveyanceAnnual;
+                    monthlyAmount = monthlyConveyance;
                 } else {
                     const classSpecific = category.amounts?.find(a => a.className === currentClassName);
                     annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
@@ -159,7 +156,7 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                 primaryPhone: data.primaryPhone || data.contact,
                 address: data.address,
                 feesStatus: data.feesStatus,
-                conveyanceSlab: data.conveyanceSlab || 0
+                monthlyConveyanceFee: data.monthlyConveyanceFee || 0
             });
         } catch (error) {
             console.error(error);
@@ -175,7 +172,7 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
         try {
             const updatedStudent = await storageService.students.update(studentId, {
                 ...data,
-                conveyanceSlab: parseInt(data.conveyanceSlab) // Ensure number
+                monthlyConveyanceFee: Number(data.monthlyConveyanceFee || 0) // Ensure number
             });
 
             // Re-fetch to update calculations
@@ -455,8 +452,8 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                                             <div className="flex justify-between items-end mb-2">
                                                                 <span className="text-sm font-semibold text-slate-700">
                                                                     {cat.name}
-                                                                    {cat.isConveyance && student?.conveyanceSlab > 0 &&
-                                                                        <span className="ml-2 text-[10px] font-normal text-slate-400 italic">(Slab {student.conveyanceSlab})</span>
+                                                                    {cat.isConveyance && student?.monthlyConveyanceFee > 0 &&
+                                                                        <span className="ml-2 text-[10px] font-normal text-slate-400 italic">(Monthly: ₹{student.monthlyConveyanceFee})</span>
                                                                     }
                                                                 </span>
                                                                 <span className="block font-bold text-slate-900">₹{cat.total.toLocaleString()}</span>
@@ -499,24 +496,18 @@ export default function StudentModal({ isOpen, onClose, studentId, initialMode =
                                                     <span className="text-sm text-blue-800">Standard Fee</span>
                                                     <span className="font-semibold text-blue-900">₹{(20000 + 6500).toLocaleString()}</span>
                                                 </div>
-
                                                 <div>
-                                                    <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                                                        <Bus size={16} />
-                                                        Conveyance Slab Selection
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                                        Monthly Vehicle Fee (₹)
                                                     </label>
-                                                    <select
-                                                        {...register("conveyanceSlab")}
-                                                        className="w-full p-2 border rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
-                                                    >
-                                                        {CONVEYANCE_SLABS.map(slab => (
-                                                            <option key={slab.id} value={slab.id}>
-                                                                {slab.label} {slab.id > 0 ? `(₹${slab.monthly} / mo)` : ''}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <p className="text-xs text-blue-600 mt-2">
-                                                        * Selecting a slab will automatically add the annual conveyance fee to the student's total payable amount.
+                                                    <input
+                                                        type="number"
+                                                        {...register("monthlyConveyanceFee")}
+                                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                                                        placeholder="Enter monthly fee amount"
+                                                    />
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        * Entering an amount will automatically add the annual vehicle fee to the student's total payable amount (Monthly × 10).
                                                     </p>
                                                 </div>
                                             </div>

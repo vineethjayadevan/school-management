@@ -10,6 +10,7 @@ import autoTable from 'jspdf-autotable';
 import { storageService } from '../../services/storage';
 import { feeStructure } from '../../services/mockData';
 import { useToast } from '../../components/ui/Toast';
+import VehicleFeeCollection from './VehicleFeeCollection';
 
 import FeeReceipt from '../../components/fees/FeeReceipt';
 import FeeSettings from '../../components/fees/FeeSettings';
@@ -683,6 +684,19 @@ export default function FeeDashboard() {
             };
         });
 
+        // Inject vehicle fee if assigned
+        if (student.monthlyConveyanceFee && student.monthlyConveyanceFee > 0) {
+            const grossAmount = student.monthlyConveyanceFee * 10;
+            const disc = studentDiscounts.find(d => d.categoryName === 'Vehicle Fee');
+            const discountAmt = disc?.discountAmount || 0;
+            categories.push({
+                type: 'Vehicle Fee',
+                grossAmount,
+                discountAmount: discountAmt,
+                due: Math.max(0, grossAmount - discountAmt)
+            });
+        }
+
         // Get all payments for this student
         const payments = transactions.filter(t => {
             const tStudentId = t.student?._id || t.student?.id || t.studentId || t.student;
@@ -696,9 +710,13 @@ export default function FeeDashboard() {
         const result = categories.map(({ type, due }) => {
             const paidAmount = payments.reduce((sum, t) => {
                 if (t.breakdown && t.breakdown.length > 0) {
-                    const bItem = t.breakdown.find(b => b.feeType === type || b.type === type);
-                    return sum + (bItem ? Number(bItem.amount) : 0);
-                } else if (t.feeType === type || t.type === type) {
+                    const bItem = t.breakdown.filter(b => {
+                        if (b.feeType === type || b.type === type) return true;
+                        if (type === 'Vehicle Fee' && b.feeType?.startsWith('Vehicle Fee')) return true;
+                        return false;
+                    });
+                    return sum + bItem.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+                } else if (t.feeType === type || t.type === type || (type === 'Vehicle Fee' && (t.type === 'Vehicle Fee' || t.feeType === 'Vehicle Fee'))) {
                     return sum + (Number(t.amount) || 0);
                 }
                 return sum;
@@ -897,9 +915,8 @@ export default function FeeDashboard() {
 
             // Get all applicable fee categories for this student based on class/slabs
             const applicableCategories = allCategories.filter(cat => {
-                if (cat.hasSlabs) {
-                    const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                    return slabCount > 0;
+                if (cat.hasSlabs || cat.name === 'Conveyance Fee' || cat.name === 'Vehicle Fee') {
+                    return student.monthlyConveyanceFee > 0;
                 }
                 const clsAmount = cat.amounts.find(a => a.className === cls);
                 return clsAmount && clsAmount.amount > 0;
@@ -921,10 +938,9 @@ export default function FeeDashboard() {
                 const targetCat = applicableCategories.find(c => c._id === ovFilterCategory);
                 if (targetCat) {
                     // Calculate Due
-                    if (targetCat.hasSlabs) {
-                        const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                        if (slabCount > 0) {
-                            totalDue = (targetCat.baseAmount + (slabCount * targetCat.slabMultiplier)) * (targetCat.months || 10);
+                    if (targetCat.hasSlabs || targetCat.name === 'Conveyance Fee' || targetCat.name === 'Vehicle Fee') {
+                        if (student.monthlyConveyanceFee > 0) {
+                            totalDue = student.monthlyConveyanceFee * 10;
                         }
                     } else {
                         const classAmount = targetCat.amounts.find(a => a.className === cls);
@@ -933,27 +949,35 @@ export default function FeeDashboard() {
 
                     // Calculate Paid
                     studentPayments.forEach(t => {
+                        const isVehicleCat = (targetCat.name === 'Conveyance Fee' || targetCat.name === 'Vehicle Fee');
+                        
                         if (t.breakdown && t.breakdown.length > 0) {
-                            const bItem = t.breakdown.find(b => b.feeType === targetCat.name || b.type === targetCat.name);
-                            if (bItem) {
-                                totalPaid += Number(bItem.amount);
+                            const bItem = t.breakdown.filter(b => {
+                                if (b.feeType === targetCat.name || b.type === targetCat.name) return true;
+                                if (isVehicleCat && (b.feeType?.startsWith('Vehicle Fee') || b.feeType?.startsWith('Conveyance Fee'))) return true;
+                                return false;
+                            });
+                            
+                            if (bItem.length > 0) {
+                                totalPaid += bItem.reduce((s, b) => s + (Number(b.amount) || 0), 0);
                                 const tDate = new Date(t.paymentDate || t.createdAt);
                                 if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
                             }
-                        } else if (t.feeType === targetCat.name || t.type === targetCat.name) {
-                            totalPaid += Number(t.amount);
-                            const tDate = new Date(t.paymentDate || t.createdAt);
-                            if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
+                        } else {
+                            if (t.feeType === targetCat.name || t.type === targetCat.name || (isVehicleCat && (t.type === 'Vehicle Fee' || t.feeType === 'Vehicle Fee' || t.type === 'Conveyance Fee'))) {
+                                totalPaid += Number(t.amount);
+                                const tDate = new Date(t.paymentDate || t.createdAt);
+                                if (!lastPaymentDate || tDate > lastPaymentDate) lastPaymentDate = tDate;
+                            }
                         }
                     });
                 }
             } else {
                 // Aggregated Calculation (ALL Categories)
                 applicableCategories.forEach(cat => {
-                    if (cat.hasSlabs) {
-                        const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                        if (slabCount > 0) {
-                            totalDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
+                    if (cat.hasSlabs || cat.name === 'Conveyance Fee' || cat.name === 'Vehicle Fee') {
+                        if (student.monthlyConveyanceFee > 0) {
+                            totalDue += student.monthlyConveyanceFee * 10;
                         }
                     } else {
                         const classAmount = cat.amounts.find(a => a.className === cls);
@@ -1841,6 +1865,12 @@ export default function FeeDashboard() {
                             Collect Fee
                         </button>
                         <button
+                            onClick={() => setActiveTab('vehicle')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'vehicle' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            Vehicle Fees
+                        </button>
+                        <button
                             onClick={() => setActiveTab('history')}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
@@ -1858,9 +1888,13 @@ export default function FeeDashboard() {
                 </div>
             </div>
 
-            {showReceipt ? renderReceipt() : (
-                activeTab === 'collect' ? renderCollectionTab() : renderHistoryTab()
-            )}
+            <div className="flex-1 overflow-auto bg-slate-50/50">
+                {showReceipt ? renderReceipt() : (
+                    activeTab === 'collect' ? renderCollectionTab() : 
+                    activeTab === 'vehicle' ? <VehicleFeeCollection /> : 
+                    renderHistoryTab()
+                )}
+            </div>
 
             {/* Fee Details Modal */}
             {renderReprintModal()}

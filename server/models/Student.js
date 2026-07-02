@@ -110,8 +110,9 @@ const studentSchema = mongoose.Schema({
     mediumOfInstruction: { type: String },
 
     // Conveyance
-    conveyanceSlab: { type: Number, enum: [0, 1, 2, 3, 4, 5], default: 0 }, // 0 = Not Applicable
-    lastConveyancePayment: { type: Date }, // Track last payment date for status
+    monthlyConveyanceFee: { type: Number, default: 0 },
+    paidVehicleMonths: [{ type: String }], // e.g., ["June 2026", "July 2026"]
+    busNumber: { type: String, default: '' },
 
     // Health & Special Needs
     hasLearningDisability: { type: Boolean, default: false },

@@ -23,7 +23,7 @@ const getFees = async (req, res) => {
 const addFee = async (req, res) => {
     try {
         // Support legacy single 'type'/'amount' or the new 'breakdown' array
-        const { studentId, type, amount, breakdown, date, mode, transactionId, remarks, manualReceiptNo } = req.body;
+        const { studentId, type, amount, breakdown, date, mode, transactionId, remarks, manualReceiptNo, paidVehicleMonths } = req.body;
 
         const feeBreakdown = breakdown || (type && amount ? [{ feeType: type, amount: Number(amount) }] : []);
 
@@ -111,30 +111,9 @@ const addFee = async (req, res) => {
             student.previousClass = undefined;
         }
 
-        // Update Conveyance Payment Date if applicable
-        // Check if any feeType in the breakdown string contains "Conveyance" or "Full" (case-insensitive)
-        const conveyanceItem = feeBreakdown.find(item =>
-            item.feeType && (item.feeType.toLowerCase().includes('conveyance') || item.feeType.toLowerCase().includes('full'))
-        );
-
-        if (conveyanceItem) {
-            // Find the category rules from the DB based on the feeType name
-            const conveyanceCategory = activeCategories.find(c => c.name === conveyanceItem.feeType);
-
-            let requiredMonthlyAmount = 0;
-            if (conveyanceCategory && conveyanceCategory.hasSlabs) {
-                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                requiredMonthlyAmount = conveyanceCategory.baseAmount + (slabCount * conveyanceCategory.slabMultiplier);
-            } else {
-                // Fallback to old flat 200 + (slab*100) if category not formally configured or hasSlabs is false
-                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                requiredMonthlyAmount = slabCount > 0 ? (200 + (slabCount * 100)) : 0;
-            }
-
-            // Only flip the "Paid" month flag if they paid at least ONE full month's worth of conveyance
-            if (Number(conveyanceItem.amount) >= requiredMonthlyAmount && requiredMonthlyAmount > 0) {
-                student.lastConveyancePayment = date || new Date(); // Use payment date or now
-            }
+        // Update Conveyance Payment Months if applicable
+        if (type === 'Vehicle Fee' && paidVehicleMonths && Array.isArray(paidVehicleMonths)) {
+            student.paidVehicleMonths = [...new Set([...(student.paidVehicleMonths || []), ...paidVehicleMonths])];
         }
 
         await student.save();
@@ -221,7 +200,7 @@ const getStudentFees = async (req, res) => {
 
         // Parallel fetch: Student Profile, Fee History, and active Fee Categories
         const [student, history, activeCategories] = await Promise.all([
-            Student.findById(studentId).select('feesStatus admissionNo name className section conveyanceSlab discounts'),
+            Student.findById(studentId).select('feesStatus admissionNo name className section monthlyConveyanceFee paidVehicleMonths discounts'),
             Fee.find({ student: studentId }).sort({ paymentDate: -1 }),
             FeeCategory.find({ isActive: true })
         ]);
@@ -233,18 +212,13 @@ const getStudentFees = async (req, res) => {
         // Calculate real expected breakdown for this student
         const className = (student.className || student.class || '').trim();
         const expectedBreakdown = activeCategories.map(cat => {
+            if (cat.name === 'Conveyance' || cat.name === 'Vehicle Fee') {
+                return null; // Handle vehicle fee separately
+            }
             let dueAmount = 0;
-            if (cat.hasSlabs) {
-                const slabCount = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
-                // Only apply if slab is selected (> 0)
-                if (slabCount > 0) {
-                    dueAmount = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
-                }
-            } else {
-                const classAmountObj = cat.amounts.find(a => (a.className || '').trim() === className);
-                if (classAmountObj) {
-                    dueAmount = classAmountObj.amount;
-                }
+            const classAmountObj = cat.amounts.find(a => (a.className || '').trim() === className);
+            if (classAmountObj) {
+                dueAmount = classAmountObj.amount;
             }
 
             // Apply discounts if any
@@ -257,7 +231,19 @@ const getStudentFees = async (req, res) => {
                 discount: discountAmount,
                 due: Math.max(0, dueAmount - discountAmount)
             };
-        }).filter(item => item.totalDue > 0);
+        }).filter(item => item !== null && item.totalDue > 0);
+
+        if (student.monthlyConveyanceFee > 0) {
+            const vehicleTotalDue = student.monthlyConveyanceFee * 10; // Assuming 10 months
+            const vehicleDiscount = student.discounts?.find(d => d.categoryName === 'Vehicle Fee')?.discountAmount || 0;
+            
+            expectedBreakdown.push({
+                type: 'Vehicle Fee',
+                totalDue: vehicleTotalDue,
+                discount: vehicleDiscount,
+                due: Math.max(0, vehicleTotalDue - vehicleDiscount)
+            });
+        }
 
         res.json({
             status: student.feesStatus,
