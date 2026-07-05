@@ -1,0 +1,21 @@
+
+AUDIT REPORT
+============
+Total rows in Excel: 305
+Rows with parseable Adm No: 300
+
+Pending / Unprocessed Items:
+---------------------------
+1. Amount is 1 (Intentionally Skipped): 2 rows
+2. Unparseable Admission No: 4 rows
+Row 93: Vacation Class Income - Amt: 3000
+Row 94: Other Income - Amt: 500
+Row 164: Aireen Najeeb MK ( 2514 - Amt: 6500
+Row 165: Aireen Najeeb MK ( 2514 - Amt: 1500
+
+3. Student Not Found in Database: 0 rows
+
+
+4. Amount < 2000 but student has NO vehicle fee assigned: 1 rows
+Row 218: Adm No: 2585 (Aydin Adam. C. V) - Amt: 850 (No vehicle fee assigned but amount < 2000)
+        
