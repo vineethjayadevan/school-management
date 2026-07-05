@@ -10,7 +10,7 @@ import api from '../../services/api';
 import StudentSearch from '../../components/students/StudentSearch';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Accordion from '../../components/ui/Accordion';
-import { CONVEYANCE_SLABS, calculateConveyanceFee, calculateTotalConveyanceFee, calculateDetailedFeeBreakdown } from '../../utils/feeUtils';
+import { calculateDetailedFeeBreakdown } from '../../utils/feeUtils';
 import { generateStudentProfilePDF, generateFeeStatementPDF } from '../../utils/studentPdfGenerator';
 
 export default function StudentDetails() {
@@ -40,8 +40,7 @@ export default function StudentDetails() {
     // Accordion State
     const [openSection, setOpenSection] = useState('academic');
 
-    // Watch conveyance slab for dynamic updates in Edit mode
-    const watchConveyance = watch('conveyanceSlab');
+    const watchConveyance = watch('monthlyConveyanceFee');
     const transportMode = watch('transportMode');
     const selectedClassName = watch('className');
 
@@ -223,7 +222,8 @@ export default function StudentDetails() {
                 address: data.address,
 
                 feesStatus: data.feesStatus,
-                conveyanceSlab: data.conveyanceSlab || '0'
+                monthlyConveyanceFee: data.monthlyConveyanceFee || '0',
+                busNumber: data.busNumber || ''
             });
 
             // Default open section
@@ -440,7 +440,8 @@ export default function StudentDetails() {
                 siblings: siblingData,
                 documents: finalDocuments,
                 photoUrl: photoUrl,
-                conveyanceSlab: parseInt(data.conveyanceSlab), // Convert to number
+                monthlyConveyanceFee: Number(data.monthlyConveyanceFee || 0), // Convert to number
+                busNumber: data.busNumber || '',
                 discounts: discounts.filter(d => d.discountAmount > 0) // Only save non-zero discounts
             });
 
@@ -869,6 +870,10 @@ export default function StudentDetails() {
                                                         <div>
                                                             <p className="text-xs text-slate-500 mb-1">Route No</p>
                                                             <p className="font-medium">{student.transportation?.routeNumber || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500 mb-1">Bus Number</p>
+                                                            <p className="font-medium">{student.busNumber || '-'}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-xs text-slate-500 mb-1">Pickup Point</p>
@@ -1563,33 +1568,50 @@ export default function StudentDetails() {
                                         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                                             <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
                                                 <Bus size={16} />
-                                                Conveyance Slab Selection
+                                                Monthly Vehicle Fee (₹)
                                             </label>
                                             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                                                <select
-                                                    {...register("conveyanceSlab")}
+                                                <input
+                                                    type="number"
+                                                    {...register("monthlyConveyanceFee")}
                                                     className="w-full md:w-auto flex-1 p-2 border rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
-                                                >
-                                                    {CONVEYANCE_SLABS.map(slab => (
-                                                        <option key={slab.id} value={slab.id}>
-                                                            {slab.label} {slab.id > 0 ? `(₹${slab.monthly}/mo)` : ''}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    placeholder="Enter monthly amount"
+                                                />
+                                                
                                                 {watchConveyance > 0 && (
-                                                    <div className="text-right flex-1">
-                                                        <p className="text-xs text-blue-600 font-semibold uppercase">Est. Conveyance Fee</p>
-                                                        <p className="text-lg font-bold text-blue-800">
-                                                            ₹{calculateTotalConveyanceFee(watchConveyance).toLocaleString()}
-                                                            <span className="text-xs font-normal text-blue-600 ml-1">
-                                                                (₹{calculateConveyanceFee(watchConveyance)}/mo)
-                                                            </span>
-                                                        </p>
+                                                    <div className="bg-blue-100 px-4 py-2 rounded-lg border border-blue-200 shadow-sm flex items-center gap-3">
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-0.5">Est. Vehicle Fee</p>
+                                                            <p className="text-lg font-black text-blue-900 leading-none">
+                                                                ₹{(Number(watchConveyance) * 10).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="h-8 w-px bg-blue-200"></div>
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-blue-800">
+                                                                ₹{watchConveyance}/mo
+                                                            </p>
+                                                            <p className="text-[10px] text-blue-600">for 10 months</p>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-blue-600 mt-3">
-                                                * Updates to conveyance slab will immediately affect the student's total payable fee upon saving.
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-blue-800 mb-2">
+                                                        Bus Number (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        {...register("busNumber")}
+                                                        className="w-full p-2 border rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
+                                                        placeholder="e.g. BUS NO 18"
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <p className="text-xs text-blue-600 mt-4 border-t border-blue-100 pt-2">
+                                                * Updates to vehicle fee will immediately affect the student's total payable fee upon saving.
                                             </p>
                                         </div>
                                     </div>

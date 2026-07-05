@@ -7,22 +7,22 @@ const FeeCategory = require('../models/FeeCategory');
 
 // ─── Helper: Year-Scoped Financial Clearance ─────────────────────────────────
 // Checks whether a student has cleared all dues for a SPECIFIC academic year.
-const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab, academicYearId) => {
-    // 1. Calculate total annual dues for the student's class
-    const allCategories = await FeeCategory.find({ isActive: true });
-
+const checkFinancialClearance = async (studentId, studentClass, monthlyConveyanceFee, academicYearId) => {
+    // 1. Get total expected fee (simplified: usually this would consider all active categories for the year)
+    // Assuming you have a centralized function or we query FeeCategory
+    const allCategories = await FeeCategory.find({ academicYear: academicYearId, isActive: true });
     let totalDue = 0;
     allCategories.forEach(cat => {
-        if (cat.hasSlabs) {
-            const slabCount = conveyanceSlab ? parseInt(conveyanceSlab) : 0;
-            if (slabCount > 0) {
-                totalDue += (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
-            }
-        } else {
-            const clsAmount = cat.amounts.find(a => a.className === studentClass);
-            if (clsAmount) totalDue += clsAmount.amount;
-        }
+        if (cat.name === 'Conveyance' || cat.name === 'Vehicle Fee') return;
+        let annualTotal = 0;
+        const clsAmount = cat.amounts.find(a => a.className === studentClass);
+        if (clsAmount) annualTotal = clsAmount.amount;
+        totalDue += annualTotal;
     });
+
+    if (monthlyConveyanceFee && monthlyConveyanceFee > 0) {
+        totalDue += (monthlyConveyanceFee * 10);
+    }
 
     // 2. Sum ONLY payments for this specific academic year (year-scoped)
     const paymentQuery = {
@@ -110,7 +110,7 @@ const getPromotionPreview = async (req, res) => {
         };
 
         const students = await Student.find(query).select(
-            'name admissionNo rollNo className section conveyanceSlab financialClearance promotionStatus academicHistory currentAcademicYear'
+            'name admissionNo rollNo className section monthlyConveyanceFee financialClearance promotionStatus academicHistory currentAcademicYear'
         );
 
         // ── Safety Rule: Filter out students already processed for the target year ──
@@ -128,7 +128,7 @@ const getPromotionPreview = async (req, res) => {
 
         for (const student of eligibleStudents) {
             const { isCleared, totalDue, totalPaid, pending } = await checkFinancialClearance(
-                student._id, student.className, student.conveyanceSlab, currentYearId
+                student._id, student.className, student.monthlyConveyanceFee, currentYearId
             );
             const mapping = classMappings[student.className];
 
@@ -251,7 +251,7 @@ const executePromotion = async (req, res) => {
 
             // Year-scoped financial clearance check
             const { isCleared, pending } = await checkFinancialClearance(
-                student._id, student.className, student.conveyanceSlab, currentYearId
+                student._id, student.className, student.monthlyConveyanceFee, currentYearId
             );
 
             // Build history entry for their CURRENT state before transitioning

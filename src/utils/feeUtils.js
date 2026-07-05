@@ -2,25 +2,6 @@
  * Utility functions for fee calculations
  */
 
-export const CONVEYANCE_SLABS = [
-    { id: 0, label: 'None (Self/Private)', monthly: 0 },
-    { id: 1, label: 'Slab 1 (0-2 km)', monthly: 300 },
-    { id: 2, label: 'Slab 2 (2-5 km)', monthly: 400 },
-    { id: 3, label: 'Slab 3 (5-8 km)', monthly: 500 },
-    { id: 4, label: 'Slab 4 (8-12 km)', monthly: 600 },
-    { id: 5, label: 'Slab 5 (>12 km)', monthly: 700 }
-];
-
-export const calculateConveyanceFee = (slabId) => {
-    const slab = CONVEYANCE_SLABS.find(s => s.id === parseInt(slabId));
-    return slab ? slab.monthly : 0;
-};
-
-// Assuming 10 months for academic year billing of transport
-export const calculateTotalConveyanceFee = (slabId, months = 10) => {
-    return calculateConveyanceFee(slabId) * months;
-};
-
 export const getFeeStructure = (className) => {
     // This could also be moved here from mockData/feeStructure if we want a single source of truth
     // keeping it simple for now and just focusing on conveyance
@@ -35,8 +16,7 @@ export const getFeeStructure = (className) => {
  * Ported from StudentDetails.jsx for reusability.
  */
 export const calculateDetailedFeeBreakdown = (student, feeHistory, activeCategories) => {
-    const breakdown = [];
-    const slab = student.conveyanceSlab ? parseInt(student.conveyanceSlab) : 0;
+    const monthlyConveyance = student.monthlyConveyanceFee ? Number(student.monthlyConveyanceFee) : 0;
     let totalFeeComputed = 0;
     let totalPaidComputed = 0;
 
@@ -44,7 +24,7 @@ export const calculateDetailedFeeBreakdown = (student, feeHistory, activeCategor
         paid: 0,
         pending: 0,
         totalFee: 0,
-        monthlyConveyance: calculateConveyanceFee(slab),
+        monthlyConveyance: monthlyConveyance,
         breakdown: []
     };
 
@@ -54,13 +34,19 @@ export const calculateDetailedFeeBreakdown = (student, feeHistory, activeCategor
         let txnAmountLeft = txn.amount || 0;
         if (txn.breakdown && txn.breakdown.length > 0) {
             txn.breakdown.forEach(item => {
-                const normalizedName = item.feeType?.trim().toLowerCase();
+                let normalizedName = item.feeType?.trim().toLowerCase();
                 if (normalizedName) {
+                    if (normalizedName.startsWith('vehicle fee')) {
+                        normalizedName = 'vehicle fee';
+                    }
                     categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + item.amount;
                 }
             });
-        } else if (txn.feeType) {
-            const normalizedName = txn.feeType.trim().toLowerCase();
+        } else if (txn.feeType || txn.type) {
+            let normalizedName = (txn.feeType || txn.type).trim().toLowerCase();
+            if (normalizedName.startsWith('vehicle fee')) {
+                normalizedName = 'vehicle fee';
+            }
             categoryPaid[normalizedName] = (categoryPaid[normalizedName] || 0) + txnAmountLeft;
         }
         totalPaidComputed += (txn.amount || 0);
@@ -74,17 +60,13 @@ export const calculateDetailedFeeBreakdown = (student, feeHistory, activeCategor
         let annualTotal = 0;
         let monthlyAmount = 0;
 
-        if (category.hasSlabs) {
-            if (slab > 0) {
-                const baseMonthly = category.baseAmount || 0;
-                monthlyAmount = baseMonthly + (slab * (category.slabMultiplier || 0));
-                annualTotal = monthlyAmount * (category.months || 10);
-            }
-        } else {
-            const classSpecific = category.amounts?.find(a => a.className === currentClassName);
-            annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
-            monthlyAmount = annualTotal / (category.months || 10);
+        if (category.name === 'Conveyance' || category.name === 'Vehicle Fee') {
+            return; // Skip, will handle vehicle fee separately
         }
+        
+        const classSpecific = category.amounts?.find(a => a.className === currentClassName);
+        annualTotal = classSpecific ? classSpecific.amount : (category.baseAmount || 0);
+        monthlyAmount = annualTotal / (category.months || 10);
 
         if (annualTotal > 0) {
             const discountEntry = studentDiscounts.find(d =>
@@ -112,6 +94,30 @@ export const calculateDetailedFeeBreakdown = (student, feeHistory, activeCategor
             });
         }
     });
+
+    if (monthlyConveyance > 0) {
+        const annualTotal = monthlyConveyance * 10;
+        const discountEntry = studentDiscounts.find(d => d.categoryName === 'Vehicle Fee');
+        const discountAmt = discountEntry?.discountAmount || 0;
+        const netTotal = Math.max(0, annualTotal - discountAmt);
+        
+        totalFeeComputed += netTotal;
+        const paidForCat = categoryPaid['vehicle fee'] || categoryPaid['conveyance'] || 0;
+        const pendingForCat = Math.max(0, netTotal - paidForCat);
+
+        feeDetails.breakdown.push({
+            id: 'vehicle-fee',
+            name: 'Vehicle Fee',
+            type: 'Vehicle',
+            total: annualTotal,
+            discountAmount: discountAmt,
+            netTotal: netTotal,
+            paid: paidForCat,
+            pending: pendingForCat,
+            monthly: monthlyConveyance,
+            months: 10
+        });
+    }
 
     feeDetails.paid = totalPaidComputed;
     feeDetails.totalFee = totalFeeComputed;

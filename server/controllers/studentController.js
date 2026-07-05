@@ -8,20 +8,16 @@ const { signUrl } = require('./uploadController');
 
 // Helper to check if a student has cleared all fees (mirrors promotionController logic)
 // discounts: student.discounts array from Student model
-const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab, discounts = []) => {
+const checkFinancialClearance = async (studentId, studentClass, monthlyConveyanceFee, discounts = []) => {
     const allCategories = await FeeCategory.find({ isActive: true });
     let totalDue = 0;
     allCategories.forEach(cat => {
-        let annualTotal = 0;
-        if (cat.hasSlabs) {
-            const slabCount = conveyanceSlab ? parseInt(conveyanceSlab) : 0;
-            if (slabCount > 0) {
-                annualTotal = (cat.baseAmount + (slabCount * cat.slabMultiplier)) * (cat.months || 10);
-            }
-        } else {
-            const clsAmount = cat.amounts.find(a => a.className === studentClass);
-            if (clsAmount) annualTotal = clsAmount.amount;
+        if (cat.name === 'Conveyance' || cat.name === 'Vehicle Fee') {
+            return; // Handled below
         }
+        let annualTotal = 0;
+        const clsAmount = cat.amounts.find(a => a.className === studentClass);
+        if (clsAmount) annualTotal = clsAmount.amount;
         if (annualTotal > 0) {
             // Subtract any discount granted for this category
             const disc = discounts.find(d =>
@@ -31,6 +27,15 @@ const checkFinancialClearance = async (studentId, studentClass, conveyanceSlab, 
             totalDue += Math.max(0, annualTotal - (disc?.discountAmount || 0));
         }
     });
+
+    if (monthlyConveyanceFee && monthlyConveyanceFee > 0) {
+        let annualTotal = monthlyConveyanceFee * 10; // Assuming 10 months
+        const discountEntry = discounts.find(d => d.categoryName === 'Vehicle Fee');
+        const discountAmt = discountEntry ? discountEntry.discountAmount : 0;
+        const netTotal = Math.max(0, annualTotal - discountAmt);
+        totalDue += netTotal;
+    }
+
     const payments = await Fee.find({ student: studentId, status: 'Paid' });
     const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
     return {
@@ -274,7 +279,7 @@ const issueTC = async (req, res) => {
         }
 
         // ── FINANCIAL CLEARANCE CHECK & SNAPSHOT ─────────────────────────────
-        const financialData = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
+        const financialData = await checkFinancialClearance(student._id, student.className, student.monthlyConveyanceFee, student.discounts || []);
         if (!financialData.isCleared) {
             return res.status(400).json({
                 message: 'Cannot issue TC: This student has pending fee dues. Please clear all dues before issuing a Transfer Certificate.'
@@ -387,7 +392,7 @@ const checkTCEligibility = async (req, res) => {
         const student = await Student.findById(req.params.id);
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
-        const financialData = await checkFinancialClearance(student._id, student.className, student.conveyanceSlab, student.discounts || []);
+        const financialData = await checkFinancialClearance(student._id, student.className, student.monthlyConveyanceFee, student.discounts || []);
         res.status(200).json({ isCleared: financialData.isCleared, isActive: student.isActive });
     } catch (error) {
         res.status(500).json({ message: error.message });

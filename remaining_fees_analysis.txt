@@ -1,0 +1,304 @@
+=== DB VERIFICATION ===
+✅ Verified: No duplicate 6500 entries exist for the same student on the same date in the DB.
+
+=== ANALYSIS OF REMAINING ENTRIES (Amount != 6500) ===
+Total Remaining Entries: 181
+
+=== STUDENTS WITH MULTIPLE PAYMENTS ===
+Student: Ayan MS (Admn: 2506) -> 3 Payments
+    - Date: 25/05/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1400
+    - Date: 23/06/2026   Amount: ₹2500
+
+Student: Muhammed Afnan P (Admn: 2519) -> 3 Payments
+    - Date: 25/05/2026   Amount: ₹5000
+    - Date: 15/06/2026   Amount: ₹1500
+    - Date: 15/06/2026   Amount: ₹1100
+
+Student: Deekshith Abilash (Admn: 2541) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹8500
+    - Date: 23/06/2026   Amount: ₹1100
+
+Student: Eva Mehak KP (Admn: 2547) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹1250
+    - Date: 23/06/2026   Amount: ₹6000
+
+Student: Sethulakshmi MS (Admn: 2572) -> 2 Payments
+    - Date: 01/04/2026   Amount: ₹3500
+    - Date: 25/05/2026   Amount: ₹9000
+
+Student: Mohammed Zifran (Admn: 2576) -> 2 Payments
+    - Date: 01/04/2026   Amount: ₹3000
+    - Date: 01/06/2026   Amount: ₹3500
+
+Student: Eira Maryam M (Admn: 2579) -> 4 Payments
+    - Date: 01/04/2026   Amount: ₹2000
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1300
+    - Date: 01/06/2026   Amount: ₹4500
+
+Student: Eva Mehfil PV (Admn: 2580) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1100
+
+Student: Adhyush Raj M (Admn: 2582) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹10300
+    - Date: 15/06/2026   Amount: ₹1200
+
+Student: Ayisha Inhara K (Admn: 2583) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹5500
+    - Date: 23/06/2026   Amount: ₹1550
+
+Student: Aydin Adam CV (Admn: 2585) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹850
+
+Student: Aliza Emin MN (Admn: 2590) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1250
+
+Student: Fathima Minha (Admn: 2597) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹14000
+    - Date: 15/06/2026   Amount: ₹1250
+
+Student: Muhammed Hyzin KP (Admn: 2598) -> 2 Payments
+    - Date: 01/04/2026   Amount: ₹1500
+    - Date: 25/05/2026   Amount: ₹5000
+
+Student: Janna Fathimma KP (Admn: 2599) -> 2 Payments
+    - Date: 01/04/2026   Amount: ₹1500
+    - Date: 25/05/2026   Amount: ₹5000
+
+Student: Vamika TP (Admn: 2601) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1100
+
+Student: Adam Alvin KV (Admn: 2604) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹950
+
+Student: Hemin Aibak KV (Admn: 2605) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹950
+
+Student: Aydhin Yousuf KV (Admn: 2606) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹950
+
+Student: Muhammed Hyzin KS (Admn: 2608) -> 3 Payments
+    - Date: 01/04/2026   Amount: ₹2000
+    - Date: 25/05/2026   Amount: ₹4500
+    - Date: 15/06/2026   Amount: ₹1100
+
+Student: Elzin Hamza AV (Admn: 2609) -> 2 Payments
+    - Date: 01/04/2026   Amount: ₹2000
+    - Date: 01/06/2026   Amount: ₹4500
+
+Student: Kabani MK (Admn: 2611) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹1100
+    - Date: 01/06/2026   Amount: ₹6000
+
+Student: Muhammed Hathim K (Admn: 2612) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1100
+
+Student: Muhammed Zahi (Admn: 2613) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1100
+
+Student: Hadi Emil T (Admn: 2614) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1300
+
+Student: Ithal Ranjith (Admn: 2615) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹1150
+    - Date: 15/06/2026   Amount: ₹6000
+
+Student: Lakshmi Narayanan TV (Admn: 2617) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹950
+
+Student: Ardra KK (Admn: 2618) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹950
+
+Student: Viswajith K (Admn: 2619) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹950
+
+Student: Muhammed Amaan C (Admn: 2626) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1100
+
+Student: Fathima Meharin KS (Admn: 2628) -> 3 Payments
+    - Date: 10/04/2026   Amount: ₹2000
+    - Date: 01/05/2026   Amount: ₹4500
+    - Date: 25/05/2026   Amount: ₹5000
+
+Student: Ohda Mariyam K (Admn: 2631) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1000
+
+Student: Aydin Adam P (Admn: 2633) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1550
+
+Student: Shayan Shafeek (Admn: 2635) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹950
+
+Student: Mohammed Tanim Ashraf (Admn: 2636) -> 3 Payments
+    - Date: 10/04/2026   Amount: ₹5500
+    - Date: 01/06/2026   Amount: ₹1150
+    - Date: 15/06/2026   Amount: ₹6000
+
+Student: Aleha Ashraf CA (Admn: 2637) -> 3 Payments
+    - Date: 10/04/2026   Amount: ₹5500
+    - Date: 01/06/2026   Amount: ₹1150
+    - Date: 15/06/2026   Amount: ₹6000
+
+Student: Ehan Nijesh K (Admn: 2641) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1500
+
+Student: Isha Noorin TV (Admn: 2646) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1300
+
+Student: Haya Zahra VV (Admn: 2647) -> 3 Payments
+    - Date: 10/04/2026   Amount: ₹3000
+    - Date: 01/05/2026   Amount: ₹3500
+    - Date: 01/06/2026   Amount: ₹4000
+
+Student: Aysha Thahrin P (Admn: 2652) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1550
+
+Student: Hadiya Mariyam TV (Admn: 2655) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹1300
+    - Date: 23/06/2026   Amount: ₹6000
+
+Student: Amelia Aimal TV (Admn: 2656) -> 2 Payments
+    - Date: 10/04/2026   Amount: ₹5200
+    - Date: 23/06/2026   Amount: ₹1300
+
+Student: Aysha Hisa Bindh Hakkeem (Admn: 2657) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1200
+
+Student: Mohammed Aashmin Eimick MN (Admn: 2661) -> 3 Payments
+    - Date: 10/04/2026   Amount: ₹3500
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1250
+
+Student: Ayan Ashley (Admn: 2664) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1100
+
+Student: Nila Navami A (Admn: 2665) -> 6 Payments
+    - Date: 10/04/2026   Amount: ₹3000
+    - Date: 01/05/2026   Amount: ₹3500
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1250
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1250
+
+Student: Krithvedha Kripesh (Admn: 2666) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1000
+
+Student: Mohammed Shafin C (Admn: 2667) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹1100
+    - Date: 15/06/2026   Amount: ₹6000
+
+Student: Evan Mohammed NM (Admn: 2675) -> 2 Payments
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1400
+
+Student: Mohammed Rizin PP (Admn: 2676) -> 3 Payments
+    - Date: 01/05/2026   Amount: ₹5000
+    - Date: 01/06/2026   Amount: ₹6000
+    - Date: 01/06/2026   Amount: ₹1300
+
+Student: Aydin Aalam EV (Admn: 2677) -> 2 Payments
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1200
+
+Student: Anvik Krishna KV (Admn: 2688) -> 2 Payments
+    - Date: 25/05/2026   Amount: ₹6000
+    - Date: 25/05/2026   Amount: ₹1150
+
+Student: Yumma Mehwish TV (Admn: 2696) -> 4 Payments
+    - Date: 25/05/2026   Amount: ₹5500
+    - Date: 23/06/2026   Amount: ₹2000
+    - Date: 23/06/2026   Amount: ₹1000
+    - Date: 23/06/2026   Amount: ₹1200
+
+Student: Maryam TV (Admn: 2699) -> 3 Payments
+    - Date: 25/05/2026   Amount: ₹5200
+    - Date: 23/06/2026   Amount: ₹6000
+    - Date: 23/06/2026   Amount: ₹1300
+
+Student: Ayaan  Mohammed KV (Admn: 2705) -> 2 Payments
+    - Date: 15/06/2026   Amount: ₹6000
+    - Date: 15/06/2026   Amount: ₹1300
+
+Student: Dua Mariyam KK (Admn: 2711) -> 2 Payments
+    - Date: 25/05/2026   Amount: ₹5000
+    - Date: 15/06/2026   Amount: ₹6000
+
+
+=== STUDENTS WITH SINGLE PAYMENT ===
+NAME                          ADMISSION NO   DATE           AMOUNT
+----------------------------------------------------------------------
+Nihaya Binth Ahamed VK        2503           25/05/2026     ₹1100
+Vivan Sundhar M               2504           01/06/2026     ₹1000
+Azan Faisal KP                2508           23/06/2026     ₹1100
+Aireen Najeeb MK              2514           25/05/2026     ₹1500
+Muhammed Shayan KV            2515           25/05/2026     ₹5000
+Radhwa Naseer V               2517           25/05/2026     ₹5000
+Jazwa Mehr MA                 2518           01/06/2026     ₹1050
+Sulaiha Zaya VK               2533           25/05/2026     ₹4000
+Dilha MD                      2536           23/06/2026     ₹1100
+Joshua Mathew                 2556           01/06/2026     ₹6000
+Izza Fathima TH               2560           15/06/2026     ₹3000
+Ayisha Jaza NV                2575           01/04/2026     ₹5000
+Muhammed Shezan VV            2588           01/04/2026     ₹3000
+Alfiya Yusra MA               2594           01/04/2026     ₹1
+Anha Fathima K                2602           01/04/2026     ₹5500
+Iniya Meharish KM             2607           01/06/2026     ₹6000
+Aydhin Adham VT               2622           01/06/2026     ₹6000
+Nihara Lakshmi PK             2623           23/06/2026     ₹6000
+Hamad Ibrahim A               2624           10/04/2026     ₹3000
+Ezin Zahan                    2629           01/06/2026     ₹6000
+Atreya KR                     2640           15/06/2026     ₹6000
+Raiza Rashid                  2645           23/06/2026     ₹6000
+Yuaan Kareem PV               2649           01/06/2026     ₹1350
+Mehvish Nasarudheen PV        2650           25/05/2026     ₹10000
+Namith Vishnu K               2651           01/06/2026     ₹6000
+Fellah Mariyam AV             2654           10/04/2026     ₹5000
+Muhammed Shayan A             2663           10/04/2026     ₹5500
+Mohammed Izyan K              2669           01/05/2026     ₹4875
+Muhammed Bishrul Hafi PP      2672           15/06/2026     ₹6000
+Izzah Mariyam PK              2674           01/05/2026     ₹5000
+Amaya Alin PV                 2680           01/06/2026     ₹5000
+Muhammed Farheen PV           2683           23/06/2026     ₹6000
+Henza Fathima KP              2684           01/05/2026     ₹5200
+Vedha Viswanath VP            2686           01/05/2026     ₹5200
+Vigha VV                      2687           01/05/2026     ₹7300
+Shahil Ahmed TS               2689           25/05/2026     ₹1
+Vedhathmika K                 2690           01/06/2026     ₹950
+Haleema Kunnath               2692           01/06/2026     ₹6000
+Muhammed Shayan KR            2693           23/06/2026     ₹6000
+Mohammed Faizan KP            2694           23/06/2026     ₹6000
+Aisha Hamda TV                2695           23/06/2026     ₹2000
+Filza Fathimma C              2697           25/05/2026     ₹2000
+Muhammed Ramzan               2701           23/06/2026     ₹1100
+Alen VA                       2706           25/05/2026     ₹5300
+Muhammed Ameen                2708           25/05/2026     ₹5200
+Aidan Al Harith               2710           01/06/2026     ₹6000
+Izan Yousaf                   2714           15/06/2026     ₹6000
+Hamid Ali K                   2718           01/06/2026     ₹500
+Vacation Class Income         UNKNOWN        30/04/2026     ₹3000
+Other Income                  UNKNOWN        30/04/2026     ₹500
+undefined                     UNKNOWN        undefined      ₹1491877

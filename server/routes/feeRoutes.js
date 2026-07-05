@@ -11,4 +11,7 @@ router.post('/', protect, addFee);
 // @desc    Get fees for a specific student (Admin view)
 router.get('/student/:id', protect, require('../controllers/feeController').getStudentFeesAdmin); // Use 'require' inline or destructured above
 
+// @desc    Get vehicle fee balance
+router.get('/vehicle-balance/:id', protect, require('../controllers/feeController').getVehicleFeeBalance);
+
 module.exports = router;

@@ -65,7 +65,7 @@ const generateFeeReceipt = (fee, student) => {
 
         // "Fee Receipt / E-Challan" Badge (simulated)
         // Draw rounded rectangle background
-        const badgeText = "FEE RECEIPT / E-CHALLAN";
+        const badgeText = fee.feeType === 'Vehicle Fee' ? "VEHICLE FEE RECEIPT" : "FEE RECEIPT / E-CHALLAN";
         const badgeWidth = 200;
         const badgeHeight = 20;
         const badgeX = (pageWidth - badgeWidth) / 2;
